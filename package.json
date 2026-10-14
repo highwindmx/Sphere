@@ -1,0 +1,26 @@
+{
+  "name": "shan-chuan-tian-gong",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "山川与天宫 —— 地形观察与空间站轨道科普沙盒（CesiumJS）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check-net": "node scripts/check-net.mjs",
+    "tiles": "node scripts/download-tiles.mjs",
+    "tiles:quick": "node scripts/download-tiles.mjs --quick",
+    "tiles:global": "node scripts/download-tiles.mjs --region global",
+    "tiles:china": "node scripts/download-tiles.mjs --region china",
+    "tiles:places": "node scripts/download-tiles.mjs --region places"
+  },
+  "dependencies": {
+    "cesium": "^1.125.0",
+    "satellite.js": "^5.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10",
+    "vite-plugin-cesium": "^1.2.23"
+  }
+}

@@ -1,0 +1,48 @@
+# ============== 敏感凭证（永远不上传） ==============
+.env
+.env.local
+.env.*.local
+# Cesium Ion Token 通过 VITE_CESIUM_ION_TOKEN 环境变量注入，见 src/main.js
+
+# ============== 依赖 & 构建 ==============
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+Thumbs.db
+
+# ============== Python (uv) ==============
+.venv/
+__pycache__/
+*.pyc
+uv.lock
+pyproject.toml        # 只保留 requirements.txt 作为 Python 依赖入口
+
+# ============== 前端构建临时 ==============
+.vite/
+*.tsbuildinfo
+
+# ============== Tauri (已废弃，暂保留目录) ==============
+src-tauri/target/
+src-tauri/gen/
+
+# ============== 原始大文件 (16GB+，永远不上传) ==============
+raw-data/
+
+# ============== 离线瓦片下载产物 (按需下载，不上传) ==============
+public/tiles/satellite/
+
+# ============== 下载中间产物 ==============
+satellite-tiles-*.txt
+public-tiles-aria2.txt
+scripts/all-urls.txt
+extracted-layers.json
+
+# ============== 编辑器 ==============
+.idea/
+.vscode/
+*.swp
+
+# ============== Trae (运行时记忆) ==============
+.trae-memory/

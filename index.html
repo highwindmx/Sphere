@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>山川与天宫 · 地形与轨道科普沙盒</title>
+</head>
+<body>
+  <div id="app">
+    <!-- 左侧控制面板 -->
+    <aside id="panel">
+      <h1>山川与天宫</h1>
+      <p class="subtitle">看地形怎样塑造中国 · 看天宫此刻飞过哪里</p>
+
+      <!-- 星球一键切换 -->
+      <div class="planet-switch">
+        <button id="btnEarthMode" class="planet-btn active">🌍 地球</button>
+        <button id="btnMoonMode" class="planet-btn">🌙 月球</button>
+      </div>
+
+      <!-- 场景工具：地形夸张 / 晨夜光影 / 回到中国 -->
+      <div class="tool-block">
+        <div class="tool-row">
+          <label for="exag" title="真实山脉相对地球其实很薄；适度夸张能看清走向，别超过 3×">地形夸张</label>
+          <input type="range" id="exag" min="1" max="4" step="0.1" value="1.2" />
+          <span id="exagVal" class="tool-val">1.2×</span>
+        </div>
+        <div class="tool-row">
+          <button id="lighting" class="tool-btn" title="配合巡游面板的 ⏩ 加速键看日出与晨昏线移动">🌗 晨夜光影</button>
+          <button id="btnHome" class="tool-btn">🏠 回到中国</button>
+        </div>
+      </div>
+
+      <!-- 标注图层 -->
+      <section>
+        <h2>标注图层</h2>
+        <input type="text" id="layerSearch" class="layer-search" placeholder="搜索图层（如 长城、运河、海峡、发射场）…" />
+        <div class="layer-toolbar">
+          <button id="layerSelectAll" class="secondary">全选</button>
+          <button id="layerClearAll" class="secondary">全清</button>
+          <button id="layerOnlyCurrent" class="secondary">只显示当前</button>
+        </div>
+        <div id="layersTree" class="layer-tree"></div>
+        <p class="hint">勾选图层或子组即显示；路线类有「▶ 跟随飞行」，「航天探索」可加载天宫轨道、发起探月任务，「山川形胜」点标注可飞到推荐视角。</p>
+      </section>
+
+      <!-- 月面标注（仅月球模式显示） -->
+      <section id="moonSection" class="hidden">
+        <h2>月面标注</h2>
+        <div id="moonGroups" class="moon-groups"></div>
+      </section>
+    </aside>
+
+    <!-- 三维地球 -->
+    <main id="cesiumContainer"></main>
+    <!-- 月球视图（切换到月球时显示） -->
+    <main id="moonContainer" class="hidden"></main>
+
+    <!-- 统一巡游控制面板（浮动；路线跟随飞行 / 探月任务 双模式共用） -->
+    <div id="tourPanel" class="fly-panel hidden">
+      <div class="fly-panel-title" id="tourTitle">跟随飞行</div>
+      <div id="rocketPhase" class="rocket-phase hidden"></div>
+      <div class="fly-row">
+        <div id="tourTrack" class="fly-progress"><div id="tourBar" class="fly-bar"></div><div id="tourTicks" class="fly-ticks"></div></div>
+        <span id="tourProgressText" class="fly-prog-text">0/0</span>
+      </div>
+
+      <!-- 时间流控制：⏪ 减速 / ⏩ 加速。平时与巡游控制时钟倍率；探月任务控制任务倍率 -->
+      <div class="fly-row time-row">
+        <label>时间</label>
+        <button id="timeSlower" class="time-btn" title="时间减速">⏪</button>
+        <span id="timeSpeedLabel" class="time-speed">60×</span>
+        <button id="timeFaster" class="time-btn" title="时间加速">⏩</button>
+      </div>
+
+      <!-- 模式 A：路线跟随飞行控制 -->
+      <div id="flyControls">
+        <div class="fly-row">
+          <label>速度</label>
+          <input type="range" id="flySpeed" min="0" max="2" step="1" value="1" class="fly-range" />
+          <span id="flySpeedLabel">中</span>
+        </div>
+        <div class="fly-row">
+          <label>高度(m)</label>
+          <input type="number" id="flyHeight" min="1000" max="2000000" step="1000" value="90000" class="fly-num" />
+        </div>
+        <div class="fly-row">
+          <label>倾角(°)</label>
+          <input type="range" id="flyPitch" min="-90" max="0" step="1" value="-35" class="fly-range" />
+          <span id="flyPitchLabel">-35°</span>
+        </div>
+      </div>
+
+      <!-- 模式 B：探月任务控制 -->
+      <div id="rocketControls" class="hidden">
+        <div id="siteRow" class="fly-row landing-row">
+          <label>发射场</label>
+          <button id="siteJiuquan" class="fly-action">酒泉</button>
+          <button id="siteWenchang" class="fly-action">文昌</button>
+        </div>
+        <div id="landingRow" class="fly-row landing-row">
+          <label>落点</label>
+          <button id="siteImbrium" class="fly-action">雨海·嫦娥三号</button>
+          <button id="siteTranquillity" class="fly-action">静海·阿波罗11</button>
+        </div>
+      </div>
+
+      <div class="fly-btns">
+        <button id="tourPause" class="fly-action hidden">暂停</button>
+        <button id="btnLaunch" class="fly-action hidden" disabled>🚀 点火</button>
+        <button id="tourStop" class="fly-action">停止</button>
+      </div>
+    </div>
+
+    <!-- 地月转移「距离已压缩」常驻标注 -->
+    <div id="compressNote" class="compress-note hidden">地月距离已压缩（约 1/6 真实距离）· 转移轨道为示意</div>
+
+    <!-- 幕间文字幕卡 -->
+    <div id="actCard" class="act-card hidden"><div id="actCardText"></div></div>
+
+    <!-- 底部信息条 -->
+    <div id="coordbar">移动鼠标查看经纬度与海拔</div>
+    <div id="status">正在初始化地球…</div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

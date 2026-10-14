@@ -1,0 +1,18 @@
+# uv 依赖清单（仅依赖声明，不是可安装包）
+# 这个项目是纯脚本（app.py serve dist/），没有 Python 包目录，
+# 所以故意不写 [build-system]，让 uv 只装依赖、不尝试 build 自身。
+
+[project]
+name = "sphere-web"
+version = "0.1.0"
+description = "山川与天宫 —— Flask pure web server"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0",
+]
+
+# --- 命令 ---
+#   uv sync              创建 venv + 安装 flask（不 build 项目自身）
+#   uv run python app.py    启动服务
+#   uv pip install flask   手动加依赖（会回写此文件）
+#   uv lock               生成 uv.lock（可选）
