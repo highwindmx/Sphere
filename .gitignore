@@ -48,3 +48,6 @@ archive/demos/.*.png
 archive/debug/*.png
 archive/debug/*.jpeg
 archive/debug/*.json
+
+# ============== WorkBuddy 代理工作区（项目记忆/验证脚本，本地留存不入库） ==============
+.workbuddy/
