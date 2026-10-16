@@ -1,4 +1,9 @@
-// Auto-rebuilt from extracted-layers.json — DO NOT HAND-EDIT
+// 坐标系: WGS84 (EPSG:4326)，十进制度，坐标顺序统一为 [经度 lon, 纬度 lat]。
+//   渲染端由 Cesium.Cartesian3.fromDegrees(lon, lat) / fromDegreesArray 直接使用，无需额外转换。
+// 数据性质: 教学示意级。城市/地点坐标为近似位置（精度约市级 ±1–5 km）；
+//           历史疆域/路线为简化示意，非考据级边界，仅供空间认知。
+// 来源: 编译自公开地理资料与通史常识，非测绘权威数据；用于科普与家庭教育。
+
 export const LAYER = {
   "id": "rome",
   "name": "罗马帝国",
@@ -119,7 +124,8 @@ export const LAYER = {
       "entities": [
         {
           "type": "polyline",
-          "name": "阿庇安道北线（罗马→约克）",
+          // 名称里不再重复"罗马"：两条路线都以罗马为起点，线上标签会与"罗马"站点标签叠字
+          "name": "阿庇安道北线（→约克）",
           "coords": [
             [
               12.5,
@@ -147,11 +153,19 @@ export const LAYER = {
             ]
           ],
           "width": 2,
+          "stops": [
+            { "lon": 12.5, "lat": 41.9, "name": "罗马" },
+            { "lon": 9.2, "lat": 45.5, "name": "梅迪奥拉努姆（米兰）" },
+            { "lon": 4.8, "lat": 45.8, "name": "卢格杜努姆（里昂）" },
+            { "lon": 1.6, "lat": 50.9, "name": "热马皮港（布洛涅）" },
+            { "lon": 0.1, "lat": 51.5, "name": "多佛尔海峡" },
+            { "lon": -1.1, "lat": 53.9, "name": "埃伯拉库姆（约克）" }
+          ],
           "description": "阿庇安道北线，罗马经高卢跨海至不列颠，\"条条大路通罗马\"的北段。"
         },
         {
           "type": "polyline",
-          "name": "阿庇安道东线（罗马→亚历山大）",
+          "name": "阿庇安道东线（→亚历山大）",
           "coords": [
             [
               12.5,
@@ -195,6 +209,18 @@ export const LAYER = {
             ]
           ],
           "width": 2,
+          "stops": [
+            { "lon": 12.5, "lat": 41.9, "name": "罗马" },
+            { "lon": 17.9, "lat": 40.6, "name": "布林迪西" },
+            { "lon": 19.8, "lat": 41.3, "name": "都拉基乌姆（都拉斯）" },
+            { "lon": 22.9, "lat": 40.6, "name": "塞萨洛尼基" },
+            { "lon": 29, "lat": 41, "name": "拜占庭（君士坦丁堡）" },
+            { "lon": 32.9, "lat": 39.9, "name": "安奇拉（安卡拉）" },
+            { "lon": 36.2, "lat": 36.2, "name": "安条克" },
+            { "lon": 36.3, "lat": 33.5, "name": "大马士革" },
+            { "lon": 35.2, "lat": 31.8, "name": "耶路撒冷" },
+            { "lon": 29.9, "lat": 31.2, "name": "亚历山大" }
+          ],
           "description": "阿庇安道东线，罗马渡亚得里亚海经巴尔干至小亚、叙利亚、埃及，帝国东段交通动脉。"
         }
       ]

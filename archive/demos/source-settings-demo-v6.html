@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图源设置 · Demo v6（每源自带缓存明细/进度 + 凭证添加）</title>
+  <link rel="stylesheet" href="/vendor/cesium/Widgets/widgets.css" />
+  <script>
+    window.CESIUM_BASE_URL = '/vendor/cesium/';
+    window.CESIUM_ION_TOKEN = 'demo-no-ion-assets';
+  </script>
+  <script type="importmap">
+    { "imports": { "cesium": "/vendor/cesium/index.js" } }
+  </script>
+  <style>
+    :root {
+      --bg: #f5f6f8; --panel: #ffffff; --line: #e3e6ea; --txt: #1f2329;
+      --sub: #646a73; --accent: #1664ff; --ok: #00b42a; --warn: #ff7d00;
+      --chip: #f2f3f5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; color: var(--txt); background: var(--bg); }
+    #app { display: flex; height: 100vh; }
+
+    /* ===== 左：地球（≥60%） ===== */
+    #stage { flex: 1; position: relative; min-width: 0; }
+    #globe { position: absolute; inset: 0; }
+    #stage-hint {
+      position: absolute; left: 16px; top: 16px; z-index: 10;
+      background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: 10px;
+      padding: 10px 14px; font-size: 12px; color: var(--sub); line-height: 1.7;
+      box-shadow: 0 2px 12px rgba(31,35,41,.08); max-width: 330px;
+    }
+    #stage-hint b { color: var(--txt); }
+    #panel-toggle {
+      position: absolute; right: 12px; top: 16px; z-index: 11;
+      border: 1px solid var(--line); background: #fff; border-radius: 8px;
+      padding: 6px 12px; font-size: 12px; cursor: pointer; color: var(--txt);
+      box-shadow: 0 2px 8px rgba(31,35,41,.08);
+    }
+    #panel-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ===== 右：配置面板（≤40%，可收起） ===== */
+    #panel {
+      width: 460px; min-width: 460px; max-width: 40vw; height: 100%;
+      background: var(--panel); border-left: 1px solid var(--line);
+      display: flex; flex-direction: column; transition: margin-right .25s ease;
+    }
+    #panel.collapsed { margin-right: -460px; }
+    #panel-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
+    #panel-head h1 { font-size: 16px; }
+    #panel-head .sub { font-size: 11px; color: var(--sub); }
+    #panel-body { flex: 1; overflow-y: auto; padding: 12px 16px 24px; }
+
+    .sec-title {
+      font-size: 12px; color: var(--sub); margin: 18px 0 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sec-title .tag { font-size: 10px; background: var(--chip); border-radius: 4px; padding: 1px 6px; }
+    .sec-title .spacer { flex: 1; }
+    .legend { font-size: 10.5px; color: var(--sub); line-height: 1.75; margin: 0 0 10px; }
+    .legend b { color: var(--txt); }
+
+    /* 源行卡片 */
+    .src {
+      border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+      margin-bottom: 8px; background: #fff; cursor: grab;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .src:hover { border-color: #c9cdd4; }
+    .src.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .src.dragging { opacity: .5; }
+    .src.running { border-color: var(--accent); background: #fafcff; }
+    .src-top { display: flex; align-items: center; gap: 8px; }
+    .drag-handle { color: #c0c4cc; font-size: 14px; cursor: grab; user-select: none; }
+    .src-name { font-size: 13px; font-weight: 600; flex: 1; }
+    .src-order { font-size: 10px; color: #fff; background: var(--accent); border-radius: 4px; padding: 1px 6px; }
+    .src-order.backup { background: var(--chip); color: var(--sub); }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); display: none; }
+    .src.active .live-dot { display: inline-block; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; align-items: center; }
+    .chip {
+      font-size: 10px; color: var(--sub); background: var(--chip);
+      border-radius: 4px; padding: 2px 6px; white-space: nowrap; text-decoration: none;
+    }
+    a.chip { color: var(--accent); background: #eef3ff; cursor: pointer; }
+    .chip.cache { color: var(--accent); background: #eef3ff; cursor: help; }
+    .chip.none { color: var(--warn); background: #fff7e8; }
+    .chip.off { color: #a8abb2; background: #f7f8fa; }
+    .chip.est { color: var(--sub); background: #f7f8fa; border: 1px dashed var(--line); cursor: help; }
+    .src-ops { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .btn {
+      font-size: 11px; border: 1px solid var(--line); background: #fff;
+      border-radius: 6px; padding: 4px 10px; cursor: pointer; color: var(--txt);
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn[disabled] { opacity: .4; cursor: not-allowed; }
+    .btn.icon { padding: 4px 8px; font-family: monospace; }
+    .btn.tier { font-size: 10.5px; padding: 3px 8px; }
+    .btn.tier.dl-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.tier.dl-queued { background: #fff7e8; border-color: #ffd08a; color: #a15c00; }
+    .btn.tier.dl-done { background: #e8ffea; border-color: #9be6a9; color: #0a7a26; }
+    .show-cb { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--sub); cursor: pointer; }
+    .prog { flex: 1; min-width: 60px; height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; display: none; }
+    .prog.on { display: block; }
+    .prog > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width .2s; }
+    .prog-txt { font-size: 10px; color: var(--sub); white-space: nowrap; }
+
+    /* 每源「已缓存明细 · 按精度」 */
+    .lv-wrap { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 7px; }
+    .lv-head {
+      display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--sub); cursor: pointer;
+      user-select: none;
+    }
+    .lv-head .caret { transition: transform .15s; display: inline-block; }
+    .lv-wrap.open .lv-head .caret { transform: rotate(90deg); }
+    .lv-list { display: none; margin-top: 5px; }
+    .lv-wrap.open .lv-list { display: block; }
+    .lv {
+      display: grid; grid-template-columns: 30px 1fr 62px 58px; align-items: center;
+      gap: 6px; font-size: 10px; color: var(--sub); padding: 2px 0;
+    }
+    .lv .lv-z { color: var(--txt); font-weight: 600; }
+    .lv .lv-bar { height: 5px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+    .lv .lv-bar > i { display: block; height: 100%; background: #8fb8ff; border-radius: 3px; }
+    .lv .lv-n, .lv .lv-b { text-align: right; font-variant-numeric: tabular-nums; }
+    .lv-empty { font-size: 10px; color: var(--warn); padding: 3px 0; }
+
+    /* 凭证（key / token）配置条 */
+    .cred { display: none; margin-top: 8px; background: #fbfcfe; border: 1px solid #dbe3f2; border-radius: 8px; padding: 8px 10px; }
+    .cred.open { display: block; }
+    .cred .row1 { display: flex; align-items: center; gap: 6px; }
+    .cred input {
+      flex: 1; min-width: 0; font-size: 11px; padding: 4px 8px; border: 1px solid var(--line);
+      border-radius: 6px; background: #fff; color: var(--txt); font-family: monospace;
+    }
+    .cred .tip { font-size: 10px; color: var(--sub); margin-top: 5px; line-height: 1.6; }
+    .cred .tip b { color: var(--txt); }
+    .btn.key { font-size: 10.5px; padding: 2px 8px; }
+    .btn.key.set { background: #e8ffea; border-color: #9be6a9; color: #0a7a26; }
+    .btn.key.unset { background: #fff7e8; border-color: #ffd08a; color: #a15c00; }
+
+    /* 添加图源下拉 */
+    .add-wrap { position: relative; }
+    .add-menu {
+      display: none; position: absolute; right: 0; top: 26px; z-index: 20; width: 230px;
+      background: #fff; border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: 0 6px 20px rgba(31,35,41,.12); padding: 5px;
+    }
+    .add-menu.open { display: block; }
+    .add-menu .item {
+      display: flex; align-items: center; gap: 7px; font-size: 11px; padding: 7px 8px;
+      border-radius: 6px; cursor: pointer; color: var(--txt);
+    }
+    .add-menu .item:hover { background: var(--chip); }
+    .add-menu .item .n { flex: 1; }
+    .add-menu .item .b { font-size: 9.5px; color: var(--sub); background: var(--chip); border-radius: 4px; padding: 1px 5px; }
+    .add-menu .item .b.need { color: var(--warn); background: #fff7e8; }
+
+    .total-row { display: flex; gap: 8px; margin: 4px 0 8px; font-size: 10.5px; }
+    .total-box {
+      flex: 1; background: #eef3ff; border: 1px solid #d6e2ff; border-radius: 8px;
+      padding: 7px 10px; color: var(--accent); cursor: help;
+    }
+    .total-box b { font-size: 13px; display: block; margin-top: 2px; color: var(--txt); }
+    .total-box .sub { font-size: 9.5px; color: var(--sub); }
+    .total-break { display: none; margin: 0 0 8px; font-size: 10px; color: var(--sub); }
+    .total-break.open { display: block; }
+    .total-break .tb {
+      display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px dotted var(--line);
+    }
+    .total-break .tb .n { flex: 1; color: var(--txt); }
+    .total-break .tb .v { font-variant-numeric: tabular-nums; }
+
+    .note { font-size: 11px; color: var(--sub); line-height: 1.8; background: var(--chip); border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+
+    #toast {
+      position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+      background: rgba(31,35,41,.88); color: #fff; font-size: 12px;
+      border-radius: 8px; padding: 8px 16px; display: none; z-index: 99; max-width: 70vw;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="stage">
+      <div id="globe"></div>
+      <div id="stage-hint">
+        <b>Demo v6 · 边配置边观察</b><br/>
+        ① 每源自带「已缓存明细（按 z 分层）」与下载进度；② 合计含高程，悬停看分项；③ 需凭证的源（Cesium ion / 天地图）行内 🔑 直接配置，或用右上角「＋ 添加」加入新源。
+      </div>
+      <button id="panel-toggle">收起配置 ›</button>
+    </div>
+
+    <aside id="panel">
+      <div id="panel-head">
+        <h1>🗺 图源设置</h1>
+        <span class="sub">影像源按优先级回退 · 地形源独立 · 每源独立缓存与进度</span>
+      </div>
+      <div id="panel-body">
+
+        <div class="sec-title">
+          🖼 影像源（优先级从上到下）<span class="tag">逐瓦片回退</span>
+          <span class="spacer"></span>
+          <span class="add-wrap">
+            <button class="btn" id="addBtn" title="添加需要凭证的图源（Cesium ion / 天地图 / 自定义 XYZ）">＋ 添加</button>
+            <div class="add-menu" id="addMenu">
+              <div class="item" data-add="ion"><span class="n">Cesium ion</span><span class="b need">需 token</span></div>
+              <div class="item" data-add="tianditu"><span class="n">天地图影像</span><span class="b need">需 key</span></div>
+              <div class="item" data-add="custom"><span class="n">自定义 XYZ / WMTS</span><span class="b">免密钥</span></div>
+            </div>
+          </span>
+        </div>
+        <div class="legend">
+          <b>P1 = 首选底图</b>（排序即可）；<b>本地优先</b> = 走本地代理缓存（浏览即落盘）；
+          <b>已缓存</b> = 本地真实扫盘统计，展开「按精度」看每级 z 的张数/体积；
+          <b>下载进度</b> 在各自源行内独立显示（排队显示 ⏳ 第N位）。
+        </div>
+        <div class="total-row" id="totalRow">
+          <div class="total-box" id="boxTiles">本地缓存合计（含高程）<b id="total-tiles">—</b><span class="sub" id="total-tiles-sub"></span></div>
+          <div class="total-box" id="boxBytes">本地缓存体积（含高程）<b id="total-bytes">—</b><span class="sub" id="total-bytes-sub"></span></div>
+        </div>
+        <div class="total-break" id="totalBreak"></div>
+        <div id="src-list"></div>
+
+        <div class="sec-title">⛰ 地形源<span class="tag">整体启用 · 不入链</span></div>
+        <div id="terrain-list"></div>
+
+        <div class="note">
+          ① <b>凭证（key / token）就近配置</b>：需要凭证的源在自己行内显示 🔑 按钮，点开即填（存 localStorage，只回显末 4 位）；也可以在区块标题处「＋ 添加」把 Cesium ion / 天地图 / 自定义源加进列表。<br/>
+          ② <b>合计含高程</b>：影像 + 高程一起算，悬停/点击展开看每个源的分项（张数 / 体积 / z 跨度）。<br/>
+          ③ <b>每源独立</b>：缓存明细按精度（z0、z1…）逐行列出；下载进度条在该源行内，不再集中到底部，避免多个任务时认不出谁在跑。<br/>
+          ④ 演示用进度为模拟动画；真机版接 /api/downloader/start + /api/downloader/state，队列行为一致（同时只跑一个，其余排队）。
+        </div>
+      </div>
+    </aside>
+  </div>
+  <div id="toast"></div>
+
+  <script type="module">
+    import * as Cesium from 'cesium';
+
+    const $ = (s) => document.querySelector(s);
+    const toast = (msg, ms = 2400) => {
+      const t = $('#toast'); t.textContent = msg; t.style.display = 'block';
+      clearTimeout(t._h); t._h = setTimeout(() => { t.style.display = 'none'; }, ms);
+    };
+    const fmtSize = (b) => b > 1e9 ? (b / 1e9).toFixed(2) + ' GB' : b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : b > 1e3 ? (b / 1e3).toFixed(0) + ' KB' : b + 'B';
+    const fmtN = (n) => n >= 1e8 ? (n / 1e8).toFixed(1) + ' 亿' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + ' 万' : n.toLocaleString();
+
+    /* ===== 地球 ===== */
+    const viewer = new Cesium.Viewer('globe', {
+      baseLayer: false, animation: false, timeline: false,
+      geocoder: false, homeButton: false, sceneModePicker: false,
+      navigationHelpButton: false, fullscreenButton: false,
+      infoBox: false, selectionIndicator: false,
+    });
+    viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#dfe6ef');
+    viewer.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(104, 30, 7800000) });
+
+    /* ===== 瓦片数预估 ===== */
+    const lon2x = (lon, z) => Math.floor((lon + 180) / 360 * Math.pow(2, z));
+    const lat2y = (lat, z) => Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
+    const countXyz = (zmin, zmax, bbox) => {
+      let n = 0;
+      for (let z = zmin; z <= zmax; z++) {
+        if (bbox) {
+          n += Math.max(0, lon2x(bbox.e, z) - lon2x(bbox.w, z) + 1) * Math.max(0, lat2y(bbox.s, z) - lat2y(bbox.n, z) + 1);
+        } else n += Math.pow(4, z);
+      }
+      return n;
+    };
+    const GIBS_GRID = [2, 6, 15, 50, 200, 800, 3200, 12800];
+    const countGibs = (zmin, zmax) => GIBS_GRID.slice(zmin, zmax + 1).reduce((a, b) => a + b, 0);
+
+    /* ===== 凭证存储（localStorage；真机版天地图另有 .env 兜底） ===== */
+    const CRED_KEY = { tianditu: 'sphere-tianditu-key', ion: 'sphere-ion-token' };
+    const getCred = (id) => { try { return localStorage.getItem(CRED_KEY[id]) || ''; } catch { return ''; } };
+    const setCred = (id, v) => { try { v ? localStorage.setItem(CRED_KEY[id], v.trim()) : localStorage.removeItem(CRED_KEY[id]); } catch { /* ignore */ } };
+    const mask = (v) => (v ? '••••' + v.slice(-4) : '');
+
+    /* ===== 源定义 =====
+       cred: 该源所需凭证（label / placeholder / docUrl）；无 cred 的源不显示 🔑 按钮 */
+    const SOURCES = [
+      { id: 'esri', name: 'Esri 卫星', grid: 'xyz', maxZ: 19,
+        provider: () => new Cesium.UrlTemplateImageryProvider({ url: 'tiles/esri/{z}/{x}/{y}.jpg', maximumLevel: 19 }),
+        chips: ['全球', 'z0–19'], scanKey: 'esri', avgKB: 11.6,
+        doc: 'https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9', docLabel: 'Esri World Imagery' },
+      { id: 'eox', name: 'AWS Sentinel-2', grid: 'xyz', maxZ: 18,
+        provider: () => new Cesium.UrlTemplateImageryProvider({ url: 'tiles/eox/{z}/{x}/{y}.jpg', maximumLevel: 18 }),
+        chips: ['全球', 'z0–18', '无云'], scanKey: 'eox', avgKB: 10.2,
+        doc: 'https://s2maps.eu/', docLabel: 'Sentinel-2 无云合成' },
+      { id: 'gibs', name: 'NASA Blue Marble', grid: 'gibs', maxZ: 7,
+        provider: () => new Cesium.UrlTemplateImageryProvider({ url: 'tiles/gibs/{g}/{r}/{c}.jpeg', maximumLevel: 7 }),
+        chips: ['全球 ±90°', 'z0–7', '非二分网格'], scanKey: 'gibs', avgKB: 30,
+        doc: 'https://nasa-gibs.github.io/gibs-api-docs/', docLabel: 'GIBS API 文档' },
+      { id: 'tianditu', name: '天地图影像', grid: 'xyz', maxZ: 18, bbox: { w: 73.4, s: 3.8, e: 135.2, n: 53.6 },
+        provider: () => new Cesium.UrlTemplateImageryProvider({ url: 'tiles/tianditu/{s}/{z}/{x}/{y}.jpg', subdomains: ['0','1','2','3','4','5','6','7'], tilingScheme: new Cesium.WebMercatorTilingScheme(), maximumLevel: 18 }),
+        chips: ['中国区', 'z0–18'], scanKey: 'tianditu', avgKB: 13.1,
+        cred: { label: '天地图 key', ph: '天地图开放平台 tk', doc: 'https://lbs.tianditu.gov.cn/', tip: '服务端另有 .env(SPHERE_TIANDITU_KEY) 兜底；浏览器端 key 需在服务端带 Referer 请求，已处理。' },
+        doc: 'https://lbs.tianditu.gov.cn/', docLabel: '天地图开发文档' },
+      { id: 'ion', name: 'Cesium ion', grid: 'xyz', maxZ: 18,
+        provider: null,   // Demo 不真挂 ion（需有效 token + 联网）
+        chips: ['ion 资产', '全球影像/地形'], scanKey: null, avgKB: 12,
+        cred: { label: 'Cesium ion token', ph: 'eyJhbGciOi...（ion 访问令牌）', doc: 'https://ion.cesium.com/tokens', tip: 'ion 是 Cesium 官方资产服务（全球影像/地形/Bing 底图），需个人 token；本项目默认不依赖它。' },
+        doc: 'https://cesium.com/platform/cesium-ion/', docLabel: 'Cesium ion' },
+    ];
+    // ion 默认不进列表（用「＋ 添加」加入），另两个参与回退
+    let ACTIVE = ['esri', 'eox', 'gibs', 'tianditu'];
+    const byId = (id) => SOURCES.find((s) => s.id === id);
+    const list = () => ACTIVE.map(byId).filter(Boolean);
+
+    const TERRAIN = { id: 'terrain', name: 'AWS Terrarium 高程', grid: 'xyz', maxZ: 14,
+      chips: ['全球', 'z0–14'], scanKey: 'terrain', avgKB: 47.6,
+      doc: 'https://registry.opendata.aws/terrain-tiles/', docLabel: 'AWS 开放数据' };
+
+    const localFirst = {};
+    const countFor = (s, zmin, zmax) => s.grid === 'gibs' ? countGibs(zmin, zmax) : countXyz(zmin, zmax, s.bbox);
+    const estLabel = (s, zmin, zmax) => {
+      const n = countFor(s, zmin, zmax);
+      return `${s.bbox ? '中国区' : '全球'} z${zmin}–${zmax} ≈ ${fmtN(n)} 张 · ${fmtSize(n * s.avgKB * 1024)}`;
+    };
+    const TIERS = [
+      { key: 'skel', label: '骨架', zmin: 0, zmax: 4 },
+      { key: 'low', label: '低清', zmin: 5, zmax: 8 },
+      { key: 'high', label: '高清', zmin: 9, zmax: 11, subsets: ['points', 'full'] },
+    ];
+    const SUBSET_LABEL = { points: '标注点', full: '全部' };
+
+    /* ===== 本地缓存统计（真实 /api/downloader/scan） ===== */
+    let scan = null;
+    fetch('/api/downloader/scan').then((r) => r.json()).then((s) => { scan = s; renderCache(); }).catch(() => {});
+    const scanOf = (key) => (scan && key && scan[key]) || null;
+    const levelsOf = (d) => Object.entries((d && d.levels) || {}).map(([z, v]) => ({ z: Number(z), ...v })).sort((a, b) => a.z - b.z);
+
+    const cacheChip = (s) => {
+      if (!s.scanKey) return '<span class="chip off">不落本地缓存</span>';
+      if (localFirst[s.id] === false) return '<span class="chip off">未启用本地优先</span>';
+      const d = scanOf(s.scanKey);
+      if (!d || !d.total) return '<span class="chip none">暂无本地缓存</span>';
+      const lv = levelsOf(d);
+      const span = lv.length ? `（z${lv[0].z}–z${lv[lv.length - 1].z}）` : '';
+      const detail = lv.map((l) => `z${l.z}: ${l.count.toLocaleString()} 张 · ${fmtSize(l.bytes)}`).join('\n');
+      return `<span class="chip cache" title="按精度明细：\n${detail}">已缓存 ${d.total.toLocaleString()} 张${span} · ${fmtSize(d.bytes)} ▾</span>`;
+    };
+
+    const levelListHtml = (s) => {
+      const d = s.scanKey ? scanOf(s.scanKey) : null;
+      const lv = levelsOf(d);
+      if (!lv.length) return '<div class="lv-empty">尚无本地瓦片（开启「本地优先」浏览或点下方分段下载）</div>';
+      const max = Math.max(...lv.map((l) => l.count), 1);
+      return lv.map((l) => `<div class="lv">
+        <span class="lv-z">z${l.z}</span>
+        <span class="lv-bar"><i style="width:${(l.count / max * 100).toFixed(1)}%"></i></span>
+        <span class="lv-n">${l.count.toLocaleString()} 张</span>
+        <span class="lv-b">${fmtSize(l.bytes)}</span>
+      </div>`).join('');
+    };
+
+    /* ===== 合计（含高程）+ 悬停/展开分项 ===== */
+    const IMG_KEYS = ['esri', 'eox', 'gibs', 'tianditu'];
+    const renderCache = () => {
+      document.querySelectorAll('[data-cache]').forEach((el) => {
+        const s = byId(el.dataset.cache) || TERRAIN;
+        el.outerHTML = `<span data-cache="${el.dataset.cache}">${cacheChip(s)}</span>`;
+      });
+      document.querySelectorAll('[data-lv]').forEach((el) => {
+        const s = byId(el.dataset.lv) || TERRAIN;
+        el.innerHTML = levelListHtml(s);
+      });
+      let tiles = 0, bytes = 0, imgT = 0, imgB = 0;
+      for (const k of [...IMG_KEYS, 'terrain']) {
+        const d = scanOf(k);
+        if (!d) continue;
+        tiles += d.total; bytes += d.bytes;
+        if (k !== 'terrain') { imgT += d.total; imgB += d.bytes; }
+      }
+      const t = $('#total-tiles'), b = $('#total-bytes');
+      if (t) t.textContent = tiles ? `${tiles.toLocaleString()} 张` : '0 张';
+      if (b) b.textContent = bytes ? fmtSize(bytes) : '0 B';
+      const rows = [...IMG_KEYS.map((k) => [k, scanOf(k)]), ['terrain', scanOf('terrain')]];
+      const lines = rows.map(([k, d]) => ({ k, name: (byId(k) || TERRAIN).name, d: d || { total: 0, bytes: 0, levels: {} } }));
+      const tip = lines.map((l) => `${l.name}：${l.d.total.toLocaleString()} 张 · ${fmtSize(l.d.bytes)}`).join('\n')
+        + `\n\n其中影像 ${imgT.toLocaleString()} 张 / ${fmtSize(imgB)}，高程 ${(scanOf('terrain')?.total || 0).toLocaleString()} 张 / ${fmtSize(scanOf('terrain')?.bytes || 0)}`;
+      $('#boxTiles').title = tip;
+      $('#boxBytes').title = tip;
+      $('#total-tiles-sub').textContent = `影像 ${fmtN(imgT)} · 高程 ${fmtN(scanOf('terrain')?.total || 0)}`;
+      $('#total-bytes-sub').textContent = `影像 ${fmtSize(imgB)} · 高程 ${fmtSize(scanOf('terrain')?.bytes || 0)}`;
+      $('#totalBreak').innerHTML = lines.map((l) => `<div class="tb">
+          <span class="n">${l.name}</span>
+          <span class="v">${l.d.total.toLocaleString()} 张</span>
+          <span class="v">${fmtSize(l.d.bytes)}</span>
+        </div>`).join('');
+    };
+
+    /* ===== 凭证条（key / token） ===== */
+    const credHtml = (s) => {
+      if (!s.cred) return '';
+      const v = getCred(s.id);
+      return `<div class="cred" data-cred="${s.id}">
+        <div class="row1">
+          <input type="text" class="cred-input" placeholder="${s.cred.ph}" value="${v ? mask(v) : ''}" autocomplete="off" spellcheck="false" />
+          <button class="btn primary cred-save">保存</button>
+          <button class="btn cred-clear">清除</button>
+        </div>
+        <div class="tip">${s.cred.tip}　<a href="${s.cred.doc}" target="_blank" rel="noopener">申请/查看 ↗</a></div>
+      </div>`;
+    };
+    const keyBtnHtml = (s) => {
+      if (!s.cred) return '';
+      const v = getCred(s.id);
+      return `<button class="btn key act-key ${v ? 'set' : 'unset'}" title="${v ? '已配置：' + mask(v) + '（点击修改）' : '未配置凭证，点击填写'}">🔑 ${v ? mask(v) : s.cred.label + ' 未配置'}</button>`;
+    };
+
+    /* ===== 影像源列表 ===== */
+    const layers = {};
+    let baseId = 'esri';
+    const listEl = $('#src-list');
+
+    const tierButtons = (s) => TIERS.map((t) => {
+      if (t.zmax > s.maxZ) {
+        return `<button class="btn tier" data-tier="${t.key}" title="超出源最高层级 z${s.maxZ}" disabled>${t.label} z${t.zmin}–${t.zmax}</button>`;
+      }
+      if (!t.subsets) {
+        return `<button class="btn tier act-tier" data-tier="${t.key}" data-subset="full" data-dlkey="${s.id}|${t.key}|full" title="${estLabel(s, t.zmin, t.zmax)}">${t.label} z${t.zmin}–${t.zmax}</button>`;
+      }
+      return t.subsets.map((sub) => `<button class="btn tier act-tier" data-tier="${t.key}" data-subset="${sub}" data-dlkey="${s.id}|${t.key}|${sub}" title="${estLabel(s, t.zmin, t.zmax)}${sub === 'points' ? '（标注点子集约为全量的 3%）' : ''}">${t.label}·${SUBSET_LABEL[sub]} z${t.zmin}–${t.zmax}</button>`).join('');
+    }).join('');
+
+    const buildRow = (s, idx) => {
+      if (localFirst[s.id] === undefined) localFirst[s.id] = true;
+      const row = document.createElement('div');
+      row.className = 'src' + (s.id === baseId ? ' active' : '');
+      row.draggable = true;
+      row.dataset.id = s.id;
+      row.innerHTML = `
+        <div class="src-top">
+          <span class="drag-handle" title="拖动调整优先级">⠿</span>
+          <span class="src-name">${s.name}</span>
+          <span class="live-dot" title="当前底图"></span>
+          ${keyBtnHtml(s)}
+          <span class="src-order ${idx === 0 ? '' : 'backup'}">P${idx + 1}</span>
+        </div>
+        <div class="chips">
+          ${s.chips.map((c) => `<span class="chip">${c}</span>`).join('')}
+          <span data-cache="${s.id}"></span>
+          <span class="chip est" title="按本地实测均瓦片大小（${s.avgKB} KB/张）推算">${estLabel(s, 0, Math.min(10, s.maxZ))}</span>
+          <a class="chip" href="${s.doc}" target="_blank" rel="noopener">📖 ${s.docLabel} ↗</a>
+        </div>
+        ${credHtml(s)}
+        <div class="src-ops">
+          <label class="show-cb" title="是否参与优先级回退链"><input type="checkbox" class="act-enable" checked /> 启用</label>
+          <label class="show-cb" title="请求走本地代理（有缓存直出、无缓存拉上游并落盘）；关闭则直连上游、不缓存"><input type="checkbox" class="act-local-first" ${localFirst[s.id] ? 'checked' : ''} /> 本地优先</label>
+          <span style="flex:1"></span>
+          <button class="btn icon act-up" title="提升优先级">▲</button>
+          <button class="btn icon act-down" title="降低优先级">▼</button>
+        </div>
+        <div class="src-ops">
+          ${tierButtons(s)}
+        </div>
+        <div class="src-ops">
+          <div class="prog"><i></i></div>
+          <span class="prog-txt"></span>
+        </div>
+        <div class="lv-wrap">
+          <div class="lv-head act-lv"><span class="caret">▸</span> 已缓存明细（按精度）</div>
+          <div class="lv-list" data-lv="${s.id}"></div>
+        </div>`;
+
+      const kBtn = row.querySelector('.act-key');
+      if (kBtn) kBtn.addEventListener('click', (e) => { e.stopPropagation(); row.querySelector('.cred')?.classList.toggle('open'); });
+      const credSave = row.querySelector('.cred-save');
+      if (credSave) {
+        credSave.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const v = row.querySelector('.cred-input').value.trim();
+          if (!v || v.startsWith('••')) { toast('请输入完整凭证（掩码值不可直接保存）'); return; }
+          setCred(s.id, v);
+          toast(`${s.name}：${s.cred.label} 已保存`);
+          renderList();
+        });
+        row.querySelector('.cred-clear').addEventListener('click', (e) => {
+          e.stopPropagation(); setCred(s.id, ''); toast(`${s.name}：凭证已清除`); renderList();
+        });
+      }
+      row.querySelector('.act-enable').addEventListener('change', (e) => { e.stopPropagation(); toast(`${s.name}：${e.target.checked ? '已启用' : '已停用（不参与回退）'}`); });
+      row.querySelector('.act-local-first').addEventListener('change', (e) => { e.stopPropagation(); setLocalFirst(s.id, e.target.checked); });
+      row.querySelectorAll('.act-tier').forEach((b) => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const t = TIERS.find((x) => x.key === b.dataset.tier);
+        enqueue(row, s, t, b.dataset.subset || 'full');
+      }));
+      row.querySelector('.act-up').addEventListener('click', (e) => { e.stopPropagation(); move(s.id, -1); });
+      row.querySelector('.act-down').addEventListener('click', (e) => { e.stopPropagation(); move(s.id, +1); });
+      row.querySelector('.act-lv').addEventListener('click', (e) => { e.stopPropagation(); row.querySelector('.lv-wrap').classList.toggle('open'); });
+      return row;
+    };
+
+    const renderList = () => {
+      listEl.innerHTML = '';
+      list().forEach((s, i) => listEl.appendChild(buildRow(s, i)));
+      bindDnD();
+      renderCache();
+      for (const k of queue) paintBtn(k, 'queued');
+      if (activeJob) paintBtn(activeJob.key, 'active');
+    };
+
+    /* ===== 图层操作 ===== */
+    const ensureLayer = (s) => {
+      if (layers[s.id]) return layers[s.id];
+      if (!s.provider) return null;
+      const layer = new Cesium.ImageryLayer(s.provider(), { show: true });
+      viewer.imageryLayers.add(layer);
+      layers[s.id] = layer;
+      return layer;
+    };
+    const setLocalFirst = (id, on) => {
+      localFirst[id] = on;
+      renderCache();
+      const s = byId(id);
+      toast(on ? `${s.name}：本地优先已开（有缓存直出 / 无缓存拉上游并落盘）` : `${s.name}：本地优先已关（直连上游，不写入本地缓存）`);
+    };
+    const move = (id, dir) => {
+      const i = ACTIVE.indexOf(id), j = i + dir;
+      if (i < 0 || j < 0 || j >= ACTIVE.length) return;
+      const [m] = ACTIVE.splice(i, 1);
+      ACTIVE.splice(j, 0, m);
+      renderList();
+      toast(`优先级：${list().map((s) => s.name).join(' → ')}`);
+    };
+
+    /* ===== 每源独立下载进度（前端队列：同时只跑一个，其余排队） ===== */
+    const queue = [];
+    let activeJob = null;
+    const rowOf = (id) => listEl.querySelector(`.src[data-id="${id}"]`) || (id === 'terrain' ? $('#terrain-list .src') : null);
+
+    const paintBtn = (key, state, txt) => {
+      const b = document.querySelector(`[data-dlkey="${key}"]`);
+      if (!b) return;
+      if (!b.dataset.base) b.dataset.base = b.textContent;
+      b.classList.toggle('dl-active', state === 'active');
+      b.classList.toggle('dl-queued', state === 'queued');
+      b.classList.toggle('dl-done', state === 'done');
+      if (state === 'idle') { b.disabled = false; b.textContent = b.dataset.base; return; }
+      b.disabled = state !== 'done';
+      if (txt) b.textContent = txt;
+    };
+
+    const paintRow = (job, pct, txt) => {
+      const row = rowOf(job.s.id);
+      if (!row) return;
+      const prog = row.querySelector('.prog'), bar = row.querySelector('.prog > i'), t = row.querySelector('.prog-txt');
+      row.classList.add('running');
+      prog.classList.add('on');
+      bar.style.width = `${pct}%`;
+      t.textContent = txt;
+    };
+
+    const clearRow = (job) => {
+      const row = rowOf(job.s.id);
+      if (!row) return;
+      row.classList.remove('running');
+      row.querySelector('.prog').classList.remove('on');
+      row.querySelector('.prog > i').style.width = '0%';
+      row.querySelector('.prog-txt').textContent = '';
+    };
+
+    function enqueue(row, s, tier, subset) {
+      const key = `${s.id}|${tier.key}|${subset}`;
+      if (queue.some((j) => j.key === key) || (activeJob && activeJob.key === key)) {
+        toast(`「${s.name} ${tier.label}·${SUBSET_LABEL[subset]}」已在队列/下载中（见该源行内的状态）`);
+        return;
+      }
+      const job = { key, s, tier, subset };
+      queue.push(job);
+      const base = document.querySelector(`[data-dlkey="${key}"]`);
+      if (base && !base.dataset.base) base.dataset.base = base.textContent;
+      job.label = `${s.name} ${tier.label}·${SUBSET_LABEL[subset]} z${tier.zmin}–${tier.zmax}`;
+      paintBtn(key, 'queued', `${base?.dataset.base || job.label} ⏳ 第${queue.length}位`);
+      toast(`已入队：${job.label}（该源行内可见进度）`);
+      pump();
+    }
+
+    function pump() {
+      if (activeJob || !queue.length) return;
+      const job = queue.shift();
+      activeJob = job;
+      paintBtn(job.key, 'active', `${job.label} ▶ 下载中`);
+      runFake(job);
+    }
+
+    function runFake(job) {
+      // 演示：模拟进度（真机版换成 /api/downloader/start + state 轮询）
+      const total = countFor(job.s, job.tier.zmin, job.tier.zmax);
+      const n = job.subset === 'points' ? Math.round(total * 0.03) : total;
+      let p = 0;
+      job.timer = setInterval(() => {
+        p = Math.min(100, p + 4 + Math.random() * 7);
+        paintRow(job, p, `${job.label} · ${Math.round(p)}% · ${fmtN(Math.round(n * p / 100))}/${fmtN(n)} 张`);
+        if (p >= 100) {
+          clearInterval(job.timer);
+          paintRow(job, 100, `✓ ${job.label} 完成 · ${fmtN(n)} 张`);
+          paintBtn(job.key, 'done', `${job.label} ✓`);
+          setTimeout(() => {
+            clearRow(job);
+            paintBtn(job.key, 'idle');
+            activeJob = null;
+            pump();
+          }, 1500);
+        }
+      }, 140);
+    }
+
+    /* ===== 拖拽排序 ===== */
+    let dragIdx = null;
+    const bindDnD = () => {
+      listEl.querySelectorAll('.src').forEach((row, i) => {
+        row.addEventListener('dragstart', () => { dragIdx = i; row.classList.add('dragging'); });
+        row.addEventListener('dragend', () => { row.classList.remove('dragging'); dragIdx = null; });
+        row.addEventListener('dragover', (e) => e.preventDefault());
+        row.addEventListener('drop', () => {
+          if (dragIdx === null || dragIdx === i) return;
+          const [m] = ACTIVE.splice(dragIdx, 1);
+          ACTIVE.splice(i, 0, m);
+          renderList();
+          toast(`优先级：${list().map((s) => s.name).join(' → ')}`);
+        });
+      });
+    };
+
+    /* ===== 地形源（同样：缓存明细 + 独立进度） ===== */
+    const tRow = document.createElement('div');
+    tRow.className = 'src';
+    tRow.dataset.id = 'terrain';
+    const tTiers = TIERS.map((t) => {
+      if (t.zmax > TERRAIN.maxZ) return `<button class="btn tier" data-tier="${t.key}" title="超出源最高层级 z${TERRAIN.maxZ}" disabled>${t.label} z${t.zmin}–${t.zmax}</button>`;
+      if (!t.subsets) return `<button class="btn tier act-tier" data-tier="${t.key}" data-subset="full" data-dlkey="terrain|${t.key}|full" title="${estLabel(TERRAIN, t.zmin, t.zmax)}">${t.label} z${t.zmin}–${t.zmax}</button>`;
+      return t.subsets.map((sub) => `<button class="btn tier act-tier" data-tier="${t.key}" data-subset="${sub}" data-dlkey="terrain|${t.key}|${sub}" title="${estLabel(TERRAIN, t.zmin, t.zmax)}">${t.label}·${SUBSET_LABEL[sub]} z${t.zmin}–${t.zmax}</button>`).join('');
+    }).join('');
+    tRow.innerHTML = `
+      <div class="src-top">
+        <span class="drag-handle" style="visibility:hidden">⠿</span>
+        <span class="src-name">${TERRAIN.name}</span>
+      </div>
+      <div class="chips">${TERRAIN.chips.map((c) => `<span class="chip">${c}</span>`).join('')}
+        <span data-cache="terrain"></span>
+        <span class="chip est" title="按本地实测均瓦片大小（${TERRAIN.avgKB} KB/张）推算">${estLabel(TERRAIN, 0, 10)}</span>
+        <a class="chip" href="${TERRAIN.doc}" target="_blank" rel="noopener">📖 ${TERRAIN.docLabel} ↗</a>
+      </div>
+      <div class="src-ops">
+        <label class="show-cb" title="地形整体启用/停用"><input type="checkbox" class="t-show" /> 启用（整体）</label>
+        <label class="show-cb" title="地形同样走本地优先代理"><input type="checkbox" class="act-local-first" checked /> 本地优先</label>
+      </div>
+      <div class="src-ops">${tTiers}</div>
+      <div class="src-ops"><div class="prog"><i></i></div><span class="prog-txt"></span></div>
+      <div class="lv-wrap">
+        <div class="lv-head act-lv"><span class="caret">▸</span> 已缓存明细（按精度）</div>
+        <div class="lv-list" data-lv="terrain"></div>
+      </div>`;
+    tRow.querySelector('.t-show').addEventListener('change', (e) => toast(e.target.checked ? '地形已启用（真机版挂载 terrarium-provider）' : '地形已停用'));
+    tRow.querySelector('.act-local-first').addEventListener('change', (e) => setLocalFirst('terrain', e.target.checked));
+    tRow.querySelectorAll('.act-tier').forEach((b) => b.addEventListener('click', () => {
+      enqueue(tRow, TERRAIN, TIERS.find((x) => x.key === b.dataset.tier), b.dataset.subset || 'full');
+    }));
+    tRow.querySelector('.act-lv').addEventListener('click', () => tRow.querySelector('.lv-wrap').classList.toggle('open'));
+    $('#terrain-list').appendChild(tRow);
+
+    /* ===== 「＋ 添加」下拉：把需要凭证的源加进列表 ===== */
+    const addBtn = $('#addBtn'), addMenu = $('#addMenu');
+    addBtn.addEventListener('click', (e) => { e.stopPropagation(); addMenu.classList.toggle('open'); });
+    document.addEventListener('click', () => addMenu.classList.remove('open'));
+    addMenu.querySelectorAll('[data-add]').forEach((it) => it.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = it.dataset.add;
+      addMenu.classList.remove('open');
+      if (id === 'custom') { toast('自定义 XYZ/WMTS：真机版将让你填 URL 模板 + 层级范围'); return; }
+      if (ACTIVE.includes(id)) { toast(`${byId(id).name} 已在列表中`); renderList(); }
+      else { ACTIVE.push(id); renderList(); toast(`${byId(id).name} 已加入列表，请点行内 🔑 填凭证`); }
+      const row = rowOf(id);
+      if (row) { row.querySelector('.cred')?.classList.add('open'); row.scrollIntoView({ block: 'center' }); }
+    }));
+
+    /* ===== 合计框点击展开分项 ===== */
+    $('#totalRow').addEventListener('click', () => $('#totalBreak').classList.toggle('open'));
+
+    /* ===== 面板收起 ===== */
+    const panel = $('#panel'), toggleBtn = $('#panel-toggle');
+    toggleBtn.addEventListener('click', () => {
+      panel.classList.toggle('collapsed');
+      toggleBtn.textContent = panel.classList.contains('collapsed') ? '‹ 展开配置' : '收起配置 ›';
+      setTimeout(() => viewer.resize(), 300);
+    });
+
+    renderList();
+    ensureLayer(byId(baseId));
+    setTimeout(() => { try { viewer.resize(); } catch { /* ignore */ } }, 300);
+  </script>
+</body>
+</html>

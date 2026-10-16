@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>资源下载 · 山川与天宫</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 22px 26px 40px; min-height: 100vh;
+    background: linear-gradient(160deg, #0d1430, #0a0f22 55%, #101a38);
+    color: #e7ecf7; font: 14px/1.6 "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  }
+  a { color: #8fb6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  header h1 { font-size: 21px; margin: 0; letter-spacing: 1px; }
+  header .crumb { font-size: 12px; color: #7e8bab; }
+  header .crumb a { color: #8fb6ff; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 16px; }
+
+  .card {
+    background: rgba(18, 27, 56, .82); border: 1px solid #26325c; border-radius: 12px;
+    padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .card h2 { font-size: 15px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .card h2 .tag {
+    font-size: 10.5px; font-weight: 400; color: #9db4e8; background: #1b2a52;
+    border: 1px solid #33446e; border-radius: 20px; padding: 1px 8px;
+  }
+  .card p.desc { margin: 0; font-size: 12px; color: #7e8bab; line-height: 1.65; }
+
+  label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #aab8d8; }
+  label.f > span { color: #8d9dc4; }
+  input[type="text"], input[type="number"], select {
+    background: #0e1734; border: 1px solid #33446e; color: #e7ecf7;
+    border-radius: 7px; padding: 7px 9px; font: 13px/1.4 inherit; width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: #4a8ce0; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .check { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #aab8d8; cursor: pointer; }
+  .check input { accent-color: #4a8ce0; }
+
+  button.primary {
+    align-self: flex-start; background: linear-gradient(180deg, #2f6fd0, #2357a8);
+    border: 1px solid #4a8ce0; color: #fff; border-radius: 8px; padding: 8px 18px;
+    font-size: 13.5px; cursor: pointer; transition: filter .15s;
+  }
+  button.primary:hover { filter: brightness(1.14); }
+  button.primary:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+  button.ghost {
+    background: #16203c; border: 1px solid #33446e; color: #9db4e8;
+    border-radius: 8px; padding: 7px 14px; font-size: 12.5px; cursor: pointer;
+  }
+  button.ghost:hover { background: #1e2c54; }
+  button.danger { border-color: #6e3546; color: #e89; background: #2a1622; }
+  button.danger:hover { background: #3a1c2c; }
+
+  /* ---- 任务面板 ---- */
+  #taskPanel { margin-top: 16px; }
+  .status-line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; }
+  .pill { font-size: 11.5px; padding: 2px 10px; border-radius: 20px; border: 1px solid #33446e; color: #9db4e8; background: #16203c; }
+  .pill.run { color: #ffd479; border-color: #6b5a2e; background: #2a2412; }
+  .pill.done { color: #8fe0a8; border-color: #2e6b45; background: #14261a; }
+  .pill.err { color: #ff9a9a; border-color: #6e3546; background: #2a1622; }
+
+  .bar { height: 10px; border-radius: 6px; background: #0e1734; border: 1px solid #26325c; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2f6fd0, #4aa8e0); transition: width .4s; }
+  .stats { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; color: #aab8d8; }
+  .stats b { color: #fff; font-weight: 600; }
+
+  .logbox {
+    height: 260px; overflow-y: auto; background: #0a1024; border: 1px solid #26325c; border-radius: 10px;
+    padding: 10px 12px; font: 12px/1.7 Consolas, "Cascadia Mono", monospace; color: #b9c6e4;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .logbox .t { color: #56689c; margin-right: 8px; }
+  .logbox .cmd { color: #ffd479; }
+  .logbox .end { color: #8fe0a8; }
+  .logbox .err { color: #ff9a9a; }
+
+  /* ---- 统计 ---- */
+  table.scan { border-collapse: collapse; width: 100%; font-size: 12.5px; margin-top: 4px; }
+  table.scan th, table.scan td { border-bottom: 1px solid #1c2650; padding: 6px 8px; text-align: right; }
+  table.scan th:first-child, table.scan td:first-child { text-align: left; }
+  table.scan th { color: #8d9dc4; font-weight: 500; background: #101a38; }
+  .muted { color: #7e8bab; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>资源下载 · 统一配置台</h1>
+  <span class="crumb"><a href="/">← 返回山川与天宫</a> · 同一时刻只跑一个任务 · 全部支持断点续传（重跑自动跳过已存在瓦片）</span>
+</header>
+
+<div class="grid">
+  <!-- 卫星影像 -->
+  <section class="card">
+    <h2>🛰 卫星影像 <span class="tag">Esri World Imagery · 在线</span></h2>
+    <p class="desc">存到 <code>public/tiles/esri/{z}/{x}/{y}.jpg</code>，主应用自动加载（本地优先、在线兜底）。默认全球 z0–z5 + 中国 z6–z10，约 5 万张。</p>
+    <label class="f"><span>范围模式</span>
+      <select id="satMode">
+        <option value="china">默认：全球 z0–z5 + 中国 z6–z10</option>
+        <option value="places">山川形胜 / 水利标注点周边（z10–z14）</option>
+        <option value="cities">全球主要城市（70 城，z10–z13）</option>
+        <option value="bbox">自定义经纬范围…</option>
+      </select>
+    </label>
+    <div id="satBbox" style="display:none; flex-direction:column; gap:10px;">
+      <div class="row">
+        <label class="f"><span>西经 W</span><input type="number" id="satW" step="0.1" value="100" /></label>
+        <label class="f"><span>南纬 S</span><input type="number" id="satS" step="0.1" value="20" /></label>
+        <label class="f"><span>东经 E</span><input type="number" id="satE" step="0.1" value="130" /></label>
+        <label class="f"><span>北纬 N</span><input type="number" id="satN" step="0.1" value="45" /></label>
+      </div>
+      <div class="row">
+        <label class="f"><span>最小层级 minZ</span><input type="number" id="satMinZ" value="0" min="0" max="18" /></label>
+        <label class="f"><span>最大层级 maxZ</span><input type="number" id="satMaxZ" value="5" min="0" max="18" /></label>
+      </div>
+      <p class="desc" style="margin:0">⚠ 每升一层瓦片数 ×4。z12 一个 30° 跨度 ≈ 2.6 万张，先小范围试。</p>
+    </div>
+    <button class="primary" data-kind="satellite">开始下载</button>
+  </section>
+
+  <!-- 地形 -->
+  <section class="card">
+    <h2>⛰ 地形瓦片 <span class="tag">AWS Terrarium · 公开数据集</span></h2>
+    <p class="desc">存到 <code>public/tiles/terrain/{z}/{x}/{y}.png</code>，由 <code>terrarium-provider.js</code> 按高度着色。全球到 z15、无 key、无配额。</p>
+    <label class="f"><span>下载方案</span>
+      <select id="terProfile">
+        <option value="full">全套：全球 z0–z5 + 中国 z6–z9 + 兴趣点 z10–z12</option>
+        <option value="quick">快速：仅全球 z0–z2（验证网络）</option>
+        <option value="china">中国区：全球 z0–z5 + 中国 z6–z9</option>
+        <option value="places">兴趣点：全球 z0–z5 + 山脉周边 z10–z12</option>
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" id="terForce" /> 覆盖已存在的瓦片（不加则跳过，即断点续传）</label>
+    <button class="primary" data-kind="terrain">开始下载</button>
+  </section>
+
+  <!-- 月球影像 -->
+  <section class="card">
+    <h2>🌙 月球影像转换 <span class="tag">LROC WAC · 本地 TIF</span></h2>
+    <p class="desc">把 <code>public/lunar/Lunar_LRO_LROC-WAC_Mosaic_global_100m_June2013.tif</code> 转成 <code>public/lunar/lunar_wac.jpg</code>（8192×4096），供月球模式 SingleTile 加载。</p>
+    <p class="desc" id="lunarImgState">检测源文件中…</p>
+    <button class="primary" data-kind="lunar-image">开始转换</button>
+  </section>
+
+  <!-- 月球 DEM -->
+  <section class="card">
+    <h2>🌗 月球地形转换 <span class="tag">LOLA DEM · 本地 TIF</span></h2>
+    <p class="desc">把 <code>Lunar_LRO_LOLA_Global_LDEM_118m_Mar2014.tif</code> 转成 <code>public/lunar/lunar_dem.png</code>（4096×2048 Terrarium），月球模式的地形起伏来源。</p>
+    <p class="desc" id="lunarDemState">检测源文件中…</p>
+    <button class="primary" data-kind="lunar-dem">开始转换</button>
+  </section>
+</div>
+
+<!-- 当前任务 -->
+<section class="card" id="taskPanel">
+  <h2>📦 当前任务 <span class="pill" id="taskPill">空闲</span></h2>
+  <div class="status-line">
+    <span id="taskLabel">—</span>
+    <span class="muted" id="taskElapsed"></span>
+  </div>
+  <div class="bar"><i id="taskBar"></i></div>
+  <div class="stats" id="taskStats">进度、速度、ETA 会在这里显示</div>
+  <div style="display:flex; gap:10px;">
+    <button class="ghost danger" id="btnCancel" disabled>取消任务</button>
+    <button class="ghost" id="btnRefresh">刷新状态</button>
+  </div>
+  <div class="logbox" id="logBox">等待任务…</div>
+</section>
+
+<!-- 已有资源统计 -->
+<section class="card" style="margin-top:16px;">
+  <h2>📊 本地资源统计 <span class="tag">public/tiles</span></h2>
+  <table class="scan" id="scanTable">
+    <thead><tr><th>资源</th><th>瓦片数</th><th>体积</th><th>层级明细</th></tr></thead>
+    <tbody><tr><td colspan="4" class="muted">加载中…</td></tr></tbody>
+  </table>
+</section>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmtBytes = (b) => {
+  if (!b) return '0 B';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0;
+  while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+  return b.toFixed(i ? 1 : 0) + ' ' + u[i];
+};
+
+// ---------- 卫星：bbox 输入随模式显隐 ----------
+$('satMode').addEventListener('change', (e) => {
+  $('satBbox').style.display = e.target.value === 'bbox' ? 'flex' : 'none';
+});
+
+// ---------- 启动任务 ----------
+document.querySelectorAll('button.primary[data-kind]').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const kind = btn.dataset.kind;
+    let params = {};
+    if (kind === 'satellite') {
+      const mode = $('satMode').value;
+      params = { mode };
+      if (mode === 'bbox') {
+        params.bbox = [+$('satW').value, +$('satS').value, +$('satE').value, +$('satN').value];
+        params.minZ = +$('satMinZ').value;
+        params.maxZ = +$('satMaxZ').value;
+      }
+    } else if (kind === 'terrain') {
+      params = { profile: $('terProfile').value, force: $('terForce').checked };
+    }
+    btn.disabled = true;
+    try {
+      const r = await fetch('/api/downloader/start', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, params }),
+      }).then((x) => x.json());
+      if (r.error) { alert(r.error); return; }
+      refreshState();
+    } catch (e) {
+      alert('启动失败：' + e);
+    } finally {
+      setTimeout(() => { btn.disabled = false; }, 800);
+    }
+  });
+});
+
+// ---------- 取消 ----------
+$('btnCancel').addEventListener('click', async () => {
+  if (!confirm('确定取消当前任务？已下载的瓦片保留（下次可断点续传）。')) return;
+  await fetch('/api/downloader/cancel', { method: 'POST' });
+  refreshState();
+});
+$('btnRefresh').addEventListener('click', refreshState);
+
+// ---------- 状态轮询 ----------
+async function refreshState() {
+  let s;
+  try {
+    s = await (await fetch('/api/downloader/state')).json();
+  } catch { return; }
+
+  const pill = $('taskPill');
+  pill.textContent = s.running ? '运行中' : (s.exitCode === 0 ? '已完成' : (s.exitCode === null ? '空闲' : `已退出(${s.exitCode})`));
+  pill.className = 'pill ' + (s.running ? 'run' : (s.exitCode === 0 ? 'done' : (s.exitCode === null ? '' : 'err')));
+
+  $('taskLabel').textContent = s.running ? (s.label || s.kind) : '—';
+  $('taskElapsed').textContent = s.running && s.elapsed != null
+    ? `已运行 ${Math.floor(s.elapsed / 60)} 分 ${Math.floor(s.elapsed % 60)} 秒` : '';
+  $('btnCancel').disabled = !s.running;
+
+  const p = s.progress;
+  $('taskBar').style.width = p && p.pct != null ? p.pct + '%' : '0%';
+  $('taskStats').innerHTML = p
+    ? `<span><b>${p.done}</b> / ${p.total} 张</span>
+       <span>进度 <b>${p.pct ?? 0}%</b></span>
+       <span>新下载 <b>${p.ok}</b></span>
+       <span>跳过 <b>${p.skip}</b></span>
+       <span>失败 <b>${p.fail}</b></span>
+       ${p.rate ? `<span>速度 <b>${p.rate}/s</b></span>` : ''}
+       ${p.eta ? `<span>剩余 <b>${p.eta}</b></span>` : ''}`
+    : (s.running ? '准备中（读取任务清单…）' : '进度、速度、ETA 会在这里显示');
+
+  const box = $('logBox');
+  const lines = (s.logs || []).map((l) =>
+    `<div><span class="t">${l.t}</span><span class="${l.tag}">${escapeHtml(l.text)}</span></div>`).join('');
+  const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 40;
+  box.innerHTML = lines;
+  if (atBottom) box.scrollTop = box.scrollHeight;
+
+  // 任务刚结束（running→stopped）→ 刷新一次本地统计（scan 遍历 30 万文件 ~2.3s，
+  // 服务端有 TTL 缓存，但不能放进轮询循环；结束后刷一次即可，下载的新瓦片立即可见）
+  if (!s.running && _wasRunning) { _wasRunning = false; refreshScan(); }
+  if (s.running) _wasRunning = true;
+}
+let _wasRunning = false;
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ---------- 资源统计 ----------
+async function refreshScan() {
+  try {
+    const s = await (await fetch('/api/downloader/scan')).json();
+    const rows = [];
+    const one = (name, d) => {
+      const levels = Object.entries(d.levels || {})
+        .map(([z, v]) => `z${z}:${v.count}`).join(' · ');
+      rows.push(`<tr><td>${name}</td><td>${d.total.toLocaleString()}</td><td>${fmtBytes(d.bytes)}</td>
+                 <td style="text-align:left;color:#8d9dc4">${levels || '—'}</td></tr>`);
+    };
+    one('卫星影像 tiles/esri', s.esri);
+    one('Sentinel-2 tiles/eox', s.eox || { total: 0, bytes: 0, levels: {} });
+    one('Blue Marble tiles/gibs', s.gibs || { total: 0, bytes: 0, levels: {} });
+    one('天地图 tiles/tianditu', s.tianditu || { total: 0, bytes: 0, levels: {} });
+    one('地形瓦片 tiles/terrain', s.terrain);
+    const lunar = Object.entries(s.lunar || {})
+      .map(([k, v]) => `<tr><td>${k}</td><td>—</td><td>${fmtBytes(v)}</td><td style="text-align:left;color:#8d9dc4">产物</td></tr>`).join('');
+    $('scanTable').querySelector('tbody').innerHTML = rows.join('') + lunar ||
+      '<tr><td colspan="4" class="muted">暂无本地资源</td></tr>';
+    // 月球源文件可用性
+    const src = s.lunarSources || {};
+    $('lunarImgState').innerHTML = src['lunar-image']
+      ? '✅ 源 TIF 已就绪，可直接转换。' : '⚠ 未找到源 TIF（需先把 NASA 原始文件放进 public/lunar/）。';
+    $('lunarDemState').innerHTML = src['lunar-dem']
+      ? '✅ 源 DEM 已就绪（转换需要 rasterio：脚本会自行检查）。' : '⚠ 未找到源 DEM 文件。';
+  } catch (e) { /* 忽略 */ }
+}
+
+refreshState();
+refreshScan();   // 懒加载：仅进场 + 任务结束各刷一次，不进轮询（scan 全盘遍历 ~2.3s，服务端另有 30s TTL 缓存）
+setInterval(refreshState, 1000);
+</script>
+</body>
+</html>

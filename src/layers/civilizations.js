@@ -1,4 +1,9 @@
-// Auto-rebuilt from extracted-layers.json — DO NOT HAND-EDIT
+// 坐标系: WGS84 (EPSG:4326)，十进制度，坐标顺序统一为 [经度 lon, 纬度 lat]。
+//   渲染端由 Cesium.Cartesian3.fromDegrees(lon, lat) / fromDegreesArray 直接使用，无需额外转换。
+// 数据性质: 教学示意级。城市/地点坐标为近似位置（精度约市级 ±1–5 km）；
+//           历史疆域/路线为简化示意，非考据级边界，仅供空间认知。
+// 来源: 编译自公开地理资料与通史常识，非测绘权威数据；用于科普与家庭教育。
+
 export const LAYER = {
   "id": "civilizations",
   "name": "古文明发源地",
@@ -89,7 +94,7 @@ export const LAYER = {
               31
             ]
           ],
-          "description": "底格里斯与幼发拉底两河流域，\"美索不达米亚\"（两河之间）。"
+          "description": "底格里斯与幼发拉底两河流域，\"美索不达米亚\"（两河之间），苏美尔城邦与巴比伦的摇篮。"
         },
         {
           "type": "polygon",
@@ -112,7 +117,7 @@ export const LAYER = {
               24
             ]
           ],
-          "description": "尼罗河中下游，\"埃及是尼罗河的赠礼\"。"
+          "description": "尼罗河中下游，\"埃及是尼罗河的赠礼\"，沿河绿洲带孕育法老文明。"
         },
         {
           "type": "polygon",
@@ -135,7 +140,7 @@ export const LAYER = {
               24
             ]
           ],
-          "description": "印度河中下游，哈拉帕文明核心区。"
+          "description": "印度河中下游平原，哈拉帕文明核心区，城市规划与排水系统领先同期。"
         },
         {
           "type": "polygon",
@@ -158,7 +163,35 @@ export const LAYER = {
               34
             ]
           ],
-          "description": "黄河中下游，华夏文明核心区，\"中原\"。"
+          "description": "黄河中下游，华夏文明核心区，仰韶—龙山文化绵延，\"中原\"之地。"
+        },
+        {
+          "type": "label",
+          "name": "两河流域 · 标注",
+          "lon": 45.5,
+          "lat": 33,
+          "text": "两河流域 · 楔形文字"
+        },
+        {
+          "type": "label",
+          "name": "尼罗河流域 · 标注",
+          "lon": 32,
+          "lat": 27.5,
+          "text": "尼罗河流域 · 象形文字"
+        },
+        {
+          "type": "label",
+          "name": "印度河流域 · 标注",
+          "lon": 70.5,
+          "lat": 26,
+          "text": "印度河流域 · 印章文字"
+        },
+        {
+          "type": "label",
+          "name": "黄河流域 · 标注",
+          "lon": 110,
+          "lat": 36,
+          "text": "黄河流域 · 甲骨文字"
         }
       ]
     }

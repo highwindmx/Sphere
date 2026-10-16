@@ -1,4 +1,9 @@
-// Auto-rebuilt from extracted-layers.json — DO NOT HAND-EDIT
+// 坐标系: WGS84 (EPSG:4326)，十进制度，坐标顺序统一为 [经度 lon, 纬度 lat]。
+//   渲染端由 Cesium.Cartesian3.fromDegrees(lon, lat) / fromDegreesArray 直接使用，无需额外转换。
+// 数据性质: 教学示意级。城市/地点坐标为近似位置（精度约市级 ±1–5 km）；
+//           历史疆域/路线为简化示意，非考据级边界，仅供空间认知。
+// 来源: 编译自公开地理资料与通史常识，非测绘权威数据；用于科普与家庭教育。
+
 export const LAYER = {
   "id": "currents",
   "name": "洋流与季风",
@@ -48,27 +53,27 @@ export const LAYER = {
           "name": "墨西哥湾流",
           "coords": [
             [
-              82,
+              -82,
               25
             ],
             [
-              80,
+              -80,
               28
             ],
             [
-              77,
+              -77,
               33
             ],
             [
-              70,
+              -70,
               38
             ],
             [
-              60,
+              -60,
               45
             ],
             [
-              45,
+              -45,
               52
             ]
           ],
@@ -80,15 +85,15 @@ export const LAYER = {
           "name": "北大西洋暖流",
           "coords": [
             [
-              45,
+              -45,
               52
             ],
             [
-              30,
+              -30,
               58
             ],
             [
-              15,
+              -15,
               62
             ],
             [
@@ -96,7 +101,7 @@ export const LAYER = {
               65
             ],
             [
-              -15,
+              15,
               68
             ]
           ],
@@ -191,19 +196,19 @@ export const LAYER = {
           "name": "加利福尼亚寒流",
           "coords": [
             [
-              128,
+              -128,
               42
             ],
             [
-              125,
+              -125,
               37
             ],
             [
-              122,
+              -122,
               33
             ],
             [
-              120,
+              -120,
               27
             ]
           ],
@@ -335,3 +340,26 @@ export const LAYER = {
     }
   ]
 };
+
+// ====== 文字标注：为每条洋流折线在中点加 label（随所在 group 显隐） ======
+for (const g of LAYER.groups) {
+  const labels = [];
+  for (const e of g.entities) {
+    if (
+      e.type === 'polyline' &&
+      e.name &&
+      Array.isArray(e.coords) &&
+      e.coords.length > 2
+    ) {
+      const m = e.coords[Math.floor(e.coords.length / 2)];
+      labels.push({
+        type: 'label',
+        name: e.name + ' · 标注',
+        lon: m[0],
+        lat: m[1],
+        text: e.name,
+      });
+    }
+  }
+  g.entities.push(...labels);
+}

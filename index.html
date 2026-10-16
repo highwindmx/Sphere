@@ -4,9 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>山川与天宫 · 地形与轨道科普沙盒</title>
+  <link rel="stylesheet" href="/vendor/cesium/Widgets/widgets.css" />
+  <link rel="stylesheet" href="/vendor/cesium-navigation/styles/cesium-navigation.css" />
+  <link rel="stylesheet" href="/src/style.css?v=__BUILD__" />
+  <script>
+    // Cesium 静态资源根（public/vendor/cesium/，构建产物直拷，无打包；
+    // cesium 与 cesium-navigation 同放 vendor/ 下统一管理）
+    window.CESIUM_BASE_URL = '/vendor/cesium/';
+    // Cesium Ion Token 由 app.py 启动时从环境变量 SPHERE_CESIUM_ION_TOKEN 注入（勿提交真实 token）
+    window.CESIUM_ION_TOKEN = '__CESIUM_ION_TOKEN__';
+    // 天地图 key（中国区高清覆盖层）：.env 的 SPHERE_TIANDITU_KEY 注入；用户可在 UI 手动覆盖（localStorage 优先）
+    window.TIANDITU_KEY = '__TIANDITU_KEY__';
+  </script>
+  <script type="importmap">
+    {
+      "imports": {
+        "cesium": "/vendor/cesium/index.js",
+        "cesium-navigation-es6": "/vendor/cesium-navigation/CesiumNavigation.js"
+      }
+    }
+  </script>
 </head>
 <body>
   <div id="app">
+    <!-- 侧栏折叠/展开按钮：必须放在 #panel 之外——#panel 折叠时是 display:none，
+         放在里面会被一起隐藏，导致"收起来就再也唤不出来"（历史 bug）。 -->
+    <button id="panelToggle" class="panel-toggle" title="折叠 / 展开侧栏">◀</button>
     <!-- 左侧控制面板 -->
     <aside id="panel">
       <h1>山川与天宫</h1>
@@ -29,7 +52,19 @@
           <button id="lighting" class="tool-btn" title="配合巡游面板的 ⏩ 加速键看日出与晨昏线移动">🌗 晨夜光影</button>
           <button id="btnHome" class="tool-btn">🏠 回到中国</button>
         </div>
+        <!-- 图源选择/排序/下载统一进「图源设置」抽屉（右侧面板，地球仍可见）。
+             旧的 底图模式/在线源/天地图key 控件已删除：优先级链 + 本地优先 + 启用开关完全覆盖其功能，
+             main.js 侧的绑定代码一并移除（引用处均有 null 守卫，getBaseMode 等仍走 localStorage）。 -->
+        <div class="tool-row">
+          <button id="btnSourceSettings" class="tool-btn" title="打开图源设置：优先级排序、本地优先、缓存统计、分段下载（地球保持可见）">🗺 图源设置</button>
+        </div>
       </div>
+
+      <!-- 航天探索（工具，不进勾选树） -->
+      <section id="toolsSection">
+        <h2>航天探索</h2>
+        <div id="toolButtons" class="tool-buttons"></div>
+      </section>
 
       <!-- 标注图层 -->
       <section>
@@ -38,15 +73,30 @@
         <div class="layer-toolbar">
           <button id="layerSelectAll" class="secondary">全选</button>
           <button id="layerClearAll" class="secondary">全清</button>
-          <button id="layerOnlyCurrent" class="secondary">只显示当前</button>
         </div>
+        <!-- 悬停预览默认关闭：开启后鼠标停在图层行 0.35 秒会临时隐藏其它图层。
+             之所以做成开关，是因为它会临时改动勾选框状态，无提示地与手动勾选打架。 -->
+        <label class="hover-preview-cb" title="开启后：鼠标停在图层行 0.35 秒即临时只显示该图层，移开自动恢复（会临时改动勾选框）">
+          <input type="checkbox" id="layerHoverPreview" />
+          <span>悬停预览图层（停 0.35 秒即只显示该项，移开恢复）</span>
+        </label>
         <div id="layersTree" class="layer-tree"></div>
-        <p class="hint">勾选图层或子组即显示；路线类有「▶ 跟随飞行」，「航天探索」可加载天宫轨道、发起探月任务，「山川形胜」点标注可飞到推荐视角。</p>
+        <p class="hint">勾选图层或子组即显示；需要"临时只看某一层"时，先勾选上方「悬停预览图层」，再把鼠标停在图层行上 0.35 秒（状态栏会提示正在预览，移开即恢复）。线路类图层组名旁有「▶ 巡礼」可沿路线行进（播放/暂停/加减速/节点跳转），「航天探索」可加载天宫轨道、发起探月任务，「山川形胜」点标注可飞到推荐视角。</p>
+      </section>
+
+      <!-- 场景预设：一键讲清一个故事，避免面对几十个勾选框 -->
+      <section id="scenesSection">
+        <h2>场景预设</h2>
+        <div id="sceneButtons" class="scene-buttons"></div>
+        <p class="hint">点一个场景自动启用精选图层（其余收起）；再手动微调。选「清空」回到全空，自定义状态不被覆盖。</p>
       </section>
 
       <!-- 月面标注（仅月球模式显示） -->
       <section id="moonSection" class="hidden">
         <h2>月面标注</h2>
+        <div class="tool-row">
+          <button id="btnMoonHome" class="tool-btn" title="停止跟随，飞回月球正面默认俯瞰视角">🏠 月球归位</button>
+        </div>
         <div id="moonGroups" class="moon-groups"></div>
       </section>
     </aside>
@@ -56,25 +106,45 @@
     <!-- 月球视图（切换到月球时显示） -->
     <main id="moonContainer" class="hidden"></main>
 
-    <!-- 统一巡游控制面板（浮动；路线跟随飞行 / 探月任务 双模式共用） -->
+    <!-- 图源设置抽屉：右侧浮层（宽度 ≤40%，地球仍占 ≥60%，可边配置边观察）。
+         内容由 src/source-settings.js 构建；侧栏原有的底图/在线源/天地图控件会被迁移进来。 -->
+    <aside id="sourcePanel" class="source-panel hidden">
+      <header class="sp-head">
+        <h2>🗺 图源设置</h2>
+        <button id="sourcePanelClose" class="sp-close" title="收起面板">✕</button>
+      </header>
+      <div id="sourcePanelBody" class="sp-body"></div>
+    </aside>
+
+    <!-- 导航控件（cesium-navigation）：指南针/缩放/重置/比例尺，由 main.js 挂到地球 Viewer -->
+
+    <!-- 统一巡游控制面板（底部通栏；路线巡礼 / 探月任务 双模式共用） -->
     <div id="tourPanel" class="fly-panel hidden">
-      <div class="fly-panel-title" id="tourTitle">跟随飞行</div>
-      <div id="rocketPhase" class="rocket-phase hidden"></div>
-      <div class="fly-row">
+      <div class="tour-head">
+        <div class="fly-panel-title" id="tourTitle">跟随飞行</div>
+        <div id="rocketPhase" class="rocket-phase hidden"></div>
+      </div>
+      <div class="tour-main-row">
         <div id="tourTrack" class="fly-progress"><div id="tourBar" class="fly-bar"></div><div id="tourTicks" class="fly-ticks"></div></div>
         <span id="tourProgressText" class="fly-prog-text">0/0</span>
-      </div>
 
-      <!-- 时间流控制：⏪ 减速 / ⏩ 加速。平时与巡游控制时钟倍率；探月任务控制任务倍率 -->
-      <div class="fly-row time-row">
-        <label>时间</label>
-        <button id="timeSlower" class="time-btn" title="时间减速">⏪</button>
-        <span id="timeSpeedLabel" class="time-speed">60×</span>
-        <button id="timeFaster" class="time-btn" title="时间加速">⏩</button>
+        <!-- 时间流控制：⏪ 减速 / ⏩ 加速。路线巡礼控制行进倍率；探月任务/天宫轨道控制时钟倍率 -->
+        <div class="time-row">
+          <label>时间</label>
+          <button id="timeSlower" class="time-btn" title="时间减速">⏪</button>
+          <span id="timeSpeedLabel" class="time-speed">60×</span>
+          <button id="timeFaster" class="time-btn" title="时间加速">⏩</button>
+        </div>
+
+        <div class="fly-btns">
+          <button id="tourPause" class="fly-action hidden">暂停</button>
+          <button id="btnLaunch" class="fly-action hidden" disabled>🚀 点火</button>
+          <button id="tourStop" class="fly-action">停止</button>
+        </div>
       </div>
 
       <!-- 模式 A：路线跟随飞行控制 -->
-      <div id="flyControls">
+      <div id="flyControls" class="tour-sub-row">
         <div class="fly-row">
           <label>速度</label>
           <input type="range" id="flySpeed" min="0" max="2" step="1" value="1" class="fly-range" />
@@ -92,7 +162,7 @@
       </div>
 
       <!-- 模式 B：探月任务控制 -->
-      <div id="rocketControls" class="hidden">
+      <div id="rocketControls" class="tour-sub-row hidden">
         <div id="siteRow" class="fly-row landing-row">
           <label>发射场</label>
           <button id="siteJiuquan" class="fly-action">酒泉</button>
@@ -104,12 +174,6 @@
           <button id="siteTranquillity" class="fly-action">静海·阿波罗11</button>
         </div>
       </div>
-
-      <div class="fly-btns">
-        <button id="tourPause" class="fly-action hidden">暂停</button>
-        <button id="btnLaunch" class="fly-action hidden" disabled>🚀 点火</button>
-        <button id="tourStop" class="fly-action">停止</button>
-      </div>
     </div>
 
     <!-- 地月转移「距离已压缩」常驻标注 -->
@@ -118,11 +182,31 @@
     <!-- 幕间文字幕卡 -->
     <div id="actCard" class="act-card hidden"><div id="actCardText"></div></div>
 
-    <!-- 底部信息条 -->
-    <div id="coordbar">移动鼠标查看经纬度与海拔</div>
+    <!-- 底部状态条（左上 #coordWidget 为统一坐标控件，见下） -->
     <div id="status">正在初始化地球…</div>
+
+    <!-- 代码版本条：向我反馈问题时，报这里编号即可判断是否旧缓存（见 initBuildTag） -->
+    <div id="buildBar" class="build-bar" title="当前页面加载的代码版本号；反馈「改了没生效」类问题时请附上此编号">
+      <span id="buildTag">build …</span>
+      <button id="btnCopyDiag" class="build-btn" title="复制版本号与极冠/图层诊断信息，直接粘贴发我">⧉ 复制诊断</button>
+    </div>
+
+    <!-- 统一坐标控件：placeholder 即光标/视点实时经纬度（省掉独立读数行），海拔只读回显 -->
+    <div id="coordWidget" class="coord-widget" title="实时坐标跟随鼠标写入输入框 placeholder；输入经纬度后点「📍 定位」，留空 = 定位到光标处；🕘 记录 = 浏览历史（倒序，点击回飞，可清空）">
+      <div class="coord-inputs">
+        <input type="number" id="gotoLon" class="goto-input" placeholder="经度" step="any" min="-180" max="180" />
+        <input type="number" id="gotoLat" class="goto-input" placeholder="纬度" step="any" min="-90" max="90" />
+        <span id="coordAlt" class="coord-alt" title="地形高程（瓦片未就绪时显示 —；负值为水下深度）">⛰ <span class="na">—</span></span>
+        <button id="btnGoto" class="tool-btn goto-btn">📍 定位</button>
+        <button id="navHistToggle" class="tool-btn nav-hist-toggle" aria-expanded="false" title="浏览历史（倒序，点击条目回飞）">🕘 记录 ▾</button>
+      </div>
+      <div id="navHistBody" class="nav-hist-body" hidden>
+        <div id="navHistList" class="nav-hist-list"></div>
+        <div class="nav-hist-foot"><button id="navHistClear" class="nav-hist-clear" hidden>清空</button></div>
+      </div>
+    </div>
   </div>
 
-  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/main.js?v=__BUILD__"></script>
 </body>
 </html>

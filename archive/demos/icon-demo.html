@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>标注图标重画 · 方案对比 demo（关隘 / 水坝）</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin:0; padding:24px 28px 40px; background:#f5f7fb; color:#1b2436;
+         font:14px/1.6 "Microsoft YaHei","PingFang SC",sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .lead { color:#5b6b8c; margin:0 0 22px; }
+  h2 { font-size:16px; margin:26px 0 10px; padding-left:9px; border-left:4px solid #3d6fd0; }
+  .row { display:flex; gap:26px; flex-wrap:wrap; }
+  .card { background:#fff; border:1px solid #dde3ef; border-radius:10px; padding:14px 16px; min-width:320px; flex:1 1 320px; }
+  .card h3 { margin:0 0 2px; font-size:15px; }
+  .card .sub { color:#78869f; font-size:12px; margin-bottom:12px; }
+  .sizes { display:flex; align-items:center; gap:14px; margin:10px 0 14px; }
+  .sizes span { font-size:11px; color:#8a97b1; width:44px; }
+  .swatch-dark, .swatch-light { display:inline-flex; align-items:center; justify-content:center; border-radius:6px; }
+  .swatch-dark { background:#20304f; }         /* 模拟球面深色海面/阴影区 */
+  .swatch-light { background:#e8eef7; }        /* 模拟浅色陆地 */
+  .note { font-size:12px; color:#6b7893; border-top:1px dashed #dde3ef; padding-top:10px; }
+  code { background:#eef2f9; padding:1px 5px; border-radius:4px; font-size:12px; }
+  table { border-collapse:collapse; margin-top:8px; font-size:13px; }
+  th, td { border:1px solid #dde3ef; padding:6px 10px; text-align:left; }
+  th { background:#eef2f9; }
+</style>
+</head>
+<body>
+<h1>标注图标重画 · 三套方案对比</h1>
+<p class="lead">
+  当前线上用的是「立体微质感」风格（最下方「现状」一栏），问题：26px 下细节糊成一团、暗色底上辨识度低、关隘飞檐和大坝弧面在小球面上只剩色块。
+  下面三套候选，请挑一套（或指定「某套的关隘 + 某套的水坝」），我再落进 <code>src/layer-renderer.js</code> 的 <code>ICONS.dam / ICONS.gate</code>。
+</p>
+
+<h2>方案 A｜扁平剪影 + 粗描边（远看最清楚）</h2>
+<div class="row" id="rowA"></div>
+
+<h2>方案 B｜圆形徽章（POI 风格，底色跟随图层配色）</h2>
+<div class="row" id="rowB"></div>
+
+<h2>方案 C｜精修立体（保留质感，简化轮廓）</h2>
+<div class="row" id="rowC"></div>
+
+<h2>现状（线上版本，作为对照）</h2>
+<div class="row" id="rowNow"></div>
+
+<script>
+// ====== 图标定义（24×24 viewBox，可直接粘进 layer-renderer.js） ======
+const A_gate = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path d="M2.5 21.2h19v-9.4c0-1.3-.9-2.2-2.1-2.2h-.6V6.2h-3.1v3.4h-7.4V6.2H5.2v3.4h-.6c-1.2 0-2.1.9-2.1 2.2z"
+        fill="#cdd4e2" stroke="#1b2436" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M9.4 21.2v-5.9a2.6 2.6 0 0 1 5.2 0v5.9z" fill="#1b2436"/>
+  <path d="M12 6.2V2.6l4.6 1.8L12 6.2z" fill="#e2574c" stroke="#1b2436" stroke-width="1.2" stroke-linejoin="round"/>
+</svg>`;
+
+const A_dam = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path d="M2 21h20v-2.6H2z" fill="#3f8fbf" stroke="#1b2436" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M4.2 18.4h15.6l-2.7-11.2H6.9z" fill="#cdd4e2" stroke="#1b2436" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M10 12.6h4v5.8h-4z" fill="#1b2436" opacity=".6"/>
+  <path d="M6.9 7.2h10.2l.6 2.2H6.3z" fill="#e2574c" stroke="#1b2436" stroke-width="1.2" stroke-linejoin="round"/>
+</svg>`;
+
+const B_gate = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="10.4" fill="#8a6a3e" stroke="#1b2436" stroke-width="1.6"/>
+  <path d="M5.6 18.6h12.8v-6.2c0-.9-.6-1.5-1.4-1.5h-.5v-2h-2.1v2h-5.4v-2H7.9v2h-.5c-.8 0-1.4.6-1.4 1.5z" fill="#fdf7ec"/>
+  <path d="M10.2 18.6v-4.1a1.8 1.8 0 0 1 3.6 0v4.1z" fill="#8a6a3e"/>
+</svg>`;
+
+const B_dam = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="10.4" fill="#2e8fb8" stroke="#1b2436" stroke-width="1.6"/>
+  <path d="M4.6 18.2h14.8v-1.9H4.6z" fill="#fdf7ec"/>
+  <path d="M6.4 16.3h11.2l-1.9-8H8.3z" fill="#fdf7ec"/>
+  <path d="M10.4 11.6h3.2v4.7h-3.2z" fill="#2e8fb8"/>
+  <path d="M8.3 8.3h7.4l.4 1.6H7.9z" fill="#8fd0e8"/>
+</svg>`;
+
+const C_gate = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <polygon points="3,21 3,13.4 21,13.4 21,21" fill="#b9c0cf"/>
+  <polygon points="15,13.4 21,13.4 21,21 15,21" fill="#949cab"/>
+  <path d="M9.6 21v-4.6a2.4 2.4 0 0 1 4.8 0V21z" fill="#3a3f4a"/>
+  <polygon points="3.6,13.4 12,9.6 20.4,13.4" fill="#c05a45"/>
+  <rect x="7.4" y="5.6" width="9.2" height="4" fill="#e6eaf3"/>
+  <rect x="13.4" y="5.6" width="3.2" height="4" fill="#c3c9d6"/>
+  <polygon points="5.4,5.6 12,2.4 18.6,5.6" fill="#c05a45"/>
+  <polygon points="18.6,5.6 12,2.4 12,5.6" fill="#963f30"/>
+</svg>`;
+
+const C_dam = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path d="M2 20.6c6-1 12-1 18 0v-2.6c-6-1-12-1-18 0z" fill="#3f8fbf"/>
+  <path d="M5 18c1.4-5.6 3.6-9.4 7-12.2 3.4 2.8 5.6 6.6 7 12.2z" fill="#d5dae6"/>
+  <path d="M12 18c2.2-4.4 4-7.9 7-12.2-3.4 2.8-5.6 6.6-7 12.2z" fill="#aeb5c4" opacity=".85"/>
+  <rect x="11" y="5.2" width="2" height="12.8" fill="#f2f5fb"/>
+  <circle cx="12" cy="4.2" r="1.3" fill="#e2574c"/>
+</svg>`;
+
+// 现状（线上正在用的两个）
+const Now_gate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polygon points="3,21 3,14 21,14 21,21" fill="#9aa0ac"/><polygon points="15,14 21,14 21,21 15,21" fill="#7c8290"/><path d="M10 21v-4a2 2 0 0 1 4 0v4z" fill="#3a3f4a"/><polygon points="4,14 12,10.5 20,14" fill="#b04a3a"/><rect x="7" y="6.5" width="10" height="4.5" fill="#c9ced8"/><rect x="15" y="6.5" width="2" height="4.5" fill="#a8adba"/><polygon points="5,6.5 12,3.5 19,6.5" fill="#b04a3a"/><polygon points="19,6.5 12,3.5 12,6.5" fill="#8a382c"/><rect x="10.6" y="8" width="2.8" height="3" fill="#4a3a30"/></svg>`;
+const Now_dam = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 20c6-1 12-1 18 0v-3c-6-1-12-1-18 0z" fill="#4a8eb8"/><path d="M4 17c1.5-6 4-10 8-13 4 3 6.5 7 8 13z" fill="#c9ced8"/><path d="M12 17c2.5-5 4.5-9 8-13-4 3-6.5 7-8 13z" fill="#a8adba" opacity="0.7"/><rect x="11" y="4" width="2" height="13" fill="#e7ecf7"/></svg>`;
+
+function svgUrl(s) { return 'data:image/svg+xml,' + encodeURIComponent(s.trim()); }
+
+function card(hostId, title, sub, note, gateSvg, damSvg) {
+  const host = document.getElementById(hostId);
+  const mk = (label, svgStr) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<h3>${label}</h3><div class="sub">${sub}</div>`;
+    for (const [size, tag] of [[16,'16px 远景'],[20,'20px 中景'],[26,'26px 线上实际'],[36,'36px 放大']]) {
+      const row = document.createElement('div');
+      row.className = 'sizes';
+      row.innerHTML = `<span>${size}px</span>`;
+      for (const cls of ['swatch-dark','swatch-light']) {
+        const box = document.createElement('div');
+        box.className = cls;
+        box.style.width = box.style.height = (size + 14) + 'px';
+        const img = document.createElement('img');
+        img.src = svgUrl(svgStr);
+        img.width = img.height = size;
+        img.style.display = 'block';
+        box.appendChild(img);
+        row.appendChild(box);
+      }
+      card.appendChild(row);
+    }
+    const n = document.createElement('div');
+    n.className = 'note';
+    n.innerHTML = note;
+    card.appendChild(n);
+    return card;
+  };
+  host.appendChild(mk('关隘 gate', gateSvg));
+  host.appendChild(mk('水坝 dam', damSvg));
+}
+
+const noteA = '深色底：白色描边+深色轮廓，边界清晰；浅色底：靠深描边压住。<br>优点：缩到 16px 仍可读；缺点：不够"精致"。';
+const noteB = '圆形徽章底色跟随图层配色，符号纯白。<br>优点：球面上成串出现时整齐、像正式地图 POI；缺点：圆底占地、密集处易糊成一片圆点。';
+const noteC = '保留立体面（亮面/暗面），但简化轮廓、加大色块对比。<br>优点：有质感；缺点：小尺寸细节仍会糊（需配合 26px→30px 放大）。';
+const noteNow = '线上版本：飞檐/弧面细节在 26px 下基本糊掉，暗色底上灰蓝块分不清。';
+
+card('rowA', '', 'A · 扁平剪影 + 粗描边', noteA, A_gate, A_dam);
+card('rowB', '', 'B · 圆形徽章', noteB, B_gate, B_dam);
+card('rowC', '', 'C · 精修立体', noteC, C_gate, C_dam);
+card('rowNow', '', '现状', noteNow, Now_gate, Now_dam);
+
+document.body.insertAdjacentHTML('beforeend', `
+<h2>怎么选</h2>
+<table>
+  <tr><th>方案</th><th>辨识度（小球面）</th><th>精致感</th><th>与现有 30+ 图标体系的统一性</th></tr>
+  <tr><td>A 扁平描边</td><td>★★★★★</td><td>★★☆</td><td>需把其它图标一起扁平化才统一（改动大）</td></tr>
+  <tr><td>B 圆形徽章</td><td>★★★★☆</td><td>★★★★</td><td>只需给关隘/水坝换徽章即可（局部改动）</td></tr>
+  <tr><td>C 精修立体</td><td>★★★☆</td><td>★★★★☆</td><td>与现有风格一致（局部改动）</td></tr>
+</table>
+<p class="lead" style="margin-top:14px">左侧深色方块 = 球面暗部（海面/阴影）；右侧浅色方块 = 亮部陆地。请按这两栏判断。</p>
+`);
+</script>
+</body>
+</html>

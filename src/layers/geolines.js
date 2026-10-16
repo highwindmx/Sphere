@@ -1,4 +1,9 @@
-// Auto-rebuilt from extracted-layers.json — DO NOT HAND-EDIT
+// 坐标系: WGS84 (EPSG:4326)，十进制度，坐标顺序统一为 [经度 lon, 纬度 lat]。
+//   渲染端由 Cesium.Cartesian3.fromDegrees(lon, lat) / fromDegreesArray 直接使用，无需额外转换。
+// 数据性质: 教学示意级。城市/地点坐标为近似位置（精度约市级 ±1–5 km）；
+//           历史疆域/路线为简化示意，非考据级边界，仅供空间认知。
+// 来源: 编译自公开地理资料与通史常识，非测绘权威数据；用于科普与家庭教育。
+
 export const LAYER = {
   "id": "geolines",
   "name": "地理参考线",
@@ -1560,33 +1565,65 @@ export const LAYER = {
         {
           "type": "polyline",
           "name": "国际日期变更线",
+          // 依据 Wikipedia《International Date Line》自北向南的逐段描述重绘（原数据阿留申段
+          // 弯向反了、基里巴斯凸出只到 155°W、南太平洋漏了萨摩亚/汤加段）：
+          //  ① 弗兰格尔岛—楚科奇半岛：向东凸出，在白令海峡两迪奥米德岛之间过（168°58'W，65.8°N）
+          //  ② 白令海：大幅向西凹，绕圣劳伦斯岛、圣马修岛**以西**（≈172–173°E）
+          //  ③ 阿留申：从美属阿留申（Attu 173°E）与俄属科曼多尔群岛（166°E）之间穿过（≈170°E），
+          //     再向东南回到 180°——保证"整个俄国在线西、整个美国在线东"
+          //  ④ 赤道—基里巴斯：大幅向东凸出，几乎到达 150°W（线岛/千禧岛，UTC+14）
+          //  ⑤ 南太平洋：回到 165°W–173°W，从萨摩亚与美属萨摩亚之间穿过（汤加、图瓦卢、
+          //     斐济、瓦利斯、托克劳、新西兰查塔姆群岛均在线西）
+          //  ⑥ 约 55°S 回到 180°，直下南极
           "coords": [
-            [
-              180,
-              -85
-            ],
-            [
-              180,
-              -45
-            ],
-            [
-              180,
-              0
-            ],
-            [
-              180,
-              45
-            ],
-            [
-              180,
-              85
-            ]
+            [180, 90],
+            [180, 71],
+            [180, 66],
+            [-169, 65.8],
+            [172, 63],
+            [173, 60],
+            [170, 53],
+            [180, 47],
+            [180, 5],
+            [-170, 2],
+            [-157, -1],
+            [-150, -10],
+            [-158, -13],
+            [-171, -15],
+            [-173, -21],
+            [-165, -30],
+            [-165, -45],
+            [180, -55],
+            [180, -90]
           ],
           "width": 2,
           "dashed": true,
-          "description": "国际日期变更线，大致沿 180° 经线，过此线日期加减一天。"
+          "description": "国际日期变更线，大致沿 180° 经线，为避开陆地和岛屿呈折线，过此线日期加减一天。北段绕楚科奇半岛与阿留申群岛，赤道段大幅东凸包住基里巴斯（近 150°W），南段沿 165°W 从萨摩亚与美属萨摩亚之间穿过。"
         }
       ]
     }
   ]
 };
+
+// 纬线/经线文字标注：每条线在中段位置加一个文字实体（随所在组一起显隐）
+function addLineLabels(group, posOf) {
+  if (!group) return;
+  const labels = [];
+  for (const e of group.entities) {
+    if (e.type !== 'polyline' || !Array.isArray(e.coords) || !e.coords.length) continue;
+    const [lon, lat] = posOf(e);
+    labels.push({ type: 'label', name: `${e.name} · 标注`, lon, lat, text: e.name });
+  }
+  group.entities.push(...labels);
+}
+
+// 纬线：统一在西经 30° 处标注，纬度取各线自身纬度
+addLineLabels(
+  LAYER.groups.find((g) => g.id === 'parallels'),
+  (e) => [-30, e.coords[0][1]]
+);
+// 经线：统一在北纬 25° 处标注，经度取各线自身经度
+addLineLabels(
+  LAYER.groups.find((g) => g.id === 'meridians'),
+  (e) => [e.coords[0][0], 25]
+);

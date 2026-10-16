@@ -1,4 +1,9 @@
-// Auto-rebuilt from extracted-layers.json — DO NOT HAND-EDIT
+// 坐标系: WGS84 (EPSG:4326)，十进制度，坐标顺序统一为 [经度 lon, 纬度 lat]。
+//   渲染端由 Cesium.Cartesian3.fromDegrees(lon, lat) / fromDegreesArray 直接使用，无需额外转换。
+// 数据性质: 教学示意级。城市/地点坐标为近似位置（精度约市级 ±1–5 km）；
+//           历史疆域/路线为简化示意，非考据级边界，仅供空间认知。
+// 来源: 编译自公开地理资料与通史常识，非测绘权威数据；用于科普与家庭教育。
+
 export const LAYER = {
   "id": "wall",
   "name": "历代长城",

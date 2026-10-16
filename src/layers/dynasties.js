@@ -1,16 +1,21 @@
-// Auto-rebuilt from extracted-layers.json — DO NOT HAND-EDIT
+// 坐标系: WGS84 (EPSG:4326)，十进制度，坐标顺序统一为 [经度 lon, 纬度 lat]。
+//   渲染端由 Cesium.Cartesian3.fromDegrees(lon, lat) / fromDegreesArray 直接使用，无需额外转换。
+// 数据性质: 教学示意级。城市/地点坐标为近似位置（精度约市级 ±1–5 km）；
+//           历史疆域/路线为简化示意，非考据级边界，仅供空间认知。
+// 来源: 编译自公开地理资料与通史常识，非测绘权威数据；用于科普与家庭教育。
+
 export const LAYER = {
   "id": "dynasties",
   "name": "历代疆域",
   "description": "秦、汉、唐、元、明、清六代大致版图（粗糙示意，非考据级边界）。",
   "icon": "◈",
-  "defaultColor": "#5d8f5d",
+  "defaultColor": "#d94f3d",
   "timeline": true,
   "groups": [
     {
       "id": "qin",
       "name": "秦（约前210年）",
-      "color": "#6b8e23",
+      "color": "#e2574c",
       "entities": [
         {
           "type": "polygon",
@@ -92,7 +97,7 @@ export const LAYER = {
     {
       "id": "han",
       "name": "汉（西汉末，约公元2年）",
-      "color": "#5d8f5d",
+      "color": "#d94f3d",
       "entities": [
         {
           "type": "polygon",
@@ -162,7 +167,7 @@ export const LAYER = {
     {
       "id": "tang",
       "name": "唐（总章元年后，约668年）",
-      "color": "#3a7d44",
+      "color": "#e8703a",
       "entities": [
         {
           "type": "polygon",
@@ -232,7 +237,7 @@ export const LAYER = {
     {
       "id": "yuan",
       "name": "元（约1300年）",
-      "color": "#2e6b3e",
+      "color": "#d63c2f",
       "entities": [
         {
           "type": "polygon",
@@ -310,7 +315,7 @@ export const LAYER = {
     {
       "id": "ming",
       "name": "明（约永乐，1420年）",
-      "color": "#4a7c59",
+      "color": "#ef6f4c",
       "entities": [
         {
           "type": "polygon",
@@ -380,7 +385,7 @@ export const LAYER = {
     {
       "id": "qing",
       "name": "清（约1820年）",
-      "color": "#1e5a40",
+      "color": "#c92a1e",
       "entities": [
         {
           "type": "polygon",

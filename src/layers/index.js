@@ -8,18 +8,15 @@ import { LAYER as geolines } from './geolines.js';
 import { LAYER as plates } from './plates.js';
 import { LAYER as currents } from './currents.js';
 import { LAYER as worldocean } from './worldocean.js';
-import { LAYER as mountains } from './mountains.js';
 
-import { LAYER as passes } from './passes.js';
+// 山川形胜 = 关隘 + 山脉 + 河流 + 大运河 + 蜀道 + 茶马古道（合并图层）
+import { LAYER as shanhai } from './shanhai.js';
+
 import { LAYER as wall } from './wall.js';
 import { LAYER as longmarch } from './longmarch.js';
 import { LAYER as g318 } from './g318.js';
-import { LAYER as river } from './river.js';
-import { LAYER as canal } from './canal.js';
 import { LAYER as waterworks } from './waterworks.js';
 import { LAYER as silkroad } from './silkroad.js';
-import { LAYER as shudao } from './shudao.js';
-import { LAYER as teahorse } from './teahorse.js';
 import { LAYER as zhenghe } from './zhenghe.js';
 import { LAYER as xuanzang } from './xuanzang.js';
 import { LAYER as dynasties } from './dynasties.js';
@@ -34,18 +31,21 @@ import { LAYER as crusades } from './crusades.js';
 import { LAYER as mongol } from './mongol.js';
 import { LAYER as alexander } from './alexander.js';
 import { LAYER as wwars } from './wwars.js';
+import { LAYER as worldcapitals } from './worldcapitals.js';
+import { LAYER as peaks } from './peaks.js';
+import { LAYER as worldrivers } from './worldrivers.js';
 
 // LAYERS 数组（按 categories 中 layerIds 出现顺序）
 export const LAYERS = [
   // 航天探索
   tiangong, moonmission,
   // 自然地理
-  geolines, plates, worldocean, currents, mountains,
-  // 中国史
-  passes, wall, longmarch, g318, river, canal, waterworks,
-  silkroad, shudao, teahorse, zhenghe, xuanzang, dynasties, cities,
+  geolines, plates, worldocean, currents,
+  // 中国史（历史路线放在长征之后）
+  shanhai, wall, longmarch, silkroad, zhenghe, xuanzang, g318, cities, dynasties, waterworks,
   // 世界史
   civilizations, wonders, heritage, ageofsail, rome, crusades, mongol, alexander, wwars,
+  worldcapitals, peaks, worldrivers,
 ];
 
 // 快速查找表
@@ -65,15 +65,15 @@ export const LAYER_CATEGORIES = [
   {
     id: 'nature',
     name: '自然地理',
-    layerIds: ['geolines', 'plates', 'worldocean', 'currents', 'mountains'],
+    layerIds: ['geolines', 'plates', 'worldocean', 'currents'],
   },
   {
     id: 'china',
     name: '中国史',
     layerIds: [
-      'passes', 'g318', 'wall', 'longmarch', 'cities',
-      'silkroad', 'dynasties', 'river', 'canal', 'shudao',
-      'teahorse', 'zhenghe', 'xuanzang', 'waterworks',
+      'shanhai', 'wall', 'longmarch',
+      'silkroad', 'zhenghe', 'xuanzang', 'g318',
+      'cities', 'dynasties', 'waterworks',
     ],
   },
   {
@@ -82,6 +82,7 @@ export const LAYER_CATEGORIES = [
     layerIds: [
       'ageofsail', 'rome', 'crusades', 'mongol', 'alexander',
       'wwars', 'civilizations', 'heritage', 'wonders',
+      'worldcapitals', 'peaks', 'worldrivers',
     ],
   },
 ];

@@ -1,0 +1,81 @@
+// 坐标系: WGS84 (EPSG:4326)，十进制度，坐标顺序统一为 [经度 lon, 纬度 lat]。
+//   渲染端由 Cesium.Cartesian3.fromDegrees(lon, lat) 直接使用，无需额外转换。
+// 数据性质: 教学示意级。首都坐标为城市中心近似位置（精度约 ±1–5 km）；
+//           非测绘权威数据，用于科普与家庭教育（世界地理 / 大洲认知）。
+// 来源: 编译自公开地理资料（各国首都经纬度为常识级数据），非考据级。
+
+export const LAYER = {
+  "id": "worldcapitals",
+  "name": "世界主要首都",
+  "description": "各大洲约 50 个国家的首都/行政中心，作为世界史与地理认知的全球锚点。",
+  "icon": "★",
+  "defaultColor": "#ffcf66",
+  "groups": [
+    {
+      "id": "capital",
+      "name": "首都",
+      "color": "#ffcf66",
+      "marker": "city",
+      "entities": [
+        { "type": "point", "name": "北京", "desc": "中国", "lon": 116.40, "lat": 39.90 },
+        { "type": "point", "name": "东京", "desc": "日本", "lon": 139.69, "lat": 35.69 },
+        { "type": "point", "name": "首尔", "desc": "韩国", "lon": 126.98, "lat": 37.57 },
+        { "type": "point", "name": "平壤", "desc": "朝鲜", "lon": 125.76, "lat": 39.04 },
+        { "type": "point", "name": "乌兰巴托", "desc": "蒙古", "lon": 106.92, "lat": 47.92 },
+        { "type": "point", "name": "新德里", "desc": "印度", "lon": 77.21, "lat": 28.61 },
+        { "type": "point", "name": "伊斯兰堡", "desc": "巴基斯坦", "lon": 73.05, "lat": 33.69 },
+        { "type": "point", "name": "达卡", "desc": "孟加拉国", "lon": 90.41, "lat": 23.81 },
+        { "type": "point", "name": "加德满都", "desc": "尼泊尔", "lon": 85.32, "lat": 27.72 },
+        { "type": "point", "name": "科伦坡", "desc": "斯里兰卡", "lon": 79.86, "lat": 6.93 },
+        { "type": "point", "name": "雅加达", "desc": "印度尼西亚", "lon": 106.85, "lat": -6.21 },
+        { "type": "point", "name": "曼谷", "desc": "泰国", "lon": 100.50, "lat": 13.75 },
+        { "type": "point", "name": "新加坡", "desc": "新加坡", "lon": 103.82, "lat": 1.35 },
+        { "type": "point", "name": "吉隆坡", "desc": "马来西亚", "lon": 101.69, "lat": 3.14 },
+        { "type": "point", "name": "马尼拉", "desc": "菲律宾", "lon": 120.98, "lat": 14.60 },
+        { "type": "point", "name": "河内", "desc": "越南", "lon": 105.83, "lat": 21.03 },
+        { "type": "point", "name": "莫斯科", "desc": "俄罗斯", "lon": 37.62, "lat": 55.75 },
+        { "type": "point", "name": "伦敦", "desc": "英国", "lon": -0.13, "lat": 51.51 },
+        { "type": "point", "name": "巴黎", "desc": "法国", "lon": 2.35, "lat": 48.86 },
+        { "type": "point", "name": "柏林", "desc": "德国", "lon": 13.40, "lat": 52.52 },
+        { "type": "point", "name": "罗马", "desc": "意大利", "lon": 12.50, "lat": 41.90 },
+        { "type": "point", "name": "马德里", "desc": "西班牙", "lon": -3.70, "lat": 40.42 },
+        { "type": "point", "name": "阿姆斯特丹", "desc": "荷兰", "lon": 4.90, "lat": 52.37 },
+        { "type": "point", "name": "布鲁塞尔", "desc": "比利时", "lon": 4.35, "lat": 50.85 },
+        { "type": "point", "name": "维也纳", "desc": "奥地利", "lon": 16.37, "lat": 48.21 },
+        { "type": "point", "name": "伯尔尼", "desc": "瑞士", "lon": 7.45, "lat": 46.95 },
+        { "type": "point", "name": "斯德哥尔摩", "desc": "瑞典", "lon": 18.07, "lat": 59.33 },
+        { "type": "point", "name": "奥斯陆", "desc": "挪威", "lon": 10.75, "lat": 59.91 },
+        { "type": "point", "name": "赫尔辛基", "desc": "芬兰", "lon": 24.94, "lat": 60.17 },
+        { "type": "point", "name": "华沙", "desc": "波兰", "lon": 21.01, "lat": 52.23 },
+        { "type": "point", "name": "布拉格", "desc": "捷克", "lon": 14.42, "lat": 50.09 },
+        { "type": "point", "name": "雅典", "desc": "希腊", "lon": 23.73, "lat": 37.98 },
+        { "type": "point", "name": "里斯本", "desc": "葡萄牙", "lon": -9.14, "lat": 38.72 },
+        { "type": "point", "name": "基辅", "desc": "乌克兰", "lon": 30.52, "lat": 50.45 },
+        { "type": "point", "name": "布加勒斯特", "desc": "罗马尼亚", "lon": 26.10, "lat": 44.43 },
+        { "type": "point", "name": "布达佩斯", "desc": "匈牙利", "lon": 19.04, "lat": 47.50 },
+        { "type": "point", "name": "索菲亚", "desc": "保加利亚", "lon": 23.32, "lat": 42.70 },
+        { "type": "point", "name": "开罗", "desc": "埃及", "lon": 31.24, "lat": 30.04 },
+        { "type": "point", "name": "伊斯坦布尔", "desc": "土耳其", "lon": 28.98, "lat": 41.01 },
+        { "type": "point", "name": "德黑兰", "desc": "伊朗", "lon": 51.39, "lat": 35.69 },
+        { "type": "point", "name": "利雅得", "desc": "沙特阿拉伯", "lon": 46.72, "lat": 24.71 },
+        { "type": "point", "name": "耶路撒冷", "desc": "以色列", "lon": 35.23, "lat": 31.77 },
+        { "type": "point", "name": "阿布扎比", "desc": "阿联酋", "lon": 54.37, "lat": 24.48 },
+        { "type": "point", "name": "多哈", "desc": "卡塔尔", "lon": 51.53, "lat": 25.29 },
+        { "type": "point", "name": "内罗毕", "desc": "肯尼亚", "lon": 36.82, "lat": -1.29 },
+        { "type": "point", "name": "亚的斯亚贝巴", "desc": "埃塞俄比亚", "lon": 38.74, "lat": 9.03 },
+        { "type": "point", "name": "比勒陀利亚", "desc": "南非", "lon": 28.19, "lat": -25.75 },
+        { "type": "point", "name": "拉各斯", "desc": "尼日利亚", "lon": 3.38, "lat": 6.52 },
+        { "type": "point", "name": "华盛顿", "desc": "美国", "lon": -77.04, "lat": 38.91 },
+        { "type": "point", "name": "渥太华", "desc": "加拿大", "lon": -75.70, "lat": 45.42 },
+        { "type": "point", "name": "墨西哥城", "desc": "墨西哥", "lon": -99.13, "lat": 19.43 },
+        { "type": "point", "name": "巴西利亚", "desc": "巴西", "lon": -47.93, "lat": -15.78 },
+        { "type": "point", "name": "布宜诺斯艾利斯", "desc": "阿根廷", "lon": -58.38, "lat": -34.60 },
+        { "type": "point", "name": "利马", "desc": "秘鲁", "lon": -77.04, "lat": -12.05 },
+        { "type": "point", "name": "波哥大", "desc": "哥伦比亚", "lon": -74.07, "lat": 4.60 },
+        { "type": "point", "name": "圣地亚哥", "desc": "智利", "lon": -70.65, "lat": -33.45 },
+        { "type": "point", "name": "堪培拉", "desc": "澳大利亚", "lon": 149.13, "lat": -35.28 },
+        { "type": "point", "name": "惠灵顿", "desc": "新西兰", "lon": 174.78, "lat": -41.29 }
+      ]
+    }
+  ]
+};
