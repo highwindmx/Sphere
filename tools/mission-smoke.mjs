@@ -11,11 +11,14 @@
  *   B. 发射前预览：进面板火箭即竖立（label 待发射）；换发射场镜头/火箭搬过去（酒泉）
  *   C. 分离相位文字：助推器窗口 phase=「第一幕 · 助推器分离（四散弹开）」（不被通用相位覆盖）
  *   D. 第一幕轨迹平滑：细采样位置转角 maxTurn<6° 且无突兀跳变（非折线）
- *   E. 第二幕轨道总览：#orbitOverview 可见且画布非空白
- *   F. LOI 赤道轨道：craft lat≈0、环月轨环 lat=0
- *   G. 下降段：纬度沿子午线推进（0<lat<site.lat）+ 相机 260 万 m
- *   H. 第四幕：玉兔驶离着陆器（行程≈26·s4）+ 车头朝向=行进方向（dot>0.95）
+ *   E. 第二幕嫦娥三段轨道：调相/捕获轨道线 + 三段标注；旧轨道总览小窗已删（ooWidgetGone）
+ *   F. LOI 子午线大圆：段中点 craft lat≈-55.88（site.lat-100）；环线经度恒定（过两极大圆）
+ *   G. 下降段：同一大圆推进（段中点 lat≈24.12 = site.lat-20）+ 相机 260 万 m
+ *   H. 第四幕：玉兔驶离着陆器（行程≈26·s4）+ 车头朝向=行进方向（debugSlotMatrix
+ *      computed 第一列 dot>0.95——必须读 computed，读 modelMatrix 只验证了自己的公式）
  *   I. 月面提亮（gamma 1.45/brightness 1.35）：第四幕中心像素亮度 >60（旧版 27）
+ * 2026-10-18 相机双模式：canvas 按下 → MANUAL 持久（blend 恒 0 不自动回归）；
+ *   点 #tourCamMode → blend>0 平滑回 AUTO（camManualPersist / camResetOnAct 两断言）
  * 前置知识（避免重踩）：
  *   - camera.position 是 lookAt 局部坐标；世界距离用 positionWC（见 models-smoke.mjs 头注）
  *   - requestRenderMode 下快照必须 requestRender() + render(now) 双步
@@ -304,65 +307,72 @@ report.steps.pauseSticky = await evaluate(`(async () => {
   };
 })()`);
 
-// ③e 第二幕（pTransfer）：顶视转移 + 飞船上面级 + 压缩说明可见 + 轨道总览角标（用户反馈 #4）
-//     校验：地月虚直线 / 未飞半段虚线 / 行径实线 三个实体都存在且有 ≥2 个点
+// ③e 第二幕（pTransfer）：嫦娥三段轨道（2026-10-18 重做，参考嫦娥一号轨道图）
+//     转移椭圆三线 / 调相段+捕获段轨道线 / 三段标注 / 旧轨道总览小窗已删
 await evaluate(`window.__moonMission.seek(${TL.pTransfer})`);
 await sleep(900);
 report.steps.transfer = await evaluate(`(() => {
   const st = window.__moonMission.debugState().slots;
   const craft = st.find((s) => s.key === 'craft');
-  const ids = ['moonEmLine', 'moonTransferMirror', 'moonTransferPath', 'moonTransferTrail'];
+  const ids = ['moonEmLine', 'moonTransferMirror', 'moonTransferPath', 'moonPhasingOrbits', 'moonCaptureOrbits'];
   const ents = {};
   for (const id of ids) {
     const e = window.viewer.entities.getById(id);
-    let n = 0;
-    try { n = e.polyline.positions.getValue(Cesium.JulianDate.now()).length; } catch {}
-    ents[id] = n;
+    let n = 0, shown = null;
+    try {
+      n = e.polyline.positions.getValue(Cesium.JulianDate.now()).length;
+      shown = e.show;
+    } catch {}
+    ents[id] = { n, shown };
   }
-  // 轨道总览：可见 + 画布非空白
-  const oo = document.getElementById('orbitOverview');
-  let ooPixels = 0;
-  try {
-    const cv = document.getElementById('orbitOverviewCanvas');
-    const x2 = cv.getContext('2d');
-    const px = x2.getImageData(0, 0, cv.width, cv.height).data;
-    for (let i = 3; i < px.length; i += 4) if (px[i] > 0) ooPixels++;
-  } catch {}
+  // 三段轨道标注（嫦娥轨道图样式）
+  const labels = ['moonPhaseLabel1', 'moonPhaseLabel2', 'moonPhaseLabel3']
+    .map((id) => { const e = window.viewer.entities.getById(id); return e ? e.label.text.getValue(Cesium.JulianDate.now()) : null; });
+  // 旧轨道总览小窗（用户反馈不喜欢，2026-10-18 删除）——DOM 应不存在
+  const ooGone = !document.getElementById('orbitOverview');
   return {
     craftShown: craft ? craft.show === true : null,
     phase: document.getElementById('rocketPhase')?.textContent || '',
     compressNoteVisible: !document.getElementById('compressNote')?.classList.contains('hidden'),
     entityPoints: ents,
-    orbitOverviewVisible: oo ? !oo.classList.contains('hidden') : null,
-    orbitOverviewPixels: ooPixels,
+    phaseLabels: labels,
+    ooWidgetGone: ooGone,
     navLocked: window.__moonMission.navLocked(),
   };
 })()`);
 const shotTransfer = await evaluate(`window.__t.snap(window.viewer)`);
 writeFileSync('tools/.mission-act2.png', Buffer.from(shotTransfer.split(',')[1], 'base64'));
 
-// ③c 相机接管：canvas 按下 → override=true；松手 → 静默期后 blend 回归启动
-// ⚠ SwiftShader 下每帧渲染可达数秒，固定时长等待不可靠（曾因 4.4s 内 0 帧误报失败）：
-//   改为轮询直到 blend>0（上限 40s），「回归启动」才是断言的本意（2026-10-17 修）。
+// ③c 相机双模式（2026-10-18 重做）：canvas 按下 → override=true 进 MANUAL；
+//     MANUAL 持久（blend 恒 0，不再自动回归）；点 #tourCamMode → blend>0 平滑回 AUTO。
+// ⚠ SwiftShader 下每帧渲染可达数秒，blend 变化用轮询（上限 40s），勿固定等待。
 report.steps.camOverride = await evaluate(`(async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const cam = () => window.__moonMission.debugState().cam;
   const canvas = window.viewer.scene.canvas;
   canvas.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1 }));
   await sleep(150);
-  const during = window.__moonMission.debugState().cam;
-  window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }));
-  await sleep(500);
-  const hold = window.__moonMission.debugState().cam;   // 静默期：override=false、blend=0
-  let after = hold, waitedMs = 0;
-  for (let i = 0; i < 80 && after.blend <= 0; i++) {     // 轮询到 blend 起来（帧率极慢时给足 40s）
+  const during = cam();                                   // override 应立即为 true
+  // MANUAL 持久：轮询 ~4s 确认 blend 始终为 0（旧版此期间会自动 blend 回归）
+  let persist = { override: during.override, noBlend: true };
+  for (let i = 0; i < 8; i++) {
+    await sleep(500);
+    const c = cam();
+    if (c.override !== true || c.blend !== 0) { persist = { override: c.override, noBlend: false, at: c }; break; }
+  }
+  // 点「🎯 推荐视角」→ 应启动 blend 回 AUTO
+  const btn = document.getElementById('tourCamMode');
+  btn.click();
+  let after = cam(), waitedMs = 0;
+  for (let i = 0; i < 80 && after.blend <= 0; i++) {
     await sleep(500); waitedMs += 500;
-    after = window.__moonMission.debugState().cam;
+    after = cam();
   }
   return {
     duringOverride: during.override,
-    afterOverride: hold.override,
-    holdNoBlend: hold.blend === 0,
-    blending: after.blend > 0,
+    manualPersist: persist.override === true && persist.noBlend === true,
+    resetBlendStarted: after.blend > 0,
+    resetOverrideCleared: after.override === false,
     blendValue: after.blend,
     waitedMs,
   };
@@ -394,33 +404,51 @@ report.steps.timelineIsolation = await evaluate(`(async () => {
 })()`);
 
 
-// ④ 跳环月制动（pLoi）→ 飞船上面级显示、着陆器隐藏 + 赤道轨道（用户反馈 #5）
+// ④ 跳环月制动（pLoi）→ 飞船上面级显示、着陆器隐藏 + 子午线大圆轨道（2026-10-18 定稿）
+//     LOI 段中点 s=0.5：latT = site.lat + lerp(-120,-40,easeIn(0.5)) = 44.12 - 100 = -55.88°
 await evaluate(`window.__moonMission.seek(${TL.pLoi})`);
 await sleep(900);
 report.steps.loi = await evaluate(`(() => {
   const st = window.__moonMission.debugState().slots;
   const pick = (k) => st.find((s) => s.key === k);
   const loi = pick('loiCraft'), lander = pick('lander');
-  // 赤道轨道： craft lat≈0、环月轨环（moonLoiOrbit）lat=0
-  let craftLat = null, ringLat = null;
+  // 子午线大圆：craft lat≈-55.88、lon≈site.lon(-19.51)；环线所有点 lon ∈ {site.lon, site.lon+180}
+  let craftLat = null, craftLon = null, ringLons = null;
   try {
     const mv = window.__getMoonViewer && window.__getMoonViewer();
     const mc = mv && mv.entities.getById('moonMissionCraft');
     const pos = mc && mc.position.getValue(Cesium.JulianDate.now());
-    if (pos) craftLat = +Cesium.Math.toDegrees(Cesium.Cartographic.fromCartesian(pos, mv.scene.globe.ellipsoid).latitude).toFixed(3);
+    if (pos) {
+      const o = Cesium.Cartographic.fromCartesian(pos, mv.scene.globe.ellipsoid);
+      craftLat = +Cesium.Math.toDegrees(o.latitude).toFixed(3);
+      craftLon = +Cesium.Math.toDegrees(o.longitude).toFixed(3);
+    }
     const ring = mv && mv.entities.getById('moonLoiOrbit');
     const rp = ring && ring.polyline.positions.getValue(Cesium.JulianDate.now());
-    if (rp && rp.length) ringLat = +Cesium.Math.toDegrees(Cesium.Cartographic.fromCartesian(rp[Math.floor(rp.length/2)], mv.scene.globe.ellipsoid).latitude).toFixed(3);
+    if (rp && rp.length) {
+      ringLons = [];
+      for (let i = 0; i < rp.length; i += 24) {
+        const c = Cesium.Cartographic.fromCartesian(rp[i], mv.scene.globe.ellipsoid);
+        ringLons.push(+Cesium.Math.toDegrees(c.longitude).toFixed(2));
+      }
+    }
   } catch {}
+  // 大圆经度校验：每个采样 lon 都应等于 site.lon(-19.51) 或其背面 wrap(160.49)
+  let ringMeridian = null;
+  if (ringLons && ringLons.length) {
+    ringMeridian = ringLons.every((lon) => Math.abs(lon - (-19.51)) < 0.5 || Math.abs(lon - 160.49) < 0.5);
+  }
   return {
     phase: document.getElementById('rocketPhase')?.textContent || '',
     loiCraftShown: loi ? loi.show === true : null,
     landerHidden: lander ? lander.show === false : null,
-    craftLat, ringLat,
+    craftLat, craftLon,
+    ringMeridian, ringLonSamples: ringLons ? ringLons.length : null,
     navLocked: window.__moonMission.navLocked(),
   };
 })()`);
-// ④a 动力下降（pDescent）：纬度沿子午线推进 + 相机 260 万 m（用户反馈 #5）
+// ④a 动力下降（pDescent）：纬度沿同一子午线大圆推进 + 相机 260 万 m（2026-10-18 定稿）
+//     下降段中点 s=0.5：latT = site.lat + lerp(-40,0,0.5) = 44.12 - 20 = 24.12°
 await evaluate(`window.__moonMission.seek(${TL.pDescent})`);
 await sleep(900);
 report.steps.descent = await evaluate(`(() => {
@@ -513,7 +541,9 @@ report.steps.roverPath = await evaluate(`(async () => {
   };
 })()`);
 // ④d 玉兔驶离着陆器 + 车头朝向=行进方向（用户反馈 #6：非螃蟹车）
-// 行程 = 车辙首点→当前位置；朝向 = rover 模型 matrix 的 X 轴 vs 两个进度点的位移方向
+// 行程 = 车辙首点→当前位置；朝向 = rover **computed** 矩阵（modelMatrix×axisCorrection）
+// 的第一列（模型 +X=车头 世界朝向）vs 两进度点的位移方向。
+// ⚠ 必须读 computed——读 modelMatrix 只验证了自己的公式、没验证 Cesium 轴校正（2026-10-18 教训）。
 report.steps.roverDrive = await evaluate(`(async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const m = window.__moonMission;
@@ -536,15 +566,15 @@ report.steps.roverDrive = await evaluate(`(async () => {
   const pB = at(fB);
   m.seek(fC); await sleep(500);
   const pC = at(fC);
-  const roverSlot = m.debugSlots().find((s) => s.key === 'rover');
-  const mm = roverSlot && roverSlot.model && roverSlot.model.modelMatrix;
-  const fwd = mm ? new Cesium.Cartesian3(mm[0], mm[1], mm[2]) : null;
+  const mat = m.debugSlotMatrix(/^rover/);
+  const computed = mat && mat.computed;
+  const fwd = computed ? new Cesium.Cartesian3(computed[0], computed[1], computed[2]) : null;
   const travel = Cesium.Cartesian3.subtract(pB, pA, new Cesium.Cartesian3());
   Cesium.Cartesian3.normalize(travel, travel);
   const dot = fwd ? Cesium.Cartesian3.dot(Cesium.Cartesian3.normalize(fwd, new Cesium.Cartesian3()), travel) : null;
   const s4 = (fC - tl.touchEnd) / (1 - tl.touchEnd);
   return {
-    roverReady: !!(roverSlot && roverSlot.ready),
+    roverReady: !!(mat && mat.ready),
     traveledM: +Cesium.Cartesian3.distance(pC, p0).toFixed(2),
     expectedTravel: +(26 * s4).toFixed(2),
     headingDot: dot === null ? null : +dot.toFixed(4),
@@ -619,17 +649,27 @@ report.checks = {
   // D. 轨迹平滑（反馈 #3）
   trajSmooth: S.trajSmooth.maxTurn < 6 && S.trajSmooth.maxTurnJump < 2.5
     && S.trajSmooth.segLast > S.trajSmooth.segFirst,   // 加速上升
-  // E. 轨道总览（反馈 #4）
-  orbitOverview: S.transfer.orbitOverviewVisible === true && S.transfer.orbitOverviewPixels > 500,
-  transferEntities: S.transfer.entityPoints.moonEmLine >= 2
-    && S.transfer.entityPoints.moonTransferMirror >= 2
-    && S.transfer.entityPoints.moonTransferPath >= 2,
-  // F. LOI 赤道轨道（反馈 #5）
-  loiEquator: Math.abs(S.loi.craftLat) < 0.5 && Math.abs(S.loi.ringLat) < 0.5,
-  // G. 下降段子午线推进 + 260 万 m 机位（反馈 #5）
-  descentMeridian: S.descent.craftLat > 0 && S.descent.craftLat < 44.12
-    && Math.abs(S.descent.craftLon - (-19.51)) < 1,
-  descentCamRange: S.descent.camRange > 2.4e6 && S.descent.camRange < 2.8e6,  // H. 玉兔驶离 + 朝向（反馈 #6）
+  // E. 第二幕嫦娥三段轨道 + 旧总览小窗已删（2026-10-18 重做）
+  transferPhases: S.transfer.entityPoints.moonPhasingOrbits.n >= 2
+    && S.transfer.entityPoints.moonCaptureOrbits.n >= 2
+    && S.transfer.entityPoints.moonPhasingOrbits.shown === true
+    && S.transfer.entityPoints.moonCaptureOrbits.shown === true
+    && /调相段/.test(S.transfer.phaseLabels[0] || '')
+    && /地月转移段/.test(S.transfer.phaseLabels[1] || '')
+    && /月球捕获段/.test(S.transfer.phaseLabels[2] || ''),
+  ooWidgetGone: S.transfer.ooWidgetGone === true,
+  transferEntities: S.transfer.entityPoints.moonEmLine.n >= 2
+    && S.transfer.entityPoints.moonTransferMirror.n >= 2
+    && S.transfer.entityPoints.moonTransferPath.n >= 2,
+  // F. LOI 子午线大圆（2026-10-18 定稿）：段中点 latT = 44.12 + lerp(-120,-40,0.25) = -55.88°
+  loiMeridian: S.loi.craftLat !== null && Math.abs(S.loi.craftLat - (-55.88)) < 2
+    && Math.abs(S.loi.craftLon - (-19.51)) < 0.5,
+  ringMeridian: S.loi.ringMeridian === true,
+  // G. 下降段同一大圆推进 + 260 万 m 机位：段中点 latT = 44.12 - 20 = 24.12°
+  descentMeridian: S.descent.craftLat !== null && Math.abs(S.descent.craftLat - 24.12) < 2
+    && Math.abs(S.descent.craftLon - (-19.51)) < 0.5,
+  descentCamRange: S.descent.camRange > 2.4e6 && S.descent.camRange < 2.8e6,
+  // H. 玉兔驶离 + 朝向（反馈 #6）
   roverDrivesAway: S.roverDrive.traveledM > 5
     && Math.abs(S.roverDrive.traveledM - S.roverDrive.expectedTravel) < 1.5,
   roverHeadingDot: S.roverDrive.headingDot > 0.95,
@@ -639,7 +679,8 @@ report.checks = {
   moonBrightDescent: S.descentPixel && S.descentPixel.lum > 60,
   moonBrightAct4: S.act4Pixel && S.act4Pixel.lum > 60,
   // 原有步骤回归
-  camOverride: S.camOverride.duringOverride === true && S.camOverride.blending === true,
+  camManualPersist: S.camOverride.duringOverride === true && S.camOverride.manualPersist === true,
+  camResetOnAct: S.camOverride.resetBlendStarted === true && S.camOverride.resetOverrideCleared === true,
   timelineIsolation: S.timelineIsolation.canvasDragNoSeek === true && S.timelineIsolation.trackSeeks === true,
   stageSwitchModel: S.stageSwitch.coreShown === true && S.stageSwitch.fullRocketHidden === true,
   transferCraft: S.transfer.craftShown === true,
