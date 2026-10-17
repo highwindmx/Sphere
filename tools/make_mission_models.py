@@ -2,7 +2,8 @@
 # tools/make_mission_models.py — 生成探月任务 glTF 2.0（.glb）模型资产
 #   public/models/longmarch5.glb      长征五号整箭（静态；Y-up，原点=发动机喷口面，单位米）
 #   public/models/longmarch5_core.glb 芯级+整流罩（助推器分离后形态）
-#   public/models/spacecraft.glb      飞船上面级（芯级+设备舱；转移/环月段）
+#   public/models/spacecraft.glb      飞船上面级 = 卫星形态（服务舱+设备舱+碟形天线+双臂太阳翼；
+#                                     整流罩分离后即此形态，保留到第三幕离轨）
 #   public/models/booster.glb         捆绑助推器（分离件）
 #   public/models/fairing.glb         整流罩半瓣（分离件，半壳）
 #   public/models/moon_lander.glb     月面着陆器（4 腿 + 喷口，Y-up，接地 y=0）
@@ -208,6 +209,8 @@ def build_rocket(with_boosters=True, with_fairing=True, filename='longmarch5.glb
     dark = g.material([0.20, 0.22, 0.25, 1.0], 0.3, 0.6)
     red = g.material([0.82, 0.18, 0.14, 1.0], 0.05, 0.6)
     gold = g.material([0.80, 0.62, 0.22, 1.0], 0.35, 0.5)
+    grey = g.material([0.55, 0.58, 0.62, 1.0], 0.45, 0.45)
+    panel = g.material([0.10, 0.17, 0.38, 1.0], 0.35, 0.45)   # 太阳翼（深蓝）
     parts = []
     parts.append(g.node(g.mesh(cylinder(1.65, 2.25, 2.6), dark), [0, 0, 0], '尾裙'))
     parts.append(g.node(g.mesh(cylinder(1.65, 1.65, 1.1), red), [0, 2.6, 0], '红色环带'))
@@ -222,9 +225,19 @@ def build_rocket(with_boosters=True, with_fairing=True, filename='longmarch5.glb
             parts.append(g.node(g.mesh(cylinder(0.62, 0.62, 14.5), white), [x, 3.7, z], f'助推器{i}'))
             parts.append(g.node(g.mesh(cylinder(0.05, 0.62, 2.8), dark), [x, 18.2, z], f'助推器头{i}'))
     else:
-        # 飞船上面级：芯级顶端接金色设备舱（转运/环月段形态）
-        parts.append(g.node(g.mesh(cylinder(0.90, 1.20, 1.6), gold), [0, 28.0, 0], '设备舱'))
-        parts.append(g.node(g.mesh(box(2.4, 0.10, 2.4), white), [0, 29.6, 0], '对接环'))
+        # 飞船上面级 = 卫星形态（2026-10-17 用户反馈：「之后火箭的形态就不可能还是圆柱体，
+        # 分级助推器已被抛弃，应该是卫星形态，而且要保留到第三幕」）：
+        # 服务舱 + 设备舱 + 碟形天线 + 双臂太阳翼。此模型自整流罩分离起一路用到
+        # 第三幕离轨（rocket.js 的 craft / loiCraft 两个槽位同 URL）。
+        parts.append(g.node(g.mesh(cylinder(1.65, 1.65, 12.0), white), [0, 3.7, 0], '服务舱'))
+        parts.append(g.node(g.mesh(cylinder(0.90, 1.20, 1.6), gold), [0, 15.7, 0], '设备舱'))
+        parts.append(g.node(g.mesh(cylinder(1.25, 0.18, 0.5, seg=24), dark), [0, 17.3, 0], '碟形天线'))
+        parts.append(g.node(g.mesh(cylinder(0.03, 0.03, 0.9), dark), [0, 17.8, 0], '馈源杆'))
+        parts.append(g.node(g.mesh(box(2.4, 0.10, 2.4), white), [0, 18.7, 0], '对接环'))
+        # 太阳翼 ×2：沿 ±X 展开（Cesium Y→Z 校正后 ±X = ENU 东西向，垂直于飞行方向）
+        for sx in (1, -1):
+            parts.append(g.node(g.mesh(box(1.0, 0.10, 0.5), grey), [sx * 2.2, 9.6, 0], f'翼根{sx}'))
+            parts.append(g.node(g.mesh(box(5.6, 0.05, 2.8), panel), [sx * 5.5, 9.6, 0], f'太阳翼{sx}'))
     root = g.node(name=name, children=parts)
     total = g.save(os.path.join(ROOT, filename), [root])
     print(f'{filename:<18s}{total/1024:6.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')

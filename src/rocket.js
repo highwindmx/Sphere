@@ -6,9 +6,9 @@
 //   第二幕 · 月地转移   （地球 Viewer「地月顶视图」：真实比例地月系 + 霍曼转移椭圆，
 //                         近地点 200 km → 远地点月距 384,400 km，月球沿轨道同步移动（5 天扫过 ~65°），
 //                         飞船上面级沿椭圆飞行，TLI 点火火焰；距离压缩说明见 #compressNote）
-//   第三幕 · 月球着陆   （月球 Viewer：环月制动 LOI（轨道倾角 = 着陆点纬度，过着陆点，逆向点火）→
-//                         离轨制动（仍是飞船上面级）→ 动力下降（着陆器 + 发动机火焰 + 触月灰尘），
-//                         末端按真实月面 DEM 接地）
+//   第三幕 · 月球着陆   （月球 Viewer：赤道环月轨道 100 km（倾角 0°，2026-10-17 用户反馈修正）→
+//                         离轨制动 → 动力下降：自降交点沿子午线大圆弧滑往着陆点，
+//                         着陆器 + 发动机火焰 + 触月灰尘，末端按真实月面 DEM 接地）
 //   第四幕 · 玉兔巡视   （着陆器驻留，玉兔号月球车驶出，6 轮滚动节点动画）
 // 幕间用文字幕卡过渡。复用底部巡游面板：播放/暂停/倍率/进度条拖拽/幕节点跳转/重播。
 // 交互（2026-10-17 用户反馈）：播放中允许鼠标拖拽/滚轮接管相机（松手 1.1s 平滑回归脚本机位）；
@@ -23,6 +23,7 @@
 
 import * as Cesium from 'cesium';
 import { MOON_ELLIPSOID, MOON_LANDING_SITES, sampleMoonHeight } from './lunar.js';
+import { sampleTerrainHeight } from './terrarium-provider.js';
 import { LANDER_ICON, SPACECRAFT_ICON } from './moon-landing.js';
 import {
   FULL_ROCKET_ICON,
@@ -72,7 +73,7 @@ const T = {
 };
 // 幕内推进倍率（2026-10-17 用户反馈「第一幕太快」）：tick 内 p += dt/BASE*mult*rateAt(p)。
 //   第一幕：0.19 × 120s ÷ 0.6 ≈ 38 s（原 16.8 s，2.3× 慢放）
-//   第四幕：0.07 × 120s ÷ 0.7 = 12 s（玉兔 14 m 行程 ≈ 1.17 m/s，与轮速匹配）
+//   第四幕：0.07 × 120s ÷ 0.7 = 12 s（玉兔 26 m 行程 ≈ 2.17 m/s，与轮速 1.85× 匹配）
 const ACT_RATE = { act1: 0.6, act4: 0.7 };
 function rateAt(pp) {
   if (pp < T.liftEnd) return ACT_RATE.act1;
@@ -114,13 +115,18 @@ function samplePath(points, s) {
 function wrapLon(lon) { return ((lon + 180) % 360 + 360) % 360 - 180; }
 function shortestAngle(a, b) { return ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; }
 
-// ====== 玉兔巡视路线（2026-10-17 修正） ======
+// ====== 玉兔巡视路线（2026-10-17 二修） ======
 // ⚠ 旧版用 97,700 m/度 换算经度——那是地球量级；月球 1° 经度 = (π/180)·1,737,400 ≈ 30,325 m，
 //   少算 3.2×，标称 14 m 的行程实际只走了 4.3 m（用户实测「行进路线不正常」）。
-// 路线：自着陆器出发、航向 96°→126°（东微南 → 东南）的 14 m 缓弯，逐点按 DEM 取地面高贴地行驶。
+// 2026-10-17 用户反馈二：「月兔车没有驶离着陆器」——除月面过暗外，起点正压在着陆器腿环
+//   （腿跨 2.36 m）下方，近距看不清「驶离」。现将起点后移 5 m（腿环之外），行程加长到 26 m。
+// 路线：自着陆器后方 5 m 出发、航向 96°→126°（东微南 → 东南）的 26 m 缓弯，
+//   逐点按 DEM 取地面高贴地行驶。
 const MOON_M_PER_DEG = (Math.PI / 180) * MOON_R;    // ≈30,325 m/度（月球）
-const ROVER_LEN = 14;                               // 巡视行程（米）
+const ROVER_LEN = 26;                               // 巡视行程（米）
+const ROVER_START_BACK = 5;                         // 起点相对着陆器的后移量（米，避开腿环）
 let _roverPathCache = null;                         // { key, pts }
+let _diveBlend = null;                              // 第三幕末「切着陆机位」推近混合 { t0 }
 
 /** 巡视路线采样点：[{lon, lat, h, heading}]，按落点缓存（DEM 采样开销不逐帧付） */
 function roverPath(site) {
@@ -128,7 +134,10 @@ function roverPath(site) {
   if (_roverPathCache && _roverPathCache.key === key) return _roverPathCache.pts;
   const N = 64;
   const ds = ROVER_LEN / N;
-  let lon = site.lon, lat = site.lat;
+  // 起点 = 着陆器 − 5 m（沿初始航向 96° 的反方向），即腿环（半径 ~1.2 m）之外
+  const h0 = Cesium.Math.toRadians(96);
+  let lon = site.lon - (ROVER_START_BACK * Math.sin(h0)) / (MOON_M_PER_DEG * Math.max(0.2, Math.cos(Cesium.Math.toRadians(site.lat))));
+  let lat = site.lat - (ROVER_START_BACK * Math.cos(h0)) / MOON_M_PER_DEG;
   const pts = [];
   for (let i = 0; i <= N; i++) {
     const s = i / N;
@@ -264,6 +273,8 @@ const _enuT = new Cesium.Matrix4();
 const _invT = new Cesium.Matrix4();
 const _locT = new Cesium.Cartesian3();
 const _eastV = new Cesium.Cartesian3();
+const _northV = new Cesium.Cartesian3();
+const _upV = new Cesium.Cartesian3();
 let frameDt = 0.016;   // 最近一帧 dt（相机回归混合用）
 const _dbg = { dir: [0, 0, 0], exhaust: [0, 0, 0] };   // 冒烟：最近一帧飞行方向/喷流方向（ENU）
 
@@ -318,11 +329,24 @@ function tumbleQuat(axis, angle, out) {
   return Cesium.Quaternion.fromAxisAngle(axis, angle, out);
 }
 
-/** 沿地表法线抬升 h 米（火焰挂喷口、避开月面用） */
-function offsetUp(cart, h, out) {
-  const n = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(cart, out ?? new Cesium.Cartesian3());
-  return Cesium.Cartesian3.add(cart, Cesium.Cartesian3.multiplyByScalar(n, h, _vec), out ?? new Cesium.Cartesian3());
-}
+  /** 沿地表法线抬升 h 米（火焰挂喷口、避开月面用） */
+  function offsetUp(cart, h, out) {
+    const n = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(cart, out ?? new Cesium.Cartesian3());
+    return Cesium.Cartesian3.add(cart, Cesium.Cartesian3.multiplyByScalar(n, h, _vec), out ?? new Cesium.Cartesian3());
+  }
+
+  /** ENU 米制偏移：cart + e·East + n·North + u·Up（分离件弹道、相机微调用） */
+  function offsetENU(cart, e, n, u, out) {
+    Cesium.Transforms.eastNorthUpToFixedFrame(cart, Cesium.Ellipsoid.WGS84, _enuT);
+    Cesium.Matrix4.getColumn(_enuT, 0, _eastV);    // East 轴
+    Cesium.Matrix4.getColumn(_enuT, 1, _northV);   // North 轴
+    Cesium.Matrix4.getColumn(_enuT, 2, _upV);      // Up 轴
+    const r = out ?? new Cesium.Cartesian3();
+    r.x = cart.x + _eastV.x * e + _northV.x * n + _upV.x * u;
+    r.y = cart.y + _eastV.y * e + _northV.y * n + _upV.y * u;
+    r.z = cart.z + _eastV.z * e + _northV.z * n + _upV.z * u;
+    return r;
+  }
 
 /** 火焰/喷气特效：exhaustDir = 喷流方向（模型 +Y 对准它）；null 或 scale<=0 时隐藏 */
 function updateFlame(viewer, cart, exhaustDir, scale, ellipsoid) {
@@ -511,6 +535,9 @@ export function createMoonMission(opts) {
   let landDustEnt = null;      // 触月激尘（第三幕末）
   let moonRing = null;
   let moonCraft = null;
+  let descentArcEnt = null;  // 动力下降段子午线大圆弧（淡虚线）
+  let loiTrailEnt = null;    // LOI 已飞行径弧（赤道）
+  let loiTrailCarts = [];
   let roverTrackEnt = null;   // 玉兔车辙（已行驶路线）
   let roverTrackCarts = [];   // 车辙 Cartesian3（逐帧前缀）
   // 分离件（第一幕临时实体）
@@ -521,14 +548,46 @@ export function createMoonMission(opts) {
   let onPause = null, onStop = null, onSlower = null, onFaster = null;
   let onTrackDown = null, onTrackMove = null, onTrackUp = null;
 
+  // 第一幕入轨注入点相对发射台的偏置（lon°E, lat°N, alt m）——makeEarthPath 与
+  // buildTransferGeom 共用同一常量，保证「第一幕终点 = 第二幕转移轨道近地点」严格重合。
+  const INJ_OFF = [2.2, 1.05, 200000];
+
+  // 第一幕上升段轨迹（2026-10-17 用户反馈「折线不科学」→ 重力转弯数值积分）：
+  //   在「发射方位–天顶」平面内按航迹角程序 γ(s)（90°→8°）与速度剖面 v(s) 积分弧长，
+  //   再把 (下漂, 高度) 归一化到真实注入点——终点与 buildTransferGeom 的 inj 严格一致。
+  //   ⚠ 改注入偏移必须改上面的 INJ_OFF，两处同源。
   function makeEarthPath(pad) {
-    return [
-      [pad.lon, pad.lat, 0],
-      [pad.lon, pad.lat, 3000],
-      [pad.lon + 0.25, pad.lat + 0.12, 22000],
-      [pad.lon + 0.8, pad.lat + 0.4, 80000],
-      [pad.lon + 2.2, pad.lat + 1.05, 200000], // 入轨 ~200 km
-    ];
+    const latR = Cesium.Math.toRadians(pad.lat);
+    const dE = INJ_OFF[0] * Cesium.Math.toRadians(1) * 6378137 * Math.cos(latR);  // 注入点东向偏置（m）
+    const dN = INJ_OFF[1] * Cesium.Math.toRadians(1) * 6356752;                   // 注入点北向偏置（m）
+    const az = Math.atan2(dE, dN);          // 发射方位角（自北顺时针）
+    const D = Math.hypot(dE, dN);           // 注入点地表投影距（m）
+    const H = INJ_OFF[2];                   // 注入高度（m）
+    const N = 128;
+    const xs = [0], ys = [0];
+    for (let i = 1; i <= N; i++) {
+      const s = i / N;
+      // 航迹角（与水平面夹角）：竖直起步，程序转弯下垂，入轨近水平
+      const gamma = (8 + 82 * Math.pow(1 - s, 1.6)) * Cesium.Math.RADIANS_PER_DEGREE;
+      // 速度剖面：起步慢（垂直段）→ 转弯后加速（入轨）
+      const v = 0.25 + 0.75 * Math.pow(s, 0.75);
+      const dl = v / N;
+      xs.push(xs[i - 1] + dl * Math.cos(gamma));
+      ys.push(ys[i - 1] + dl * Math.sin(gamma));
+    }
+    const sx = D / xs[N], sy = H / ys[N];
+    const lonScale = 111319.5 * Math.cos(latR);   // 经度米/度（按发射台纬度取常数 → 终点与 inj 严格一致）
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const x = xs[i] * sx;            // 沿方位角的下漂距离（m）
+      const north = x * Math.cos(az), east = x * Math.sin(az);
+      pts.push([
+        pad.lon + east / lonScale,
+        pad.lat + north / 110946,
+        ys[i] * sy,
+      ]);
+    }
+    return pts;
   }
 
   // —— 霍曼转移椭圆（第二幕科学化，2026-10-17） ——
@@ -547,7 +606,7 @@ export function createMoonMission(opts) {
   // 月球抵达位 = 远地点（会合）。TR 在 buildPathData 时构建。
   let TR = null;
   function buildTransferGeom(pad) {
-    const inj = [pad.lon + 2.2, pad.lat + 1.05, 200000];   // 入轨注入点（与第一幕终点一致）
+    const inj = [pad.lon + INJ_OFF[0], pad.lat + INJ_OFF[1], INJ_OFF[2]];   // 入轨注入点（与第一幕终点一致）
     const e1 = Cesium.Cartesian3.normalize(
       Cesium.Cartesian3.fromDegrees(inj[0], inj[1], inj[2]), new Cesium.Cartesian3());
     const lonR = Cesium.Math.toRadians(inj[0]), latR = Cesium.Math.toRadians(inj[1]);
@@ -578,6 +637,12 @@ export function createMoonMission(opts) {
   function transferPosAt(s) {
     const c = Cesium.Cartographic.fromCartesian(transferCartAt(s), Cesium.Ellipsoid.WGS84, new Cesium.Cartographic());
     return [Cesium.Math.toDegrees(c.longitude), Cesium.Math.toDegrees(c.latitude), c.height];
+  }
+
+  /** 转移椭圆真近点角 ν(s)（rad，0=近地点）——轨道总览视窗画弧用 */
+  function transferNuAt(s) {
+    const E = keplerE(Math.PI * clamp01(s), EM.e);
+    return Math.atan2(Math.sqrt(1 - EM.e * EM.e) * Math.sin(E), Math.cos(E) - EM.e);
   }
 
   /** 月球方向单位向量（世界）：s=1 时抵达远地点（与飞船会合），转移期间沿轨道面扫过 moonSweep */
@@ -625,9 +690,12 @@ export function createMoonMission(opts) {
   }
 
   // ---- 地球火箭（billboard 沿飞行方向旋转，形态随分离阶段切换）----
-  function ensureEarthRocket() {
-    if (earthRocket) return;
+  // force=true：按当前 launchSiteKey 原地重建（发射前切换发射场用，2026-10-17）
+  function ensureEarthRocket(force = false) {
     const pad = LAUNCH_SITES[launchSiteKey];
+    if (earthRocket && !force) return;
+    if (earthRocket) { earthViewer.entities.remove(earthRocket); earthRocket = null; }
+    if (padDustEnt) { earthViewer.entities.remove(padDustEnt); padDustEnt = null; }
     earthRocket = earthViewer.entities.add({
       id: 'moonMissionRocket',
       position: Cesium.Cartesian3.fromDegrees(pad.lon, pad.lat, 0),
@@ -665,6 +733,70 @@ export function createMoonMission(opts) {
           material: Cesium.Color.WHITE.withAlpha(0),
         },
       });
+    }
+  }
+
+  /**
+   * 发射前预览（2026-10-17 用户反馈）：
+   * 「还没发射，选择不同的发射场时镜头就应该随之转过去，并竖起火箭
+   *  （而不是要点击发射才开始转场出现火箭）」。
+   * 行为：按当前 launchSiteKey 把整箭竖立于发射台、相机取景（箭体+发射台同框）。
+   * 仅任务未播放（!raf）且无巡礼时生效；播放中相机归脚本机位，不抢镜。
+   */
+  function previewLaunchSite() {
+    if (raf) return;
+    if (isRouteTourActive()) return;
+    env.showEarth();                 // 幂等：在月球模式则先切回地球容器
+    ensureEarthRocket(true);         // 换发射场 → 火箭搬家（按当前 key 重建）
+    if (!earthRocket) return;
+    const pad = LAUNCH_SITES[launchSiteKey];
+    earthRocket.show = true;
+    earthRocket.label.text = `长征五号 · 待发射（${pad.name}）`;
+    // 特效全收（点火前不喷火、不扬尘）
+    updateFlame(earthViewer, null, null, 0, Cesium.Ellipsoid.WGS84);
+    updateRcs(earthViewer, null, null, 0, Cesium.Ellipsoid.WGS84);
+    if (padDustEnt) padDustEnt.ellipse.material = Cesium.Color.WHITE.withAlpha(0);
+    // 相机取景：从东南低空侧望箭体（先清 lookAt 变换，避免与旧参考系叠加）
+    try { earthViewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); } catch { /* 忽略 */ }
+    resetCamOverride();
+    // 按真实地形高程落位 + 取景（2026-10-17：酒泉海拔 ~1 km，0 高程会把火箭和相机
+    // 都埋进地下）。同步先按 0 落一帧（模型/相机立刻就位），异步采样回真实高程再贴地。
+    const placeAt = (groundH) => {
+      const cart = Cesium.Cartesian3.fromDegrees(pad.lon, pad.lat, groundH);
+      earthRocket.position = cart;
+      // 竖立于发射台：整箭模型 +Y=天顶（Cesium Y→Z 校正后 identity 即竖直）
+      const slot = getRocketSlot();
+      if (attachIfReady(slot)) {
+        earthRocket.billboard.show = false;
+        hideSlot(rocketCoreSlot); hideSlot(craftSlot); showSlot(slot);
+        placeModel(slot, cart, Cesium.Quaternion.IDENTITY, Cesium.Ellipsoid.WGS84);
+      } else {
+        earthRocket.billboard.show = true;
+        earthRocket.billboard.image = FULL_ROCKET_ICON;
+        earthRocket.billboard.rotation = 0;
+      }
+      const eastM = 240, southM = 150;                    // 水平偏移（发射台东南侧）
+      const latOff = -southM / 110946;
+      const lonOff = eastM / (111319.5 * Math.max(0.15, Math.cos(Cesium.Math.toRadians(pad.lat))));
+      const camPos = Cesium.Cartesian3.fromDegrees(
+        pad.lon + lonOff, pad.lat + latOff, groundH + 150);
+      const dir = Cesium.Cartesian3.normalize(
+        Cesium.Cartesian3.subtract(cart, camPos, new Cesium.Cartesian3()), new Cesium.Cartesian3());
+      const up = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(cart, new Cesium.Cartesian3());
+      applyCameraPose(earthViewer, camPos, dir, up);
+    };
+    placeAt(0);
+    // 地形高程异步采样：相机必须在地表之上（否则地下渲染全黑）。
+    // ⚠ 大坑（2026-10-17 实测）：Cesium.sampleTerrainMostDetailed 对本项目的自定义
+    //   terrarium provider 直接抛 "computeMaximumLevelAtPosition of undefined"
+    //   （CustomHeightmapTerrainProvider 无 availability），被外层 try/catch 吞掉后
+    //   按 0 高程取景 → 酒泉火箭/相机都埋进地下 ~1 km。改用同源瓦片采样 sampleTerrainHeight。
+    try {
+      sampleTerrainHeight(pad.lon, pad.lat)
+        .then((h) => { if (!raf) placeAt(h || 0); })
+        .catch(() => { /* 保持 0 高程 */ });
+    } catch {
+      /* 保持 0 高程 */
     }
   }
 
@@ -832,7 +964,8 @@ export function createMoonMission(opts) {
     return -Math.atan2(b[0] - a[0], b[1] - a[1]);
   }
 
-  // 发射轨迹逐帧追加（节流：水平累计 >0.05° 或高度变化 >5 km 才记一点）
+  // 发射轨迹逐帧追加（节流：水平累计 >0.012° 或高度变化 >1.2 km 才记一点；
+  // 2026-10-17 重力转弯路径加密到 128 点，节流同步收紧，否则平滑曲线会被抽成折线）
   function pushLaunchTrail(pos) {
     if (!lastLaunch) {
       launchCarts.push(Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2]));
@@ -841,7 +974,7 @@ export function createMoonMission(opts) {
     }
     const dh = Math.abs(pos[2] - lastLaunch[2]);
     const dl = Math.abs(pos[0] - lastLaunch[0]) + Math.abs(pos[1] - lastLaunch[1]);
-    if (dh > 5000 || dl > 0.05) {
+    if (dh > 1200 || dl > 0.012) {
       launchCarts.push(Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2]));
       lastLaunch = pos.slice();
     }
@@ -853,9 +986,16 @@ export function createMoonMission(opts) {
     trailCarts = transferCarts.slice(0, idx + 1);
   }
 
-  // ---- 分离件：助推器 ×4（斜向弹开 + 翻滚 + 下坠），整流罩 ×2（两侧抛离 + 自转）----
-  // 3D 化（2026-10-17）：每枚分离件独立 loadSlot（模型实例不可共享），翻滚用固定 ENU 轴；
-  //                    billboard 保留作加载期兜底（slot.ready 后隐藏）。
+  // ---- 分离件：助推器 ×4（四散弹开 + 下漂 + 重力抛物 + 缓慢翻滚），整流罩 ×2（两瓣抛离）----
+  // 2026-10-17 用户反馈重做：「抛出后应该四散分开」「不用在空中翻滚这么多圈」
+  // 「下落的速度与翻滚不成比例」：
+  //   ① 弹开方向绕飞行方向扇形四散（±35°），并保留部分水平速度向下漂移；
+  //   ② 竖直走重力抛物线（½·g·t²），与水平位移构成真实弹道感；
+  //   ③ 翻滚总圈数 ~0.45 圈（旧版 2.2 圈），速率恒定、四枚交替反向；
+  //   ④ 分离镜头：机位从「跟火箭」1.2s 混合到「跟分离件质心」——118 km 机位外
+  //      760 m 的弹开距离只有 ~2 像素，用户根本看不到「四散」（见 sepCam）。
+  let sepCam = null;   // 分离镜头混合状态 { t0, fromTgt, fromRange }
+
   function clearSeparators() {
     for (const b of boosters) {
       earthViewer.entities.remove(b.ent);
@@ -867,21 +1007,33 @@ export function createMoonMission(opts) {
     }
     boosters = [];
     fairings = [];
+    sepCam = null;
   }
 
   function spawnSeparators(kind) {
     const base = rocketPosAt(kind === 'booster' ? BOOSTER_SEP : FAIRING_SEP);
+    const baseCart = Cesium.Cartesian3.fromDegrees(base[0], base[1], base[2]);
+    const fdir = flightDirENU(kind === 'booster' ? BOOSTER_SEP : FAIRING_SEP);   // ENU 切向
+    // 水平侧向 = fdir × Up（归一）
+    Cesium.Cartesian3.cross(fdir, Cesium.Cartesian3.UNIT_Z, _vec);
+    const side = Cesium.Cartesian3.normalize(_vec, new Cesium.Cartesian3());
+    // 分离镜头起点：当前跟火箭机位（1.2s 混合到分离件质心，见 render）
+    sepCam = {
+      t0: performance.now(),
+      fromTgt: Cesium.Cartesian3.clone(earthRocket.position.getValue(Cesium.JulianDate.now())),
+      fromRange: _lastFocusRange,
+    };
     if (kind === 'booster') {
-      // 4 枚助推器：东北/东南/西北/西南 斜向弹开，各自反向翻滚
+      // 4 枚助推器：左右 × 上下的扇形四散，翻滚交替反向
       const dirs = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]];
-      for (const [dlon, dlat, spin] of dirs) {
+      for (const [sgnSide, sgnUp, spin] of dirs) {
         boosters.push({
-          dir: [dlon, dlat, spin],
+          sgnSide, sgnUp, spin, base, baseCart, fdir, side,
           axis: Cesium.Cartesian3.normalize(
-            new Cesium.Cartesian3(dlon * 0.45, 0.85, dlat * 0.45), new Cesium.Cartesian3()),
+            new Cesium.Cartesian3(sgnSide * 0.45, 0.85, sgnUp * 0.45), new Cesium.Cartesian3()),
           slot: loadSlot('booster', earthViewerRef),
           ent: earthViewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(base[0], base[1], base[2] - 300),
+            position: baseCart,
             billboard: {
               image: BOOSTER_ICON,
               width: 26,
@@ -891,36 +1043,21 @@ export function createMoonMission(opts) {
               heightReference: Cesium.HeightReference.NONE,
               disableDepthTestDistance: Number.POSITIVE_INFINITY,
             },
-            label: {
-              text: '助推器分离',
-              font: '11px "Microsoft YaHei", sans-serif',
-              fillColor: Cesium.Color.fromCssColorString('#ffd24a'),
-              outlineColor: Cesium.Color.BLACK,
-              outlineWidth: 3,
-              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-              pixelOffset: new Cesium.Cartesian2(0, -20),
-              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
-            },
           }),
         });
       }
     } else {
-      // 整流罩左右两瓣：向两侧水平抛离并自转
-      const defs = [
-        { dir: -1, icon: FAIRING_LEFT_ICON, text: '整流罩分离' },
-        { dir: 1, icon: FAIRING_RIGHT_ICON, text: '整流罩分离' },
-      ];
-      for (const d of defs) {
+      // 整流罩左右两瓣：向两侧水平抛离 + 微上 + 缓慢自转
+      for (const d of [-1, 1]) {
         fairings.push({
-          dir: d.dir,
+          dir: d, base, baseCart, fdir, side,
           axis: Cesium.Cartesian3.normalize(
             new Cesium.Cartesian3(1, 0.15, 0.1), new Cesium.Cartesian3()),
           slot: loadSlot('fairing', earthViewerRef),
           ent: earthViewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(base[0], base[1], base[2] + 200),
+            position: baseCart,
             billboard: {
-              image: d.icon,
+              image: d < 0 ? FAIRING_LEFT_ICON : FAIRING_RIGHT_ICON,
               width: 24,
               height: 24,
               rotation: 0,
@@ -928,21 +1065,20 @@ export function createMoonMission(opts) {
               heightReference: Cesium.HeightReference.NONE,
               disableDepthTestDistance: Number.POSITIVE_INFINITY,
             },
-            label: {
-              text: d.text,
-              font: '11px "Microsoft YaHei", sans-serif',
-              fillColor: Cesium.Color.fromCssColorString('#ffd24a'),
-              outlineColor: Cesium.Color.BLACK,
-              outlineWidth: 3,
-              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-              pixelOffset: new Cesium.Cartesian2(0, -18),
-              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
-            },
           }),
         });
       }
     }
+  }
+
+  /** 分离件质心（世界坐标，相机跟随用） */
+  function debrisCentroid(list) {
+    let ex = 0, ey = 0, ez = 0;
+    for (const b of list) {
+      const c = b.ent.position.getValue(Cesium.JulianDate.now());
+      ex += c.x; ey += c.y; ez += c.z;
+    }
+    return new Cesium.Cartesian3(ex / list.length, ey / list.length, ez / list.length);
   }
 
   // 逐帧更新分离件（从分离时刻起的弹开/翻滚/下坠动画，结束后销毁）
@@ -958,22 +1094,26 @@ export function createMoonMission(opts) {
       if (dt > 8) {
         clearSeparators();
       } else if (dt >= 0) {
-        const base = rocketPosAt(BOOSTER_SEP);
         for (const b of boosters) {
-          const [dlon, dlat, spin] = b.dir;
-          const cart = Cesium.Cartesian3.fromDegrees(
-            base[0] + dlon * 0.05 * dt,
-            base[1] + dlat * 0.03 * dt,
-            Math.max(0, base[2] - 300 + 900 * dt - 130 * dt * dt)
-          );
+          // 四散弹开 + 下漂（保留部分入轨速度）+ 重力抛物；翻滚 ~0.36 rad/s（8s≈0.46 圈）
+          const drift = 2600 * dt;
+          const eject = 95 * dt;
+          const fall = 0.5 * 520 * dt * dt;
+          const cart = offsetENU(
+            b.baseCart,
+            b.fdir.x * drift + b.side.x * b.sgnSide * eject * 0.82,
+            b.fdir.y * drift + b.side.y * b.sgnSide * eject * 0.82,
+            b.fdir.z * drift + b.sgnUp * eject * 0.57 - fall,
+            new Cesium.Cartesian3());
           b.ent.position = cart;
           if (attachIfReady(b.slot)) {
             b.ent.billboard.show = false;
-            placeModel(b.slot, cart, tumbleQuat(b.axis, spin * dt * 1.7, _q), Cesium.Ellipsoid.WGS84);
+            placeModel(b.slot, cart, tumbleQuat(b.axis, b.spin * 0.36 * dt, _q), Cesium.Ellipsoid.WGS84);
           } else {
-            b.ent.billboard.rotation = spin * dt * 1.7;
+            b.ent.billboard.rotation = b.spin * 0.36 * dt;
           }
         }
+        setPhase('第一幕 · 助推器分离（四散弹开）');
       }
     }
     // 整流罩
@@ -985,21 +1125,26 @@ export function createMoonMission(opts) {
       if (dt > 6.5) {
         clearSeparators();
       } else if (dt >= 0) {
-        const base = rocketPosAt(FAIRING_SEP);
         for (const f of fairings) {
-          const cart = Cesium.Cartesian3.fromDegrees(
-            base[0] + f.dir * 0.09 * dt,
-            base[1],
-            Math.max(0, base[2] + 200 + 250 * dt - 110 * dt * dt)
-          );
+          // 两瓣向两侧抛离 + 随箭微漂 + 重力抛物；自转 ~0.2 rad/s（6.5s≈0.2 圈）
+          const drift = 1400 * dt;
+          const eject = 42 * dt;
+          const fall = 0.5 * 520 * dt * dt;
+          const cart = offsetENU(
+            f.baseCart,
+            f.fdir.x * drift + f.side.x * f.dir * eject,
+            f.fdir.y * drift + f.side.y * f.dir * eject,
+            f.fdir.z * drift - fall,
+            new Cesium.Cartesian3());
           f.ent.position = cart;
           if (attachIfReady(f.slot)) {
             f.ent.billboard.show = false;
-            placeModel(f.slot, cart, tumbleQuat(f.axis, f.dir * dt * 0.9, _q), Cesium.Ellipsoid.WGS84);
+            placeModel(f.slot, cart, tumbleQuat(f.axis, f.dir * 0.2 * dt, _q), Cesium.Ellipsoid.WGS84);
           } else {
-            f.ent.billboard.rotation = f.dir * dt * 0.9;
+            f.ent.billboard.rotation = f.dir * 0.2 * dt;
           }
         }
+        setPhase('第一幕 · 整流罩分离');
       }
     }
   }
@@ -1010,6 +1155,9 @@ export function createMoonMission(opts) {
     if (mv) {
       if (moonRing) { mv.entities.remove(moonRing); moonRing = null; }
       if (moonCraft) { mv.entities.remove(moonCraft); moonCraft = null; }
+      if (descentArcEnt) { mv.entities.remove(descentArcEnt); descentArcEnt = null; }
+      if (loiTrailEnt) { mv.entities.remove(loiTrailEnt); loiTrailEnt = null; }
+      loiTrailCarts = [];
       if (roverTrackEnt) { mv.entities.remove(roverTrackEnt); roverTrackEnt = null; }
       roverTrackCarts = [];
       if (landDustEnt) { mv.entities.remove(landDustEnt); landDustEnt = null; }
@@ -1036,10 +1184,14 @@ export function createMoonMission(opts) {
     }
     const site = MOON_LANDING_SITES[landingSiteKey];
 
-    // 环月目标轨道（100 km 圆轨，纬度 = 着陆点纬度 → 轨道过着陆点，动力下降垂直）
+    // 环月目标轨道（2026-10-17 用户反馈「环月轨道为何不在月球赤道线上、而在某个高纬度圈」）：
+    // 旧版 literally 画成 site.lat 纬度圈（雨海 44°N = 高纬圈），不科学。
+    // 现改为**赤道轨道**（倾角 0°，100 km 圆轨）：飞船沿赤道飞行，下降段自降交点
+    // （着陆点经度与赤道交点）沿子午线大圆弧滑往着陆点——这才是「赤道轨道 + 大圆弧下降」的
+    // 真实几何（静海 0.67°N 近垂直、雨海 44°N 为长弧，与嫦娥三号/阿波罗11 下降段同构）。
     const flat = [];
     for (let i = 0; i <= 120; i++) {
-      flat.push(wrapLon((i / 120) * 360), site.lat, 100000);
+      flat.push(wrapLon((i / 120) * 360), 0, 100000);
     }
     moonRing = mv.entities.add({
       id: 'moonLoiOrbit',
@@ -1051,6 +1203,54 @@ export function createMoonMission(opts) {
         arcType: Cesium.ArcType.NONE,
       },
     });
+
+    // 动力下降段（子午线大圆弧：降交点 → 着陆点，淡虚线，3 km 等高示意）
+    if (!descentArcEnt) {
+      const arc = [];
+      for (let i = 0; i <= 48; i++) {
+        arc.push(site.lon, site.lat * (i / 48), 3000);
+      }
+      descentArcEnt = mv.entities.add({
+        id: 'moonDescentArc',
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArrayHeights(arc, MOON_ELLIPSOID),
+          width: 1.6,
+          material: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.5),
+            dashLength: 12,
+          }),
+          arcType: Cesium.ArcType.NONE,
+        },
+        label: {
+          text: '动力下降段（降交点 → 着陆点 · 子午线大圆弧）',
+          font: '11px "Microsoft YaHei", sans-serif',
+          fillColor: Cesium.Color.fromCssColorString('#cfe0ff'),
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 3,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -14),
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          showBackground: true,
+          backgroundColor: new Cesium.Color(0.05, 0.08, 0.18, 0.55),
+          backgroundPadding: new Cesium.Cartesian2(6, 4),
+        },
+      });
+    }
+
+    // LOI 已飞轨迹（赤道上的行径弧，逐帧追加）
+    if (!loiTrailEnt) {
+      loiTrailEnt = mv.entities.add({
+        id: 'moonLoiTrail',
+        polyline: {
+          positions: new Cesium.CallbackProperty(() => loiTrailCarts, false),
+          width: 2,
+          material: Cesium.Color.fromCssColorString('#7fc4ff').withAlpha(0.85),
+          arcType: Cesium.ArcType.NONE,
+        },
+      });
+    }
+    loiTrailCarts = [];
 
     // 玉兔车辙（第四幕：已行驶路线，亮黄细线；高度取 DEM 采样，贴地不悬空）
     if (!roverTrackEnt) {
@@ -1128,6 +1328,154 @@ export function createMoonMission(opts) {
     $('compressNote')?.classList.toggle('hidden', !on);
   }
 
+  // ===== 第二幕「轨道总览」角标视窗（2026-10-17 用户反馈）=====
+  // 用户原话：「地月相对运动这很好，但也需要另一个更大尺度的坐标系来呈现轨道的总体情况」。
+  // 主视是 75 万 km 外的斜顶视，椭圆只占画面一小块；这里用固定轨道面坐标系
+  // （x=拱线 e1 指近地点，y=面内 e2）画一张「轨道平面图」：地心、月球轨环、
+  // 完整霍曼椭圆、已飞弧、航天器、月球当前位置与起始位置、近/远地点、比例尺。
+  let _ooEl = null, _ooCtx = null, _ooDpr = 1;
+
+  function drawOrbitOverview(s) {
+    if (!_ooEl) {
+      _ooEl = $('orbitOverviewCanvas');
+      if (!_ooEl) return;
+      _ooDpr = window.devicePixelRatio || 1;
+      _ooEl.width = 300 * _ooDpr;
+      _ooEl.height = 216 * _ooDpr;
+      _ooCtx = _ooEl.getContext('2d');
+    }
+    const ctx = _ooCtx;
+    if (!ctx || !TR) return;
+    const W = 300, H = 216;
+    ctx.setTransform(_ooDpr, 0, 0, _ooDpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    const cx = W / 2, cy = H / 2 + 2;
+    const R = Math.min(W, H) / 2 - 26;
+    const k = R / EM.moonDist;                      // px / km（月球轨环半径 = R）
+    const P = (xKm, yKm) => [cx + xKm * k, cy - yKm * k];
+    const proj = (cart) => [
+      Cesium.Cartesian3.dot(cart, TR.e1) / 1000,
+      Cesium.Cartesian3.dot(cart, TR.e2) / 1000,
+    ];
+
+    // ① 月球绕地轨环（虚线圆，半径 = 地月距）
+    ctx.strokeStyle = 'rgba(143,168,200,0.5)';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ② 完整霍曼椭圆（细实线，按真近点角参数化）
+    ctx.strokeStyle = 'rgba(158,193,255,0.55)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = 0; i <= 128; i++) {
+      const nu = (i / 128) * Math.PI * 2;
+      const r = EM.a * (1 - EM.e * EM.e) / (1 + EM.e * Math.cos(nu));
+      const [px, py] = P(r * Math.cos(nu), r * Math.sin(nu));
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    ctx.stroke();
+
+    // ③ 已飞行径弧（亮黄粗线：近地点 → 当前真近点角）
+    const nuNow = transferNuAt(s);
+    ctx.strokeStyle = '#ffd24a';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for (let i = 0; i <= 64; i++) {
+      const nu = (i / 64) * nuNow;
+      const r = EM.a * (1 - EM.e * EM.e) / (1 + EM.e * Math.cos(nu));
+      const [px, py] = P(r * Math.cos(nu), r * Math.sin(nu));
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    ctx.stroke();
+
+    // ④ 地球（地心，半径夸张到 ≥2.5px 否则看不见）
+    const [ex, ey] = P(0, 0);
+    const er = Math.max(2.5, EM.rE * k);
+    const grad = ctx.createRadialGradient(ex, ey, 0, ex, ey, er);
+    grad.addColorStop(0, '#7fb2ff'); grad.addColorStop(1, '#2c5daa');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2); ctx.fill();
+
+    // ⑤ 月球当前位置 + 起始位置（空心）
+    const moonCart = moonCartAt(s);
+    const [mx, my] = P(...proj(moonCart));
+    const moonR = Math.max(3, EM.moonR * k);
+    ctx.fillStyle = '#cfd6e4';
+    ctx.beginPath(); ctx.arc(mx, my, moonR, 0, Math.PI * 2); ctx.fill();
+    const [sx0, sy0] = P(...proj(moonCartAt(0)));
+    ctx.strokeStyle = 'rgba(207,214,228,0.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(sx0, sy0, moonR, 0, Math.PI * 2); ctx.stroke();
+
+    // ⑥ 航天器（小三角，机头沿飞行方向）
+    const craft = transferCartAt(s);
+    const [px2, py2] = P(...proj(craft));
+    const craftAhead = transferCartAt(Math.min(1, s + 0.01));
+    const [ax, ay] = P(...proj(craftAhead));
+    const ang = Math.atan2(ay - py2, ax - px2);
+    ctx.fillStyle = '#ffd24a';
+    ctx.beginPath();
+    ctx.moveTo(px2 + 5 * Math.cos(ang), py2 + 5 * Math.sin(ang));
+    ctx.lineTo(px2 + 4 * Math.cos(ang + 2.5), py2 + 4 * Math.sin(ang + 2.5));
+    ctx.lineTo(px2 + 4 * Math.cos(ang - 2.5), py2 + 4 * Math.sin(ang - 2.5));
+    ctx.closePath(); ctx.fill();
+
+    // ⑦ 近/远地点标注
+    ctx.font = '9px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = 'rgba(207,224,255,0.85)';
+    ctx.textAlign = 'left';
+    const [pgx, pgy] = P(EM.rp, 0);
+    ctx.fillText('近地点 200 km', pgx + 3, pgy + 10);
+    const [apx, apy] = P(-EM.ra, 0);
+    ctx.textAlign = 'right';
+    ctx.fillText('远地点 384,400 km', apx - 3, apy - 4);
+
+    // ⑧ 名称标注
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#9ec1ff';
+    ctx.fillText('地球', ex, ey + er + 11);
+    ctx.fillStyle = '#cfd6e4';
+    ctx.fillText('月球', mx, my - moonR - 4);
+    ctx.fillStyle = '#ffd24a';
+    ctx.fillText('航天器', px2, py2 + 14);
+    ctx.fillStyle = 'rgba(207,214,228,0.5)';
+    ctx.fillText('月球起始', sx0, sy0 + moonR + 10);
+
+    // ⑨ 比例尺（左下：10 万 km）
+    const barKm = 100000, barPx = barKm * k;
+    const bx = 10, by = H - 12;
+    ctx.strokeStyle = '#8fa8c8'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + barPx, by); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bx, by - 3); ctx.lineTo(bx, by + 3);
+    ctx.moveTo(bx + barPx, by - 3); ctx.lineTo(bx + barPx, by + 3);
+    ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#8fa8c8';
+    ctx.fillText('10 万 km', bx + barPx + 5, by + 3);
+
+    // ⑩ 读数（左上）：地月距 + 飞行进度
+    const distKm = Cesium.Cartesian3.distance(moonCart, craft) / 1000;
+    ctx.fillStyle = '#cfe0ff';
+    ctx.textAlign = 'left';
+    ctx.fillText(`飞船↔月球 ${Math.round(distKm).toLocaleString('en-US')} km`, 8, 13);
+    ctx.fillStyle = 'rgba(207,224,255,0.7)';
+    ctx.fillText(`已飞行 ${(clamp01(s) * 100).toFixed(0)}% · 转移周期 ≈ 5 天`, 8, 25);
+  }
+
+  function setOrbitOverviewVisible(on, s = 0) {
+    const el = $('orbitOverview');
+    if (!el) return;
+    if (on) {
+      el.classList.remove('hidden');
+      drawOrbitOverview(s);
+    } else if (!el.classList.contains('hidden')) {
+      el.classList.add('hidden');
+    }
+  }
+
   // 第二幕顶视相机：相机悬在转移轨道面法向上方，正对椭圆面俯瞰（真实比例）。
   // 铁律：lookAt 的 pitch 相对目标点局部 ENU——中点处的「下方」恰是地月连线方向，
   // 用 HPR 顶视实际得到沿地月轴的侧视（椭圆压成一条线，地月两点重叠，2026-10-17 实测）。
@@ -1142,12 +1490,27 @@ export function createMoonMission(opts) {
     applyCameraPose(earthViewer, camPos, dir, TR.e2);   // up 取面内 e2，画面北向稳定
   }
 
+  let _lastFocusRange = 3.0e5;   // 最近一次跟火箭机位距离（分离镜头混合起点用）
+
   function focusEarth(alt, wide) {
     // 末端 clamp 900m~300km：3D 火箭仅 36m 高，不 clamp 的话触地/入轨瞬间只剩 1~2 像素
     const range = wide ? 3.0e7 : Cesium.Math.clamp(alt * 2.6, 900, 3.0e5);
+    _lastFocusRange = range;
     const pos = earthRocket ? earthRocket.position.getValue(Cesium.JulianDate.now()) : null;
     if (!pos) return;
     applyFollow(earthViewer, pos, 0, Cesium.Math.toRadians(-38), range);
+  }
+
+  /** 分离镜头（2026-10-17）：机位从「跟火箭」1.2s 混合到「跟分离件质心」。
+   *  不这么做的话：118 km 外 760 m 的弹开距离 ≈ 2 像素，「四散分开」用户永远看不到。 */
+  function focusSeparators() {
+    const list = boosters.length ? boosters : fairings.length ? fairings : null;
+    if (!list || !sepCam) { focusEarth(rocketPosAt(p)[2]); return; }
+    const centroid = debrisCentroid(list);
+    const k = easeInOut(Math.min(1, (performance.now() - sepCam.t0) / 1200));
+    const tgt = Cesium.Cartesian3.lerp(sepCam.fromTgt, centroid, k, new Cesium.Cartesian3());
+    const range = lerp(sepCam.fromRange, boosters.length ? 7000 : 4500, k);
+    applyFollow(earthViewer, tgt, 0, Cesium.Math.toRadians(-30), range);
   }
 
   // 飞行方向单位向量（ENU）：取样 ±0.4% 进度处两点求切向（竖直起步时回退天顶）
@@ -1168,6 +1531,9 @@ export function createMoonMission(opts) {
 
   // ---- 逐帧渲染 ----
   function render() {
+    // 「轨道总览」角标视窗：仅第二幕（地月转移）显示，其余幕隐藏
+    const inAct2 = p >= T.card1End && p < T.card2End;
+    setOrbitOverviewVisible(inAct2, inAct2 ? clamp01((p - T.card1End) / (T.transferEnd - T.card1End)) : 0);
     // —— 地球侧（第一幕 / 幕卡 1 / 第二幕 / 幕卡 2）——
     if (p < T.card2End) {
       if (inMoon) {
@@ -1238,8 +1604,15 @@ export function createMoonMission(opts) {
         }
         pushLaunchTrail(pos);
         updateSeparators();
-        setPhase('第一幕 · 点火起飞');
-        focusEarth(pos[2]);
+        // 分离相位文字由 updateSeparators() 内部按阶段设置（四散弹开/整流罩分离），
+        // 这里只在无分离件时才设通用相位——否则会覆盖掉分离窗口的说明（2026-10-17 修）
+        if (!boosters.length && !fairings.length) setPhase('第一幕 · 点火起飞');
+        // 分离窗口内切分离镜头（四散/翻滚可读），其余时间跟火箭
+        if (boosters.length || fairings.length) {
+          focusSeparators();
+        } else {
+          focusEarth(pos[2]);
+        }
       } else if (p < T.card1End) {
         // 幕卡 1：点火起飞 → 月地转移
         clearSeparators();
@@ -1312,14 +1685,22 @@ export function createMoonMission(opts) {
     const site = MOON_LANDING_SITES[landingSiteKey];
 
     if (p < T.loiEnd) {
-      // 环月制动 LOI：半圈降轨（800 → 100 km），轨道纬度 = 着陆点纬度（过着陆点）
+      // 环月制动 LOI（2026-10-17 重做）：**赤道轨道**（倾角 0°，100 km 圆轨）。
+      // 飞船自西向东扫过 120° 赤道弧抵达「降交点」（经度 = 着陆点经度、纬度 0），
+      // 同时 800 → 100 km 降轨；下降段即从该交点沿子午线大圆弧滑往着陆点。
+      _diveBlend = null;
       const s = clamp01((p - T.card2End) / (T.loiEnd - T.card2End));
-      const lon = wrapLon(site.lon - 180 + 180 * s);
+      const lon = wrapLon(site.lon - 120 + 120 * s);
       const alt = lerp(800000, 100000, easeIn(s));
-      const craftPos = Cesium.Cartesian3.fromDegrees(lon, site.lat, alt, MOON_ELLIPSOID);
+      const craftPos = Cesium.Cartesian3.fromDegrees(lon, 0, alt, MOON_ELLIPSOID);
       moonCraft.position = craftPos;
-      moonCraft.label.text = `环月制动 · LOI（倾角 ${Math.abs(site.lat).toFixed(0)}° · 过着陆点）`;
+      moonCraft.label.text = '环月制动 · LOI（赤道轨道 100 km · 倾角 0°）';
       setPhase('第三幕 · 环月制动（LOI）');
+      // LOI 行径弧（赤道，逐帧追加；>20 km 才记一点）
+      if (!loiTrailCarts.length ||
+          Cesium.Cartesian3.distance(loiTrailCarts[loiTrailCarts.length - 1], craftPos) > 20000) {
+        loiTrailCarts.push(Cesium.Cartesian3.clone(craftPos));
+      }
       // 3D 飞船上面级（机头沿环月切向，与第一/二幕同一模型）；未就绪回退 billboard
       const slot = getLoiCraftSlot();
       if (attachIfReady(slot)) {
@@ -1327,8 +1708,8 @@ export function createMoonMission(opts) {
         hideSlot(landerSlot); hideSlot(roverSlot); showSlot(slot);
         const e = 0.01;
         const sa = Math.max(0, s - e), sb = Math.min(1, s + e);
-        const a = [wrapLon(site.lon - 180 + 180 * sa), site.lat, lerp(800000, 100000, sa)];
-        const b = [wrapLon(site.lon - 180 + 180 * sb), site.lat, lerp(800000, 100000, sb)];
+        const a = [wrapLon(site.lon - 120 + 120 * sa), 0, lerp(800000, 100000, sa)];
+        const b = [wrapLon(site.lon - 120 + 120 * sb), 0, lerp(800000, 100000, sb)];
         placeModel(slot, craftPos, quatUpTo(tangentENU(a, b, _dir), _q), MOON_ELLIPSOID);
       } else {
         moonCraft.billboard.show = true;
@@ -1338,29 +1719,36 @@ export function createMoonMission(opts) {
       if (s < 0.25) {
         const e = 0.01;
         const sa = Math.max(0, s - e), sb = Math.min(1, s + e);
-        const a = [wrapLon(site.lon - 180 + 180 * sa), site.lat, lerp(800000, 100000, sa)];
-        const b = [wrapLon(site.lon - 180 + 180 * sb), site.lat, lerp(800000, 100000, sb)];
+        const a = [wrapLon(site.lon - 120 + 120 * sa), 0, lerp(800000, 100000, sa)];
+        const b = [wrapLon(site.lon - 120 + 120 * sb), 0, lerp(800000, 100000, sb)];
         const burn = 1.1 * (0.9 + 0.1 * Math.sin(performance.now() * 0.049)) * (1 - s / 0.25 * 0.35);
         updateFlame(mv, craftPos, tangentENU(a, b, _dir), burn, MOON_ELLIPSOID);
       } else {
         updateFlame(mv, null, null, 0, MOON_ELLIPSOID);
       }
-      applyFollow(mv, craftPos, 0, Cesium.Math.toRadians(-42), lerp(700000, 420000, s));
+      // 相机：框住整个月球 + 赤道轨环（旧值 70 万 km 时月球只剩小点，用户反馈看不全）
+      // 月球半径 1,737 km、轨环半径 1,837 km → 420 万 m 处 60° 视角高 ~485 万 m，刚好容下
+      applyFollow(mv, craftPos, 0, Cesium.Math.toRadians(-42), lerp(4.2e6, 2.6e6, s));
     } else if (p < T.touchEnd) {
-      // 离轨 + 动力下降：前 28% 仍是飞船上面级（离轨制动 100→15 km），
-      // 之后着陆器分离并动力下降至月面（末端按 DEM 真实地形高接地）
+      // 离轨 + 动力下降（2026-10-17 重做）：自降交点（site.lon, 0）沿**子午线大圆弧**
+      // 滑往着陆点——赤道轨道下这才是物理可行的下降段（雨海 44°N 为长弧、静海近垂直）。
+      //   弧线进度：u∈[0,0.7] 线性走完全弧（水平速度恒定 ~223 km/s），后 30% 垂直下降；
+      //   相机：滑翔段保持 260 万 m 远机位（弧线在画面上 ~30% 高、可读不糊），
+      //         触月前 1.4s 平滑推近到着陆机位（广播式「切着陆机位」）。
       const s = clamp01((p - T.loiEnd) / (T.touchEnd - T.loiEnd));
       const ground = sampleMoonHeight(site.lon, site.lat);
       const prof = descentProfile(s);
       const alt = ground + prof.alt;
-      const lon = site.lon + prof.drift * 0.03;
-      const craftPos = Cesium.Cartesian3.fromDegrees(lon, site.lat, alt, MOON_ELLIPSOID);
+      const ARC_END = 0.7;
+      const latFrac = s < ARC_END ? s / ARC_END : 1;
+      const rLat = site.lat * latFrac;
+      const craftPos = Cesium.Cartesian3.fromDegrees(site.lon, rLat, alt, MOON_ELLIPSOID);
       moonCraft.position = craftPos;
       // 姿态：环月切向 → 竖直（离轨段平滑过渡）
       const e = 0.01;
       const sa = Math.max(0, 1 - e), sb = Math.min(1, 1 + e);
-      const a = [wrapLon(site.lon - 180 + 180 * sa), site.lat, lerp(800000, 100000, sa)];
-      const b = [wrapLon(site.lon - 180 + 180 * sb), site.lat, lerp(800000, 100000, sb)];
+      const a = [wrapLon(site.lon - 120 + 120 * sa), 0, lerp(800000, 100000, sa)];
+      const b = [wrapLon(site.lon - 120 + 120 * sb), 0, lerp(800000, 100000, sb)];
       const orbitDir = tangentENU(a, b, _dir2);
       const u = s < 0.28 ? s / 0.28 : 1;
       const dir = new Cesium.Cartesian3(
@@ -1420,8 +1808,20 @@ export function createMoonMission(opts) {
         }
       }
       // 关键：必须传 Cartesian3 本体；传 Property 会得到 NaN 相机 → 渲染崩溃
-      // 末端机位 clamp 到 60m：着陆器仅 ~4.4m 高，不 clamp 的话触月瞬间只有 1~2 像素
-      applyFollow(mv, craftPos, 0, Cesium.Math.toRadians(-22), Math.max(60, (alt - ground) * 2.4));
+      // 机位（2026-10-17 重做）：
+      //   滑翔段（大圆弧，水平 ~223 km/s）必须保持 260 万 m 远机位——近了地形会糊成频闪；
+      //   弧线走完后 1.4s 内平滑推近到着陆机位（末端 clamp 60m：着陆器 ~4.4m 高，
+      //   不 clamp 触月瞬间只剩 1~2 像素）。
+      if (s < ARC_END) {
+        _diveBlend = null;
+        applyFollow(mv, craftPos, 0, Cesium.Math.toRadians(-22), 2.6e6);
+      } else {
+        const near = Math.max(60, (alt - ground) * 2.4);
+        if (!_diveBlend) _diveBlend = { t0: performance.now() };
+        const k = easeInOut(Math.min(1, (performance.now() - _diveBlend.t0) / 1400));
+        const range = Math.exp(lerp(Math.log(2.6e6), Math.log(near), k));
+        applyFollow(mv, craftPos, 0, Cesium.Math.toRadians(-22), range);
+      }
     } else {
       // 第四幕：玉兔驶出巡视（着陆器驻留 + 月球车 6 轮滚动节点动画）
       const s4 = clamp01((p - T.touchEnd) / (1 - T.touchEnd));
@@ -1455,7 +1855,8 @@ export function createMoonMission(opts) {
       if (attachIfReady(ls)) { showSlot(ls); placeModel(ls, landerPos, Cesium.Quaternion.IDENTITY, MOON_ELLIPSOID); }
       hideSlot(loiCraftSlot);
       // 月球车：前进 +X（Y→Z 轴校正后即 ENU 东向），按航向绕天顶旋转；
-      // 轮子动画 REPEAT ×1.0（模型内一圈 0.86s ≈ 1.16 转/秒，匹配 14m÷12s ≈ 1.17 m/s 车速）
+      // 轮子动画 REPEAT ×1.85（模型内一圈 0.86s ≈ 1.16 转/秒 ≈ 1.16 m/s；
+      // 26 m ÷ 12 s ≈ 2.17 m/s → 倍率 2.17/1.16 ≈ 1.85）
       const rs = getRoverSlot();
       if (attachIfReady(rs)) {
         moonCraft.billboard.show = false;
@@ -1465,7 +1866,7 @@ export function createMoonMission(opts) {
         // activeAnimations.add 抛 TypeError，且异常穿出 tick 会杀死整个 rAF 循环（第四幕冻住）。
         // 判 sceneGraph 存在再 add；本帧未就绪则下一帧 render 自然重试（animOn 仍为 false）。
         if (rs.animCount > 0 && !rs.animOn && !rs.model.isDestroyed() && rs.model.sceneGraph) {
-          rs.model.activeAnimations.add({ index: 0, loop: Cesium.ModelAnimationLoop.REPEAT, multiplier: 1.0 });
+          rs.model.activeAnimations.add({ index: 0, loop: Cesium.ModelAnimationLoop.REPEAT, multiplier: 1.85 });
           rs.animOn = true;
         }
       } else {
@@ -1474,9 +1875,10 @@ export function createMoonMission(opts) {
       }
       updateFlame(mv, null, null, 0, MOON_ELLIPSOID);
       updateRcs(mv, null, null, 0, MOON_ELLIPSOID);
-      // 相机取着陆器与月球车中点、30m 机位：两者同框，轮子滚动清晰可辨
+      // 相机取着陆器与月球车中点、沿行进方向（航向 ~109°）俯瞰、38m 机位：
+      // 26 m 全程 + 着陆器同框，「驶离」过程完整可读（2026-10-17 用户反馈）
       const mid = Cesium.Cartesian3.midpoint(landerPos, roverPos, new Cesium.Cartesian3());
-      applyFollow(mv, mid, 0.34, Cesium.Math.toRadians(-26), 30);
+      applyFollow(mv, mid, 1.9, Cesium.Math.toRadians(-24), 38);
     }
   }
 
@@ -1606,8 +2008,14 @@ export function createMoonMission(opts) {
       };
       onTrackMove = (e) => { if (_trackDragging) seekFromEvent(e); };
       onTrackUp = () => {
+        // 2026-10-17 用户反馈「时间轴无法暂停」根因：window 级 pointerup 无守卫——
+        // 拖过进度条后（_wasPlaying 置 true 且不复位），之后点暂停、再点一下画布/任意按钮，
+        // 都会走到这里把 playing 恢复（暂停被无声解除）。
+        // 修复：① 只有时间轴上按下过的松手才处理；② _wasPlaying 用完立即复位。
+        if (!_trackDragging) return;
         _trackDragging = false;
         if (_wasPlaying && p < 1) playing = true;
+        _wasPlaying = false;
         const b = $('tourPause');
         if (b) b.textContent = playing ? '暂停' : '播放';
         if (playing && !raf) { last = 0; raf = requestAnimationFrame(tick); }
@@ -1689,6 +2097,7 @@ export function createMoonMission(opts) {
     if (raf) cancelAnimationFrame(raf);
     raf = 0; playing = false;
     resetCamOverride();
+    setOrbitOverviewVisible(false);   // 收起「轨道总览」角标
     clearSeparators();          // 内含分离件 slot 销毁
     for (const s of slots.slice()) destroySlot(s);
     rocketSlot = rocketCoreSlot = craftSlot = loiCraftSlot = landerSlot = roverSlot = null;
@@ -1726,6 +2135,8 @@ export function createMoonMission(opts) {
       getRocketSlot(); getRocketCoreSlot(); getCraftSlot();
       getFx(earthViewerRef, 'flame'); getFx(earthViewerRef, 'rcs');
     },
+    /** 发射前预览：火箭竖立于当前发射台 + 相机取景（选场/进面板时调用；播放中自动跳过） */
+    previewLaunchSite,
     /** 冒烟/诊断：各模型槽位状态（含 minimumPixelSize/computedScale 等运行时量）
      *  注意：Model.boundingSphere/computedScale 在 sceneGraph 未就绪（首次 update 前）时
      *  访问会抛异常，必须逐项 safe 包装（2026-10-17 实测）。 */
@@ -1761,26 +2172,32 @@ export function createMoonMission(opts) {
     timeline: () => ({ ...T, boosterSep: BOOSTER_SEP, fairingSep: FAIRING_SEP, rate: { ...ACT_RATE } }),
     /** 冒烟探针专用：原始槽位引用（页内计算用，勿序列化返回） */
     debugSlots: () => slots,
-    setLaunchSite: (k) => { launchSiteKey = k; },
+    setLaunchSite: (k) => {
+      if (!LAUNCH_SITES[k]) return;
+      launchSiteKey = k;
+      previewLaunchSite();   // 未发射时换场：镜头转过去 + 竖起火箭（播放中内部自动跳过）
+    },
     setLandingSite: (k) => { landingSiteKey = k; },
     getLaunchSite: () => launchSiteKey,
     getLandingSite: () => landingSiteKey,
   };
 }
 
-// 动力下降曲线（第三幕，2026-10-17）：s∈[0,1]
+// 动力下降曲线（第三幕，2026-10-17 重做）：s∈[0,1]
 //   0~0.28 离轨制动（仍是飞船上面级）：100 km → 15 km，逆向主发动机
-//   0.28~1 动力下降（着陆器）：15 km → 月面，先快后慢，末段收油门 + 小幅水平机动
+//   0.28~1 动力下降（着陆器）：15 km → 月面，先快后慢，末段收油门
+// 水平位移（子午线大圆弧）不在本曲线内——由 render 的 ARC_END 逻辑按进度推进纬度，
+// 末端 30% 垂直下降（对应真实着陆末段「几乎垂直」的最后几百米）。
 function descentProfile(s) {
   const s01 = clamp01(s);
   if (s01 < 0.28) {
     const u = s01 / 0.28;
-    return { alt: lerp(100000, 15000, u * 0.25 + u * u * 0.75), thrust: 0.55 + 0.45 * (1 - u), drift: 0 };
+    return { alt: lerp(100000, 15000, u * 0.25 + u * u * 0.75), thrust: 0.55 + 0.45 * (1 - u) };
   }
   const u = (s01 - 0.28) / 0.72;
-  const alt = 15000 * Math.pow(1 - u, 1.7);
+  const alt = 15000 * Math.pow(1 - u, 1.1);
   const thrust = u < 0.82 ? 1 : Math.max(0.12, (1 - u) / 0.18);
-  return { alt, thrust, drift: clamp01((u - 0.2) / 0.6) };
+  return { alt, thrust };
 }
 
 export default createMoonMission;

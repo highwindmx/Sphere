@@ -196,8 +196,15 @@
       </div>
     </div>
 
-    <!-- 地月转移「距离已压缩」常驻标注 -->
-    <div id="compressNote" class="compress-note hidden">地月距离已压缩（约 1/6 真实距离）· 转移轨道为示意</div>
+    <!-- 地月转移常驻标注：轨道尺度为真实比例，仅月球体积 ×8 示意（2026-10-17 文案修正） -->
+    <div id="compressNote" class="compress-note hidden">轨道尺度为真实比例 · 月球体积 ×8 示意（右下角「轨道总览」看椭圆全貌）</div>
+
+    <!-- 第二幕「轨道总览」角标视窗（2026-10-17 用户反馈：需要一个更大尺度的坐标系
+         呈现霍曼转移椭圆总体情况）。Canvas 2D，固定轨道面坐标系，由 src/rocket.js 绘制。 -->
+    <div id="orbitOverview" class="orbit-overview hidden">
+      <div class="oo-head">🛰 轨道总览 · 霍曼转移椭圆（轨道面俯视）</div>
+      <canvas id="orbitOverviewCanvas" width="300" height="216"></canvas>
+    </div>
 
     <!-- 幕间文字幕卡 -->
     <div id="actCard" class="act-card hidden"><div id="actCardText"></div></div>

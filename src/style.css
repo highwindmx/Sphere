@@ -195,3 +195,9 @@ table.dl .t-cache .bar>i{display:block;height:100%;width:0;background:#3f6ea8;bo
 .t-cancel{background:none;border:1px solid #5a3350;color:#d98fb0;border-radius:4px;padding:1px 6px;font-size:9px;cursor:pointer;flex:0 0 auto}
 .t-cancel:hover{background:#3a2034;border-color:#8a4a72}
 .sp-btn.dl-active{border-color:#4a8ce0;background:#17294a;color:#8fb6ff}
+
+/* ===== 第二幕「轨道总览」角标视窗（2026-10-17 用户反馈：更大尺度坐标系看霍曼椭圆） ===== */
+/* 位置：右侧、导航控件（top≈206 起）之下、压缩说明（bottom 146）之上；不挡底部巡游面板 */
+.orbit-overview{position:absolute;z-index:26;right:16px;bottom:172px;width:308px;padding:8px 8px 6px;background:#0a1022d9;border:1px solid #33446e;border-radius:10px;box-shadow:0 4px 16px #0006;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.orbit-overview .oo-head{font-size:11px;color:#9fc6ff;letter-spacing:.5px;margin-bottom:6px;white-space:nowrap}
+.orbit-overview canvas{display:block;width:300px;height:216px}

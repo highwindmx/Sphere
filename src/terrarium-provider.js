@@ -252,3 +252,45 @@ export function createLocalTerrainProvider() {
       tileAvailable(x, y, level) ? loadHeightsGeographic(x, y, level) : undefined,
   });
 }
+
+/**
+ * 采样地表高程（米，相对 WGS84 椭球）：与 globe 完全同源的瓦片数据。
+ * 从最高可用层级逐级往下找第一个 tileAvailable 的地理瓦片（发射台类非山脉点 → z9 中国地形），
+ * 双线性插值出该点高程。
+ *
+ * ⚠ 为什么不用 Cesium.sampleTerrainMostDetailed（2026-10-17 实测踩坑）：
+ *   该 API 内部读 terrainProvider.availability.computeMaximumLevelAtPosition，
+ *   而 CustomHeightmapTerrainProvider 不设 availability → 直接抛
+ *   "Cannot read properties of undefined (reading 'computeMaximumLevelAtPosition')"。
+ *   previewLaunchSite 的 try/catch 会把它吞掉按 0 高程取景 → 酒泉（海拔 ~1 km）
+ *   相机在地下 ~850 m，月面/地表预览全黑。本函数与渲染共用 loadHeightsGeographic，
+ *   数据必然一致。
+ */
+export async function sampleTerrainHeight(lon, lat) {
+  for (let level = CHINA_MAX_LEVEL; level >= 0; level--) {
+    // ⚠ 坑（2026-10-17 实测）：GeographicTilingScheme 默认 numberOfLevelZeroTilesX=2
+    //   （z9 时 x 方向 1024 块、每块 360/2^(L+1)°），不能按 1<<level 算 x，否则采样点
+    //   落到西半球去（曾采到 -4942 m 的大西洋海底）。用 scheme 自己的计数函数。
+    const xTiles = geoScheme.getNumberOfXTilesAtLevel(level);
+    const yTiles = geoScheme.getNumberOfYTilesAtLevel(level);
+    // 地理方案等距经纬切分：y=0 在北极，行向南增（与 tileXYToRectangle 一致）
+    const x = Math.min(xTiles - 1, Math.max(0, Math.floor((lon + 180) / 360 * xTiles)));
+    const y = Math.min(yTiles - 1, Math.max(0, Math.floor((90 - lat) / 180 * yTiles)));
+    if (!tileAvailable(x, y, level)) continue;
+    const heights = await loadHeightsGeographic(x, y, level);
+    if (!heights) return 0;
+    const rect = geoScheme.tileXYToRectangle(x, y, level);
+    const west = Cesium.Math.toDegrees(rect.west), east = Cesium.Math.toDegrees(rect.east);
+    const north = Cesium.Math.toDegrees(rect.north), south = Cesium.Math.toDegrees(rect.south);
+    const u = Math.min(0.9999, Math.max(0, (lon - west) / (east - west)));
+    const v = Math.min(0.9999, Math.max(0, (north - lat) / (north - south)));
+    const fx = u * (SIZE - 1), fy = v * (SIZE - 1);
+    const ix = fx | 0, iy = fy | 0;
+    const ix1 = Math.min(SIZE - 1, ix + 1), iy1 = Math.min(SIZE - 1, iy + 1);
+    const tx = fx - ix, ty = fy - iy;
+    const a = heights[iy * SIZE + ix], b = heights[iy * SIZE + ix1];
+    const c = heights[iy1 * SIZE + ix], d = heights[iy1 * SIZE + ix1];
+    return a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty;
+  }
+  return 0;
+}

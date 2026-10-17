@@ -1393,12 +1393,16 @@ function enterRocketMode() {
     const tgBtn = document.getElementById('btnTiangong');
     if (tgBtn) tgBtn.textContent = '📡 天宫轨道';
   }
+  // 探月任务在地球 Viewer 上演出：若停在月球模式先切回（否则预览火箭画在隐藏容器里）
+  if (isMoonMode) enterEarthMode();
   // 勾选同步：任务面板打开 ⇔ 探月任务顶层勾选
   const mmCb = document.getElementById('layer-moonmission');
   if (mmCb) mmCb.checked = true;
   getMission();
   // 预加载地球侧 3D 模型（GLB 异步）：用户选场地/看点的时候就在加载，点火时已就绪
   moonMission.preload?.();
+  // 发射前预览（2026-10-17 用户反馈）：进面板即把火箭竖在当前发射台、镜头转过去
+  moonMission.previewLaunchSite?.();
   $('tourPanel')?.classList.remove('hidden');
   $('tourTitle').textContent = '探月任务 · 三幕剧';
   $('flyControls')?.classList.add('hidden');

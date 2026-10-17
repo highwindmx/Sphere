@@ -159,8 +159,9 @@ function addHighResLunarLayer(viewer, onStatus) {
         credit: 'NASA Moon Trek · LRO WAC Mosaic（303 ppd）',
       });
       // ⚠ Cesium 1.146 坑：addImageryProvider(provider, {}) 的第二参会被当 index（ToInteger({})===0）
-      //   → 新层插到 0 抢掉底图位。必须单参 add()。
-      _lunarHiResLayer = viewer.imageryLayers.addImageryProvider(p);
+      //   → 新层插到 0 抢掉底图位。必须 ImageryLayer + 单参 add()。
+      // 高清层同样套提亮参数（否则在线瓦片加载后月面又变回暗的）。
+      _lunarHiResLayer = viewer.imageryLayers.add(brightLayer(p));
       _lunarHiResState = 'on';
       if (onStatus) onStatus('月面高清瓦片已加载（LRO WAC ≈100 m/像素，已缓存到本地）', 'ok');
     })
@@ -193,6 +194,24 @@ export function setLunarHiRes(on, onStatus = null) {
 
 export function isLunarHiRes() { return _lunarHiRes; }
 export function lunarHiResState() { return _lunarHiResState; }
+
+// 月面提亮（2026-10-17 用户反馈「月面近黑，月兔车动起来看不清」）：
+// 本地 lunar_wac.jpg 是 WAC 反照率镶嵌——实测全局均值 64/255、着陆区仅 37/255，
+// 叠加太阳光照后渲染像素 ~29，近距看等于近黑。
+// ImageryLayer 调整参数（vendored sampleAndBlend 中的应用顺序：gamma → brightness → contrast）：
+//   out = clamp(src^(1/gamma) × brightness)   ← 2026-10-17 读 shader 实测标定的公式
+//   gamma=1.45    → 指数 0.69，暗部大幅提亮且高光不 clipping；
+//   brightness=1.35 → 线性再乘一档。两者合用：着陆区 37 → ~91、全局均值 64 → ~133。
+// ⚠ 两个坑（都读 vendored shader 证实，改值前必读）：
+//   ① czm_gammaCorrect 在非 HDR 下是**恒等函数**（#ifdef HDR 才生效）——所以默认
+//      (gamma=1) 路径对纹理值什么也不做，别按「sRGB 解码」的直觉推；
+//   ② gamma<1 是**变暗**（指数 >1），要提亮必须 gamma>1。第一版按直觉写了 0.7，白改。
+const LUNAR_LAYER_OPTS = { gamma: 1.45, brightness: 1.35 };
+
+/** 给月球 viewer 的影像层统一套提亮参数（底图 / 高清瓦片层共用） */
+function brightLayer(provider) {
+  return new Cesium.ImageryLayer(provider, LUNAR_LAYER_OPTS);
+}
 
 /**
  * 创建月球 Viewer（影像 + 高程 + 月面标注）
@@ -249,12 +268,14 @@ export function createMoonViewer(containerId = 'moonContainer', onStatus = null)
     console.warn('[lunar] 月球导航控件创建失败（不影响主流程）：', e);
   }
 
-  // 影像底图
+  // 影像底图（2026-10-17：套 LUNAR_LAYER_OPTS 提亮，见文件头注释）
   Cesium.SingleTileImageryProvider.fromUrl('lunar/lunar_wac.jpg')
     .then((p) => {
       if (!_moonViewer) return;
       _moonViewer.imageryLayers.removeAll();
-      _moonViewer.imageryLayers.addImageryProvider(p);
+      // ⚠ Cesium 1.146 坑：addImageryProvider(provider, {}) 的第二参会被当 index
+      //   （ToInteger({})===0）→ 新层插到 0 抢底图位。必须 ImageryLayer + 单参 add()。
+      _moonViewer.imageryLayers.add(brightLayer(p));
       if (onStatus) onStatus('月球影像已加载', 'ok');
       // 高清瓦片层（见下）：底图就绪后再叠加，缺失/离线时自动保持本地底图
       addHighResLunarLayer(_moonViewer, onStatus);
