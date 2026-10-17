@@ -1,6 +1,7 @@
 // src/lunar.js — 月球 Viewer、月面高程与月面标注
 
 import * as Cesium from 'cesium';
+import CesiumNavigation from 'cesium-navigation-es6';
 
 // 月球椭球（球形，半径 ~1737.4 km）
 export const MOON_ELLIPSOID = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
@@ -50,6 +51,7 @@ export const MOON_GROUPS = [
 ];
 
 let _moonViewer = null;
+let _moonNav = null;        // 月球 Viewer 的右上角导航控件（2026-10-17：探月第三/四幕要保留操作控件）
 let _moonEntities = null;   // 标注实体
 let _moonGroupMap = new Map();
 let _heightBuf = null;      // 高程采样缓冲（Uint8 灰度）
@@ -123,6 +125,75 @@ function heightmapCallback(x, y, level) {
   return out;
 }
 
+// ====== 月面高清瓦片层（2026-10-17 接入） ======
+// 本地资产只有 lunar_wac.jpg（8192×4096 ≈ 660 m/像素）与 lunar_dem.png（4096×2048 ≈ 8.5 km/像素），
+// 近距离（探月第三/四幕几十米机位）看不出月面细节——必须补在线瓦片源。
+// 源：NASA Moon Trek 官方 RESTful WMTS（LRO WAC 全局镶嵌 303 ppd ≈ 100 m/像素）：
+//   https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/{z}/{y}/{x}.jpg
+//   （官方 apidoc 明确：覆盖全球的产品的第 0 级 = 2 列 × 1 行 → 与 GeographicTilingScheme 一致）
+// 通道：前端请求本地端点 /tiles/lunar/{z}/{x}/{y}.jpg，app.py 未命中时代理上游并回写
+//   public/tiles/lunar/…（与 esri/eox/gibs 同一套「本地优先 + 在线缓存」机制）。
+// 降级：先探测 0/0/0，失败即不挂层（离线或被墙时静默保持本地底图，不产生瓦片报错刷屏）。
+const LUNAR_TILE_URL = '/tiles/lunar/{z}/{x}/{y}.jpg';
+const LUNAR_TILE_MAX_LEVEL = 9;
+let _lunarHiRes = localStorage.getItem('sphere.lunarHiRes') !== '0';
+let _lunarHiResLayer = null;
+let _lunarHiResState = 'idle';   // idle | on | off | failed
+
+function addHighResLunarLayer(viewer, onStatus) {
+  if (!_lunarHiRes || !viewer || viewer.isDestroyed()) return;
+  if (_lunarHiResLayer) return;
+  fetch(LUNAR_TILE_URL.replace('{z}', '0').replace('{x}', '0').replace('{y}', '0'))
+    .then((r) => {
+      if (!r.ok) throw new Error('probe http ' + r.status);
+      return r.arrayBuffer();
+    })
+    .then((buf) => {
+      if (!_lunarHiRes || !viewer || viewer.isDestroyed() || buf.byteLength < 512) return;
+      const p = new Cesium.UrlTemplateImageryProvider({
+        url: LUNAR_TILE_URL,
+        tilingScheme: new Cesium.GeographicTilingScheme({ ellipsoid: MOON_ELLIPSOID }),
+        tileWidth: 256,
+        tileHeight: 256,
+        maximumLevel: LUNAR_TILE_MAX_LEVEL,
+        credit: 'NASA Moon Trek · LRO WAC Mosaic（303 ppd）',
+      });
+      // ⚠ Cesium 1.146 坑：addImageryProvider(provider, {}) 的第二参会被当 index（ToInteger({})===0）
+      //   → 新层插到 0 抢掉底图位。必须单参 add()。
+      _lunarHiResLayer = viewer.imageryLayers.addImageryProvider(p);
+      _lunarHiResState = 'on';
+      if (onStatus) onStatus('月面高清瓦片已加载（LRO WAC ≈100 m/像素，已缓存到本地）', 'ok');
+    })
+    .catch(() => {
+      _lunarHiResState = 'failed';
+      if (onStatus) onStatus('月面高清瓦片不可用（离线/上游不可达），使用本地月面贴图', 'warn');
+    });
+}
+
+function removeHighResLunarLayer(viewer) {
+  if (_lunarHiResLayer && viewer && !viewer.isDestroyed()) {
+    try { viewer.imageryLayers.remove(_lunarHiResLayer); } catch { /* 忽略 */ }
+  }
+  _lunarHiResLayer = null;
+  _lunarHiResState = 'off';
+}
+
+/** UI 开关：月面高清瓦片（在线） */
+export function setLunarHiRes(on, onStatus = null) {
+  _lunarHiRes = !!on;
+  localStorage.setItem('sphere.lunarHiRes', on ? '1' : '0');
+  const v = getMoonViewer();
+  if (on) addHighResLunarLayer(v, onStatus);
+  else {
+    removeHighResLunarLayer(v);
+    if (onStatus) onStatus('已关闭月面高清瓦片（使用本地月面贴图）', '');
+  }
+  return _lunarHiRes;
+}
+
+export function isLunarHiRes() { return _lunarHiRes; }
+export function lunarHiResState() { return _lunarHiResState; }
+
 /**
  * 创建月球 Viewer（影像 + 高程 + 月面标注）
  */
@@ -163,6 +234,21 @@ export function createMoonViewer(containerId = 'moonContainer', onStatus = null)
 
   _moonViewer = viewer;
 
+  // 导航控件（指南针 / 缩放 / 重置 / 比例尺）：与地球同款，右上角位置由
+  // .cesium-widget-cesiumNavigationContainer 的 CSS 决定（style.css）。
+  // 2026-10-17：探月第三/四幕在月球容器内，没有它「右上角操作控件」就整体消失。
+  try {
+    _moonNav = new CesiumNavigation(viewer, {
+      enableCompass: true,
+      enableZoomControls: true,
+      enableDistanceLegend: true,
+      defaultResetView: Cesium.Cartographic.fromDegrees(0, 10, MOON_R * 3.2),
+      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-90), roll: 0 },
+    });
+  } catch (e) {
+    console.warn('[lunar] 月球导航控件创建失败（不影响主流程）：', e);
+  }
+
   // 影像底图
   Cesium.SingleTileImageryProvider.fromUrl('lunar/lunar_wac.jpg')
     .then((p) => {
@@ -170,6 +256,8 @@ export function createMoonViewer(containerId = 'moonContainer', onStatus = null)
       _moonViewer.imageryLayers.removeAll();
       _moonViewer.imageryLayers.addImageryProvider(p);
       if (onStatus) onStatus('月球影像已加载', 'ok');
+      // 高清瓦片层（见下）：底图就绪后再叠加，缺失/离线时自动保持本地底图
+      addHighResLunarLayer(_moonViewer, onStatus);
     })
     .catch(() => { if (onStatus) onStatus('月球影像加载失败（缺 lunar/lunar_wac.jpg）', 'warn'); });
 
@@ -258,6 +346,9 @@ export function sampleMoonHeight(lon, lat) {
 
 export function destroyMoonViewer() {
   if (_moonViewer) {
+    _lunarHiResLayer = null;
+    _lunarHiResState = 'idle';
+    if (_moonNav) { try { _moonNav.destroy(); } catch { /* 忽略 */ } _moonNav = null; }
     try { _moonViewer.destroy(); } catch { /* 忽略 */ }
     _moonViewer = null;
   }
@@ -285,6 +376,9 @@ export function getMoonGroups() {
 export default {
   createMoonViewer,
   destroyMoonViewer,
+  setLunarHiRes,
+  isLunarHiRes,
+  lunarHiResState,
   toggleLunarGroup,
   getMoonViewer,
   getMoonGroups,

@@ -96,6 +96,13 @@
         <div class="tool-row">
           <button id="btnMoonHome" class="tool-btn" title="停止跟随，飞回月球正面默认俯瞰视角">🏠 月球归位</button>
         </div>
+        <!-- 月面高清瓦片：本地只有 8192×4096 全局贴图（≈660 m/像素），近距离看不出细节。
+             勾选后叠加 NASA Moon Trek 在线瓦片（LRO WAC 303 ppd ≈100 m/像素，经本地代理缓存）；
+             离线/上游不可达时自动回退本地贴图。 -->
+        <label class="hover-preview-cb" title="叠加 NASA Moon Trek 在线瓦片：LRO WAC 全局镶嵌 303 ppd（≈100 m/像素）。首次加载经本地代理缓存到 public/tiles/lunar/；离线或上游不可达时自动回退本地 8192×4096 贴图">
+          <input type="checkbox" id="moonHiRes" checked />
+          <span>月面高清瓦片（在线 LRO WAC ≈100 m/像素）</span>
+        </label>
         <div id="moonGroups" class="moon-groups"></div>
       </section>
     </aside>

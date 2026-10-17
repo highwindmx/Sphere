@@ -301,7 +301,7 @@ def build_rover():
         g.node(g.mesh(cylinder(0.03, 0.03, 0.52), silver), [0.72, 0.42, 0], '桅杆'),
         g.node(g.mesh(box(0.14, 0.12, 0.14), dark), [0.72, 1.00, 0], '相机头'),
     ]
-    # 6 轮：滚动 = 绕 Z 轴节点动画（半圈 0.5s，REPEAT 循环即 1 转/秒，首尾恒等无缝）
+    # 6 轮：滚动 = 绕轮轴（Z）的节点动画。
     # 轮辐：每轮 3 根银色小辐条作为轮子节点的子节点——纯色光滑圆柱绕自身轴旋转
     #       视觉上几乎不变（2026-10-17 冒烟实测 animDiff≈0.10 假阴性），辐条让旋转可判读。
     wheel_nodes = []
@@ -313,11 +313,24 @@ def build_rover():
             wheel_nodes.append(g.node(
                 g.mesh(rot_x_90(cylinder(0.16, 0.16, 0.14, seg=16)), wheel),
                 [wx, 0.16, wz], f'轮{xz(wx, wz)}', children=spokes))
-    # 动画：input times=[0,0.5]，output 四元数 [identity, 绕Z半圈]
-    tv = struct.pack('<2f', 0.0, 0.5)
-    qv = struct.pack('<8f', 0, 0, 0, 1, 0, 0, 1, 0)
-    t_idx = g.raw_accessor(tv, 5126, 2, 'SCALAR', [0.0], [0.5])
-    q_idx = g.raw_accessor(qv, 5126, 2, 'VEC4')
+    # 动画：绕 -Z 整圈（4 关键帧 0 / -120° / -240° / -360°，一圈 0.86s ≈ 1.16 转/秒，
+    #       匹配 1.17 m/s 车速与 R=0.16 m 轮半径）。
+    # ⚠ 方向铁律（2026-10-17 用户实测「轮子方向不正常」修正）：前进 +X、轮轴 +Z 的右手系里，
+    #   正确滚动是绕 **-Z** 旋转（接触点速度 = v_center + ω×r = 0 → ω_z<0）；
+    #   旧版「绕 +Z 半圈」= 轮子倒转。整圈首尾恒等（q(-360°)=(0,0,0,-1) 与 identity 同姿态）
+    #   → REPEAT 无缝；中间两帧把旋转方向钉死（只有 0/180° 两帧时 slerp 方向二义）。
+    #   相邻关键帧点积均 = 0.5 > 0，slerp 全程走短弧、方向一致。
+    times = (0.0, 0.287, 0.573, 0.86)
+    quats = (
+        (0.0, 0.0, 0.0, 1.0),          #   0°
+        (0.0, 0.0, -0.8660254, 0.5),   # -120°
+        (0.0, 0.0, -0.8660254, -0.5),  # -240°
+        (0.0, 0.0, 0.0, -1.0),         # -360°（与 identity 同姿态，循环无缝）
+    )
+    tv = struct.pack('<4f', *times)
+    qv = struct.pack('<16f', *[c for q in quats for c in q])
+    t_idx = g.raw_accessor(tv, 5126, 4, 'SCALAR', [0.0], [0.86])
+    q_idx = g.raw_accessor(qv, 5126, 4, 'VEC4')
     channels = [{'sampler': 0, 'target': {'path': 'rotation', 'node': n}} for n in wheel_nodes]
     anims = [{'channels': channels, 'samplers': [
         {'input': t_idx, 'output': q_idx, 'interpolation': 'LINEAR'}]}]

@@ -27,6 +27,8 @@ import {
   getMoonViewer,
   getMoonGroups,
   sampleMoonHeight,
+  setLunarHiRes,
+  isLunarHiRes,
   MOON_ELLIPSOID,
 } from './lunar.js';
 
@@ -1340,6 +1342,17 @@ function exitRocketMode() {
   if (mmCb) mmCb.checked = false;
 }
 
+// 月面高清瓦片开关（见 lunar.js：本地贴图只有 ≈660 m/像素，高清需在线源）
+{
+  const cb = $('moonHiRes');
+  if (cb) {
+    cb.checked = isLunarHiRes();
+    cb.addEventListener('change', () => {
+      setLunarHiRes(cb.checked, (msg, kind) => setStatus(msg, kind));
+    });
+  }
+}
+
 // 月球一键归位：停止跟随，飞回默认正面俯瞰视角（对应地球「回到中国」）
 $('btnMoonHome')?.addEventListener('click', () => {
   const mv = getMoonViewer();
@@ -1375,7 +1388,13 @@ $('tourStop')?.addEventListener('click', () => {
 
 // ====== 导航控件锁定：巡礼/探月播放期间禁用 cesium-navigation（置灰 + 控件失效） ======
 function cameraLocked() {
-  return isRouteTourFollowing() || (moonMission && moonMission.isActive());
+  if (isRouteTourFollowing()) return true;
+  // 探月任务（2026-10-17 用户反馈）：仅第二幕地月顶视构图锁定导航控件，
+  // 第一幕（地球发射段）与第三/四幕（月球）保留右上角指南针/缩放/重置可用。
+  if (moonMission && moonMission.isActive()) {
+    return typeof moonMission.navLocked === 'function' ? moonMission.navLocked() : false;
+  }
+  return false;
 }
 
 let _navLocked = null;
@@ -1386,8 +1405,10 @@ viewer.scene.postRender.addEventListener(() => {
   if (locked !== _navLocked) {
     _navLocked = locked;
     earthNav.setNavigationLocked(locked);
-    const c = document.querySelector('.cesium-widget-cesiumNavigationContainer');
-    if (c) c.classList.toggle('nav-locked', locked);
+    // 地球 + 月球两个容器都要置灰（月球 viewer 也有自己的导航控件）
+    for (const c of document.querySelectorAll('.cesium-widget-cesiumNavigationContainer')) {
+      c.classList.toggle('nav-locked', locked);
+    }
     if (locked) setStatus('相机正被巡礼/任务跟随占用，导航控件暂不可用', 'warn');
   }
 });

@@ -133,10 +133,18 @@ report.steps.earthModels = await evaluate(`(async () => {
   return { ok: false, slots: m.debugState().slots };
 })()`);
 
-// ③ 点火 + 第一幕截图（p=0.05，上升段，分离尚未开始）
+// ③ 点火 + 第一幕截图（p=5%，上升段，分离尚未开始）
+// 时间轴常量从 timeline() 读（2026-10-17：第一幕加长 + 幕内慢放，硬编码进度会失效）
+const TL = await evaluate(`(() => {
+  const t = window.__moonMission.timeline();
+  return { ...t, pAct1: 0.05, pStage: (t.boosterSep + t.fairingSep) / 2,
+           pTransfer: (t.card1End + t.transferEnd) / 2, pLoi: (t.card2End + t.loiEnd) / 2,
+           pDescent: (t.loiEnd + t.touchEnd) / 2, pAct4: (t.touchEnd + 1) / 2 };
+})()`);
+report.steps.timeline = TL;
 await evaluate(`window.__moonMission.start({ launchSite: 'wenchang', landingSite: 'imbrium' })`);
 await sleep(1500);
-await evaluate(`window.__moonMission.seek(0.05)`);
+await evaluate(`window.__moonMission.seek(${TL.pAct1})`);
 await sleep(1200);
 report.steps.act1 = await evaluate(`(() => {
   const m = window.__moonMission;
@@ -153,10 +161,10 @@ report.steps.act1 = await evaluate(`(() => {
 const shot1 = await evaluate(`window.__t.snap(window.viewer)`);
 writeFileSync('tools/.mission-act1.png', Buffer.from(shot1.split(',')[1], 'base64'));
 
-// ③b 分离换模型 + 火焰特效（p=0.08：BOOSTER_SEP(0.063) 后 → 应显示 rocketCore 而非整箭）
+// ③b 分离换模型 + 火焰特效（pStage：助推器分离后、整流罩分离前 → 应显示 rocketCore 而非整箭）
 // 播放中 CDP evaluate 开销大（SwiftShader 页面单次可达数秒），p 会漂移过界——
-// seek 后先暂停再轮询，保证 eval 时 p 恒为 8%（2026-10-17 实测教训）。
-await evaluate(`window.__moonMission.seek(0.08); document.getElementById('tourPause').click();`);
+// seek 后先暂停再轮询，保证 eval 时 p 恒定（2026-10-17 实测教训）。
+await evaluate(`window.__moonMission.seek(${TL.pStage}); document.getElementById('tourPause').click();`);
 await sleep(900);
 report.steps.stageSwitch = await evaluate(`(() => {
   const st = window.__moonMission.debugState().slots;
@@ -169,19 +177,31 @@ report.steps.stageSwitch = await evaluate(`(() => {
     fullRocketHidden: rocket ? rocket.show === false : null,
     flameShown: flame ? flame.show === true : null,
     boosterSlots: st.filter((s) => s.key === 'booster').length,
+    navLocked: window.__moonMission.navLocked(),   // 第一幕应为 false（保留右上角控件）
   };
 })()`);
 
-// ③e 第二幕（p=0.35）：顶视转移 + 飞船上面级 + 压缩说明可见
-await evaluate(`window.__moonMission.seek(0.35)`);
+// ③e 第二幕（pTransfer）：顶视转移 + 飞船上面级 + 压缩说明可见；
+//     新增校验：地月虚直线 / 未飞半段虚线 / 行径实线 三个实体都存在且有 ≥2 个点
+await evaluate(`window.__moonMission.seek(${TL.pTransfer})`);
 await sleep(700);
 report.steps.transfer = await evaluate(`(() => {
   const st = window.__moonMission.debugState().slots;
   const craft = st.find((s) => s.key === 'craft');
+  const ids = ['moonEmLine', 'moonTransferMirror', 'moonTransferPath', 'moonTransferTrail'];
+  const ents = {};
+  for (const id of ids) {
+    const e = window.viewer.entities.getById(id);
+    let n = 0;
+    try { n = e.polyline.positions.getValue(Cesium.JulianDate.now()).length; } catch {}
+    ents[id] = n;
+  }
   return {
     craftShown: craft ? craft.show === true : null,
     phase: document.getElementById('rocketPhase')?.textContent || '',
     compressNoteVisible: !document.getElementById('compressNote')?.classList.contains('hidden'),
+    entityPoints: ents,
+    navLocked: window.__moonMission.navLocked(),
   };
 })()`);
 const shotTransfer = await evaluate(`window.__t.snap(window.viewer)`);
@@ -195,9 +215,18 @@ report.steps.camOverride = await evaluate(`(async () => {
   await sleep(120);
   const during = window.__moonMission.debugState().cam;
   window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }));
-  await sleep(300);
-  const after = window.__moonMission.debugState().cam;
-  return { duringOverride: during.override, afterOverride: after.override, blending: after.blend > 0 };
+  // 2026-10-17 新行为：松手后先静默 CAM_HOLD_MS(1.4s)，再启动 1.8s 混合回归
+  await sleep(400);
+  const hold = window.__moonMission.debugState().cam;   // 静默期：override=false、blend=0
+  // SwiftShader 下帧率极低（一帧可达数秒），静默期 1.4s 后要多等几帧才能看到 blend 起来
+  await sleep(4000);
+  const after = window.__moonMission.debugState().cam;  // 静默期结束：blend>0
+  return {
+    duringOverride: during.override,
+    afterOverride: hold.override,
+    holdNoBlend: hold.blend === 0,
+    blending: after.blend > 0,
+  };
 })()`);
 
 // ③d 时间轴隔离：画布拖动不改进度；只有 #tourTrack 按下才 seek
@@ -226,8 +255,8 @@ report.steps.timelineIsolation = await evaluate(`(async () => {
 })()`);
 
 
-// ④ 跳环月制动（p=0.70）→ 飞船上面级显示、着陆器隐藏；再跳动力下降（p=0.85）→ 反转 + 着陆火焰
-await evaluate(`window.__moonMission.seek(0.70)`);
+// ④ 跳环月制动（pLoi）→ 飞船上面级显示、着陆器隐藏；再跳动力下降（pDescent）→ 反转 + 着陆火焰
+await evaluate(`window.__moonMission.seek(${TL.pLoi})`);
 await sleep(600);
 report.steps.loi = await evaluate(`(() => {
   const st = window.__moonMission.debugState().slots;
@@ -237,9 +266,10 @@ report.steps.loi = await evaluate(`(() => {
     phase: document.getElementById('rocketPhase')?.textContent || '',
     loiCraftShown: loi ? loi.show === true : null,
     landerHidden: lander ? lander.show === false : null,
+    navLocked: window.__moonMission.navLocked(),
   };
 })()`);
-await evaluate(`window.__moonMission.seek(0.85)`);
+await evaluate(`window.__moonMission.seek(${TL.pDescent})`);
 await sleep(600);
 report.steps.descent = await evaluate(`(() => {
   const st = window.__moonMission.debugState().slots;
@@ -259,7 +289,7 @@ report.steps.descent = await evaluate(`(() => {
 // ④b 跳第四幕（p=0.95，巡视中段）→ 月球侧模型就绪 + rover 动画激活
 // 兜底：p 会随播放推进到 1（约 6s），若模型就绪时 tick 已停（animOn 未置位），
 //       再 seek 一次强制 render 补挂动画（seekTo 内部必跑 render）。
-await evaluate(`window.__moonMission.seek(0.95)`);
+await evaluate(`window.__moonMission.seek(${TL.pAct4})`);
 report.steps.act4 = await evaluate(`(async () => {
   const m = window.__moonMission;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -269,13 +299,38 @@ report.steps.act4 = await evaluate(`(async () => {
     const lander = pick(st, 'lander'), rover = pick(st, 'rover');
     if (lander && rover && lander.ready && rover.ready) {
       if (rover.animOn) return { ok: true, waitedMs: i * 250, lander, rover };
-      if (i > 24) { m.seek(0.97); }   // 已就绪但动画没挂上：强制一次 render
+      if (i > 24) { m.seek(${TL.pAct4} + 0.01); }   // 已就绪但动画没挂上：强制一次 render
     }
     await sleep(250);
   }
   return { ok: false, slots: m.debugState().slots };
 })()`);
 await sleep(800);
+// ④c 玉兔路线：车辙点数随进度增长、行驶方向（航向）与「向东偏南」一致
+report.steps.roverPath = await evaluate(`(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const m = window.__moonMission;
+  const mv = window.__getMoonViewer && window.__getMoonViewer();
+  const track = () => {
+    const e = mv && mv.entities.getById('moonRoverTrack');
+    try { return e.polyline.positions.getValue(Cesium.JulianDate.now()).length; } catch { return 0; }
+  };
+  m.seek(${TL.pAct4} - 0.02);
+  await sleep(400);
+  const n1 = track();
+  m.seek(${TL.pAct4} + 0.03);
+  await sleep(400);
+  const n2 = track();
+  // 行进方向：取月球车实体位置与落点的经纬度差
+  const mc = mv && mv.entities.getById('moonMissionCraft');
+  const pos = mc && mc.position.getValue(Cesium.JulianDate.now());
+  const c = pos ? Cesium.Cartographic.fromCartesian(pos, new Cesium.Ellipsoid(1737400, 1737400, 1737400)) : null;
+  return {
+    trackGrew: n2 > n1, n1, n2,
+    roverLon: c ? +Cesium.Math.toDegrees(c.longitude).toFixed(5) : null,
+    roverLat: c ? +Cesium.Math.toDegrees(c.latitude).toFixed(5) : null,
+  };
+})()`);
 report.steps.act4Phase = await evaluate(`(() => ({
   phase: document.getElementById('rocketPhase') ? document.getElementById('rocketPhase').textContent : '',
   progress: document.getElementById('tourProgressText') ? document.getElementById('tourProgressText').textContent : '',

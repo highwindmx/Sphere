@@ -242,6 +242,8 @@ def proxy_tile_cache(path):
         return proxy_tianditu_tile(path)
     if source == 'terrain':
         return proxy_terrain_tile(path)
+    if source == 'lunar':
+        return proxy_lunar_tile(path)
     abort(404)
 
 
@@ -333,6 +335,61 @@ def proxy_terrain_tile(path):
     if data is None:
         abort(404)  # 交回 provider 做父级回退，绝不回透明瓦片
     return Response(data, mimetype='image/png')
+
+
+# =====================================================================
+# 月面高清瓦片（NASA Moon Trek 官方 RESTful WMTS）
+# ---------------------------------------------------------------------
+# 本地 public/lunar/lunar_wac.jpg 只有 8192×4096（≈660 m/像素），近距离看不出
+# 月面细节；LRO WAC 全局镶嵌 303 ppd ≈ 100 m/像素，量级提升 ~6.6×。
+# 官方 apidoc（trek.nasa.gov/tiles/apidoc/trekAPI.html?body=moon）：
+#   .../1.0.0/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg
+#   覆盖全球的产品：第 0 级 = 2 列 × 1 行（与 Cesium GeographicTilingScheme 一致）。
+# 失败语义：回 1×1 透明 PNG（200）——该层叠在本地底图之上，透明即「透出本地底图」，
+#           同时避免 Cesium "Failed to obtain image tile" 报错刷屏。
+# =====================================================================
+_LUNAR_TILE = (
+    'https://trek.nasa.gov/tiles/Moon/EQ/'
+    'LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/{z}/{y}/{x}.jpg'
+)
+
+
+def proxy_lunar_tile(path):
+    # tiles/lunar/{z}/{x}/{y}.jpg（前端 URL 用 Cesium 约定的 z/x/y；上游是 z/y/x）
+    parts = path.split('/')
+    if len(parts) != 5 or not parts[4].endswith('.jpg'):
+        abort(404)
+    z, x, y = parts[2], parts[3], parts[4][:-4]
+    # 越界保护：第 0 级只有 2 列 1 行，深层列数 = 2^(z+1)、行数 = 2^z
+    try:
+        zi = int(z)
+        if int(y) >= 2 ** zi or int(x) >= 2 ** (zi + 1) or zi > 12:
+            abort(404)
+    except ValueError:
+        abort(404)
+    url = _LUNAR_TILE.format(z=z, y=y, x=x)
+    try:
+        data = _fetch_bytes(url, timeout=25, extra_headers={
+            # 上游对纯服务端 UA 有时会返回非图片内容，带浏览器 UA 更稳
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                          '(KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+            'Referer': 'https://trek.nasa.gov/moon/',
+        })
+    except Exception as e:
+        _log_proxy_fail(path, e)
+        return _transparent_response()
+    if not data or data[:2] != b'\xff\xd8':      # 非 JPEG（HTML 错误页等）→ 当作失败
+        _log_proxy_fail(path, ValueError('non-jpeg response'))
+        return _transparent_response()
+    try:
+        local = os.path.join(PUBLIC, path)
+        os.makedirs(os.path.dirname(local), exist_ok=True)
+        with open(local, 'wb') as fh:
+            fh.write(data)
+        _scan_invalidate()
+    except OSError:
+        pass
+    return Response(data, mimetype='image/jpeg')
 
 
 # =====================================================================
