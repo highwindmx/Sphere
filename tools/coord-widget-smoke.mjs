@@ -76,12 +76,16 @@ await sleep(20000);   // 等 viewer + 地形瓦片就绪（海拔读数需要）
 const report = {};
 
 // ① DOM 结构：旧读数行已移除，海拔只读 span 在位
+//   + 2026-10-17：navHistBody 默认折叠（[hidden] 生效——曾因 display:flex 盖掉 UA 规则而失效）
+//   + 2026-10-17：🏠 回国按钮已从侧栏迁入 coord-inputs
 try {
   report.dom = await evaluate(`(() => {
     const lon = document.getElementById('gotoLon'), lat = document.getElementById('gotoLat');
     const alt = document.getElementById('coordAlt');
     const cs = lon ? getComputedStyle(lon) : null;
     const inputs = document.querySelector('.coord-inputs');
+    const body = document.getElementById('navHistBody');
+    const home = document.getElementById('btnHome');
     return {
       liveGone: !document.getElementById('coordLive'),
       hasAlt: !!alt,
@@ -90,6 +94,9 @@ try {
       latPlaceholder: lat?.placeholder || '',
       inputWidth: cs ? Math.round(parseFloat(cs.width)) : 0,
       inputsGap: inputs ? getComputedStyle(inputs).gap : '',
+      navHistDefaultCollapsed: !!body && body.hidden && getComputedStyle(body).display === 'none',
+      homeInCoordWidget: !!home && !!home.closest('#coordWidget'),
+      homeGoneFromSidebar: !document.querySelector('#panel button#btnHome, .tool-row #btnHome'),
     };
   })()`);
 } catch (e) { report.domErr = String(e.message); }

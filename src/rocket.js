@@ -1,13 +1,20 @@
-// src/rocket.js — 探月三幕剧动画
-// 三幕结构：
-//   第一幕 · 点火起飞   （地球 Viewer：发射段上升 + 助推器/整流罩分离动效 + 发射轨迹线）
+// src/rocket.js — 探月任务四幕剧（3D 版：glTF Model 替代 billboard）
+// 四幕结构：
+//   第一幕 · 点火起飞   （地球 Viewer：发射段上升 + 助推器/整流罩分离动效 + 发射轨迹线；
+//                         长征五号整箭 3D 模型，机头沿速度方向）
 //   第二幕 · 月地转移   （地球 Viewer 内「局部太阳系顶视图」：压缩距离示意，
-//                         规划航线虚线 + 已飞轨迹亮线 + 示意月球，飞船沿航线飞行）
+//                         规划航线虚线 + 已飞轨迹亮线 + 示意月球，飞船上面级沿航线飞行）
 //   第三幕 · 月球着陆   （月球 Viewer：环月制动 LOI 俯视机位 → 动力下降，
-//                         末端按真实月面 DEM 接地，换着陆器图标）
+//                         末端按真实月面 DEM 接地，换着陆器 3D 模型）
+//   第四幕 · 玉兔巡视   （着陆器驻留，玉兔号月球车驶出，6 轮滚动节点动画）
 // 幕间用文字幕卡过渡。复用底部巡游面板：播放/暂停/倍率/进度条拖拽/幕节点跳转/重播。
 // 崩溃防护：camera.lookAt 只接受 Cartesian3 —— 禁止把 entity.position（Property）直接传入，
 //           否则相机矩阵为 NaN → createPotentiallyVisibleSet 抛 RangeError: invalid array length。
+// 3D 模型说明（2026-10-17，Cesium 1.146 实测要点）：
+//   - Model.fromGltfAsync({url, minimumPixelSize}) 异步加载；billboard 保留作加载期/失败兜底
+//   - 定位必须显式 modelMatrix = eastNorthUpToFixedFrame(pos, ellipsoid) * 旋转，否则躺在原点不可见
+//   - glTF 为 Y-up，Cesium 自动做 Y→Z 轴校正：identity 旋转即「竖直向上」
+//   - requestRenderMode 下每帧必须 scene.requestRender()（tick 内已做），模型才会随动画重绘
 
 import * as Cesium from 'cesium';
 import { MOON_ELLIPSOID, MOON_LANDING_SITES, sampleMoonHeight } from './lunar.js';
@@ -38,7 +45,8 @@ const T = {
   card1End: 0.17,     // 幕卡 1 结束
   transferEnd: 0.56,  // 第二幕结束（抵达月球影响球）
   card2End: 0.60,     // 幕卡 2 结束
-  loiEnd: 0.80,       // 环月制动段结束
+  loiEnd: 0.80,       // 环月制动段结束（开始动力下降）
+  touchEnd: 0.90,     // 第三幕结束（触月）；0.90~1.00 为第四幕「玉兔巡视」
 };
 // 幕节点（进度条跳转锚点）
 const ACTS = [
@@ -46,6 +54,7 @@ const ACTS = [
   { f: T.card1End, name: '转移' },
   { f: T.card2End, name: '入月轨' },
   { f: T.loiEnd, name: '着陆' },
+  { f: T.touchEnd, name: '巡视' },
 ];
 // 第一幕内的分离事件时刻
 const BOOSTER_SEP = T.liftEnd * 0.45;  // 助推器分离
@@ -68,6 +77,128 @@ function samplePath(points, s) {
 
 function wrapLon(lon) { return ((lon + 180) % 360 + 360) % 360 - 180; }
 
+// ====== glTF 3D 模型（异步加载 + billboard 兜底；2026-10-17） ======
+// 模型约定（tools/make_mission_models.py）：Y-up；火箭/飞船机头 +Y，着陆器/月球车接地 y=0。
+// Cesium 对 glTF 自动做 Y→Z 校正，故 modelMatrix = ENU(pos) * R 时 R=identity 即竖直向上。
+// minimumPixelSize 标定（2026-10-17 实测，勿照理论公式）：
+//   Cesium 的 minPx 放大用 _initialRadius（≠当前 boundingSphere.radius，实测放大量比理论小 ~4×），
+//   表观像素 ≈ 0.231 × minPx。取值按「旧 billboard 尺寸」标定：火箭/飞船/分离件 ~35px → 150/120，
+//   着陆器下降段 marker ~28px → 120；近距（月球车 30m 机位）走自然尺寸，minPx 不参与。
+const MODEL_DEFS = {
+  rocket:   { url: '/models/longmarch5.glb',  minPx: 150 },  // 第一幕整箭
+  craft:    { url: '/models/spacecraft.glb',  minPx: 150 },  // 第二幕上面级
+  loiCraft: { url: '/models/spacecraft.glb',  minPx: 150 },  // 第三幕环月段（月球 viewer 独立实例）
+  booster:  { url: '/models/booster.glb',     minPx: 120 },  // 分离件（每枚独立实例）
+  fairing:  { url: '/models/fairing.glb',     minPx: 120 },
+  lander:   { url: '/models/moon_lander.glb', minPx: 120 },
+  rover:    { url: '/models/yutu_rover.glb',  minPx: 80 },   // 第四幕（6 轮滚动动画）
+};
+
+const slots = [];           // 全部存活 slot 登记（stop 时统一销毁）
+let rocketSlot = null;      // 单例：整箭 / 上面级 / 环月飞船 / 着陆器 / 月球车
+let craftSlot = null;
+let loiCraftSlot = null;
+let landerSlot = null;
+let roverSlot = null;
+let earthViewerRef = null;  // 由 createMoonMission 赋值
+let moonViewerRef = null;
+
+/** 新建一个模型槽位并开始异步加载（不立即入场景，由 attachIfReady 在渲染循环里挂载） */
+function loadSlot(key, viewer) {
+  const def = MODEL_DEFS[key];
+  const slot = {
+    key, def, viewer,
+    model: null, ready: false, failed: false, added: false, destroyed: false,
+    animCount: 0, mat: new Cesium.Matrix4(),
+  };
+  slots.push(slot);
+  Cesium.Model.fromGltfAsync({
+    url: def.url,
+    minimumPixelSize: def.minPx,
+    gltfCallback: (gltf) => { slot.animCount = gltf.animations ? gltf.animations.length : 0; },
+  }).then((m) => {
+    if (slot.destroyed) { try { m.destroy(); } catch { /* 已销毁 */ } return; }
+    slot.model = m;
+    slot.ready = true;
+  }).catch((e) => {
+    slot.failed = true;
+    console.warn('[moonMission] 模型加载失败，回退 2D 图标：', def.url, e);
+  });
+  return slot;
+}
+
+/** 就绪即挂载到目标 viewer 的 primitives（月球 viewer 会随模式切换重建，added 标志自然复位） */
+function attachIfReady(slot) {
+  if (slot.ready && slot.model && !slot.added && !slot.model.isDestroyed()) {
+    slot.viewer?.scene.primitives.add(slot.model);
+    slot.added = true;
+  }
+  return slot.ready && slot.added;
+}
+
+function destroySlot(slot) {
+  if (!slot) return;
+  slot.destroyed = true;
+  if (slot.added && slot.viewer) {
+    try { slot.viewer.scene.primitives.remove(slot.model); } catch { /* 忽略 */ }
+  }
+  if (slot.model) { try { slot.model.destroy(); } catch { /* 忽略 */ } }
+  const i = slots.indexOf(slot);
+  if (i >= 0) slots.splice(i, 1);
+}
+
+function getRocketSlot() { if (!rocketSlot) rocketSlot = loadSlot('rocket', earthViewerRef); return rocketSlot; }
+function getCraftSlot() { if (!craftSlot) craftSlot = loadSlot('craft', earthViewerRef); return craftSlot; }
+function getLoiCraftSlot() { if (!loiCraftSlot) loiCraftSlot = loadSlot('loiCraft', moonViewerRef); return loiCraftSlot; }
+function getLanderSlot() { if (!landerSlot) landerSlot = loadSlot('lander', moonViewerRef); return landerSlot; }
+function getRoverSlot() { if (!roverSlot) roverSlot = loadSlot('rover', moonViewerRef); return roverSlot; }
+function hideSlot(s) { if (s && s.ready && s.model) s.model.show = false; }
+function showSlot(s) { if (s && s.ready && s.model) s.model.show = true; }
+
+// —— 旋转/定位辅助（ENU 系内）——
+const _q = new Cesium.Quaternion();
+const _m3 = new Cesium.Matrix3();
+const _rotM = new Cesium.Matrix4();
+const _enuM = new Cesium.Matrix4();
+const _dir = new Cesium.Cartesian3();
+
+/** 求把 ENU 天顶(0,0,1) 旋到单位向量 dir 的四元数（机头朝速度方向用） */
+function quatUpTo(dir, out) {
+  const d = Cesium.Cartesian3.dot(Cesium.Cartesian3.UNIT_Z, dir);
+  if (d > 0.999999) return Cesium.Quaternion.clone(Cesium.Quaternion.IDENTITY, out);
+  if (d < -0.999999) return Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_X, Math.PI, out);
+  Cesium.Cartesian3.cross(Cesium.Cartesian3.UNIT_Z, dir, _dir);
+  Cesium.Cartesian3.normalize(_dir, _dir);
+  return Cesium.Quaternion.fromAxisAngle(_dir, Math.acos(Math.max(-1, Math.min(1, d))), out);
+}
+
+/** [lon,lat,alt] 路径 a→b 的切向单位向量（ENU：东/北/天，米制近似） */
+function tangentENU(a, b, out) {
+  const latMid = Cesium.Math.toRadians((a[1] + b[1]) / 2);
+  const east = (b[0] - a[0]) * Cesium.Math.toRadians(1) * 6378137 * Math.cos(latMid);
+  const north = (b[1] - a[1]) * Cesium.Math.toRadians(1) * 6356752;
+  const up = b[2] - a[2];
+  const len = Math.hypot(east, north, up);
+  if (len < 1e-9) return Cesium.Cartesian3.clone(Cesium.Cartesian3.UNIT_Z, out);
+  return Cesium.Cartesian3.normalize(new Cesium.Cartesian3(east, north, up), out);
+}
+
+/** 模型落位：modelMatrix = ENU(cart, ellipsoid) * R(quat)。quat 为 ENU 系内旋转 */
+function placeModel(slot, cart, quat, ellipsoid) {
+  const m = slot.model;
+  if (!m || m.isDestroyed()) return;
+  Cesium.Matrix3.fromQuaternion(quat, _m3);
+  Cesium.Matrix4.fromRotationTranslation(_m3, Cesium.Cartesian3.ZERO, _rotM);
+  Cesium.Transforms.eastNorthUpToFixedFrame(cart, ellipsoid, _enuM);
+  Cesium.Matrix4.multiply(_enuM, _rotM, slot.mat);
+  m.modelMatrix = slot.mat;
+}
+
+/** 模型绕固定 ENU 轴翻滚（分离件用） */
+function tumbleQuat(axis, angle, out) {
+  return Cesium.Quaternion.fromAxisAngle(axis, angle, out);
+}
+
 /**
  * 创建探月任务控制器
  * @param {object} opts
@@ -76,6 +207,7 @@ function wrapLon(lon) { return ((lon + 180) % 360 + 360) % 360 - 180; }
  */
 export function createMoonMission(opts) {
   const { earthViewer, env } = opts;
+  earthViewerRef = earthViewer;
 
   let raf = 0, last = 0;
   let p = 0, playing = false, mult = 1;
@@ -297,9 +429,17 @@ export function createMoonMission(opts) {
   }
 
   // ---- 分离件：助推器 ×4（斜向弹开 + 翻滚 + 下坠），整流罩 ×2（两侧抛离 + 自转）----
+  // 3D 化（2026-10-17）：每枚分离件独立 loadSlot（模型实例不可共享），翻滚用固定 ENU 轴；
+  //                    billboard 保留作加载期兜底（slot.ready 后隐藏）。
   function clearSeparators() {
-    for (const b of boosters) earthViewer.entities.remove(b.ent);
-    for (const f of fairings) earthViewer.entities.remove(f.ent);
+    for (const b of boosters) {
+      earthViewer.entities.remove(b.ent);
+      destroySlot(b.slot);
+    }
+    for (const f of fairings) {
+      earthViewer.entities.remove(f.ent);
+      destroySlot(f.slot);
+    }
     boosters = [];
     fairings = [];
   }
@@ -312,6 +452,9 @@ export function createMoonMission(opts) {
       for (const [dlon, dlat, spin] of dirs) {
         boosters.push({
           dir: [dlon, dlat, spin],
+          axis: Cesium.Cartesian3.normalize(
+            new Cesium.Cartesian3(dlon * 0.45, 0.85, dlat * 0.45), new Cesium.Cartesian3()),
+          slot: loadSlot('booster', earthViewerRef),
           ent: earthViewer.entities.add({
             position: Cesium.Cartesian3.fromDegrees(base[0], base[1], base[2] - 300),
             billboard: {
@@ -346,6 +489,9 @@ export function createMoonMission(opts) {
       for (const d of defs) {
         fairings.push({
           dir: d.dir,
+          axis: Cesium.Cartesian3.normalize(
+            new Cesium.Cartesian3(1, 0.15, 0.1), new Cesium.Cartesian3()),
+          slot: loadSlot('fairing', earthViewerRef),
           ent: earthViewer.entities.add({
             position: Cesium.Cartesian3.fromDegrees(base[0], base[1], base[2] + 200),
             billboard: {
@@ -384,18 +530,23 @@ export function createMoonMission(opts) {
     if (boosters.length) {
       const dt = (p - BOOSTER_SEP) * D;
       if (dt > 8) {
-        for (const b of boosters) earthViewer.entities.remove(b.ent);
-        boosters = [];
+        clearSeparators();
       } else if (dt >= 0) {
         const base = rocketPosAt(BOOSTER_SEP);
         for (const b of boosters) {
           const [dlon, dlat, spin] = b.dir;
-          b.ent.position = Cesium.Cartesian3.fromDegrees(
+          const cart = Cesium.Cartesian3.fromDegrees(
             base[0] + dlon * 0.05 * dt,
             base[1] + dlat * 0.03 * dt,
             Math.max(0, base[2] - 300 + 900 * dt - 130 * dt * dt)
           );
-          b.ent.billboard.rotation = spin * dt * 1.7;
+          b.ent.position = cart;
+          if (attachIfReady(b.slot)) {
+            b.ent.billboard.show = false;
+            placeModel(b.slot, cart, tumbleQuat(b.axis, spin * dt * 1.7, _q), Cesium.Ellipsoid.WGS84);
+          } else {
+            b.ent.billboard.rotation = spin * dt * 1.7;
+          }
         }
       }
     }
@@ -406,17 +557,22 @@ export function createMoonMission(opts) {
     if (fairings.length) {
       const dt = (p - FAIRING_SEP) * D;
       if (dt > 6.5) {
-        for (const f of fairings) earthViewer.entities.remove(f.ent);
-        fairings = [];
+        clearSeparators();
       } else if (dt >= 0) {
         const base = rocketPosAt(FAIRING_SEP);
         for (const f of fairings) {
-          f.ent.position = Cesium.Cartesian3.fromDegrees(
+          const cart = Cesium.Cartesian3.fromDegrees(
             base[0] + f.dir * 0.09 * dt,
             base[1],
             Math.max(0, base[2] + 200 + 250 * dt - 110 * dt * dt)
           );
-          f.ent.billboard.rotation = f.dir * dt * 0.9;
+          f.ent.position = cart;
+          if (attachIfReady(f.slot)) {
+            f.ent.billboard.show = false;
+            placeModel(f.slot, cart, tumbleQuat(f.axis, f.dir * dt * 0.9, _q), Cesium.Ellipsoid.WGS84);
+          } else {
+            f.ent.billboard.rotation = f.dir * dt * 0.9;
+          }
         }
       }
     }
@@ -437,6 +593,14 @@ export function createMoonMission(opts) {
     const mv = env.showMoon();
     inMoon = true;
     if (!mv) return;
+    // 月球 viewer 每次进入都会重建（destroyMoonViewer → viewer.destroy()，其 primitives 随之销毁），
+    // 旧槽位里的 Model 已不可用：检测换代即销毁重建，避免把死模型挂进新场景。
+    if (moonViewerRef !== mv) {
+      destroySlot(loiCraftSlot); loiCraftSlot = null;
+      destroySlot(landerSlot); landerSlot = null;
+      destroySlot(roverSlot); roverSlot = null;
+      moonViewerRef = mv;
+    }
     const site = MOON_LANDING_SITES[landingSiteKey];
 
     // 环月轨迹（闭环，即环月段轨迹描绘）
@@ -515,13 +679,30 @@ export function createMoonMission(opts) {
   }
 
   function focusEarth(alt, wide) {
-    const range = wide ? 3.0e7 : Math.max(6000, alt * 2.2);
+    // 末端 clamp 900m~300km：3D 火箭仅 36m 高，不 clamp 的话触地/入轨瞬间只剩 1~2 像素
+    const range = wide ? 3.0e7 : Cesium.Math.clamp(alt * 2.6, 900, 3.0e5);
     const pos = earthRocket ? earthRocket.position.getValue(Cesium.JulianDate.now()) : null;
     if (!pos) return;
     earthViewer.camera.lookAt(
       pos,
       new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-38), range)
     );
+  }
+
+  // 飞行方向单位向量（ENU）：取样 ±0.4% 进度处两点求切向（竖直起步时回退天顶）
+  function flightDirENU(pp) {
+    const e = 0.004;
+    const a = rocketPosAt(Math.max(0, pp - e));
+    const b = rocketPosAt(Math.min(1, pp + e));
+    return tangentENU(a, b, _dir);
+  }
+
+  /** 火箭/飞船模型：就绪则落位返回 true（调用方据此隐藏 billboard 兜底） */
+  function updateRocketModel(slot, cart, dir) {
+    if (!slot) return false;
+    if (!attachIfReady(slot)) return false;
+    placeModel(slot, cart, quatUpTo(dir, _q), Cesium.Ellipsoid.WGS84);
+    return true;
   }
 
   // ---- 逐帧渲染 ----
@@ -542,16 +723,22 @@ export function createMoonMission(opts) {
         earthRocket.show = true;
         noteOn(false);
         const pos = rocketPosAt(p);
-        earthRocket.position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2]);
-        earthRocket.billboard.rotation = 0;
+        const cart = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2]);
+        earthRocket.position = cart;
+        // 3D 整箭（机头沿速度方向）；未就绪/失败回退 billboard
+        if (updateRocketModel(getRocketSlot(), cart, flightDirENU(p))) {
+          earthRocket.billboard.show = false;
+          hideSlot(craftSlot);
+        } else {
+          earthRocket.billboard.show = true;
+          earthRocket.billboard.rotation = 0;
+          earthRocket.billboard.image = p >= BOOSTER_SEP ? STAGE1_ICON : FULL_ROCKET_ICON;
+        }
         if (p >= FAIRING_SEP) {
-          earthRocket.billboard.image = STAGE1_ICON;
           earthRocket.label.text = '长征五号 · 整流罩分离';
         } else if (p >= BOOSTER_SEP) {
-          earthRocket.billboard.image = STAGE1_ICON;
           earthRocket.label.text = '长征五号 · 助推器分离';
         } else {
-          earthRocket.billboard.image = FULL_ROCKET_ICON;
           earthRocket.label.text = '长征五号 · 点火升空';
         }
         pushLaunchTrail(pos);
@@ -572,9 +759,17 @@ export function createMoonMission(opts) {
         noteOn(true);
         const s = clamp01((p - T.card1End) / (T.transferEnd - T.card1End));
         const pos = rocketPosAt(p);
-        earthRocket.position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2]);
-        earthRocket.billboard.rotation = flightRotation(p);
-        earthRocket.billboard.image = SPACECRAFT_ICON;
+        const cart = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2]);
+        earthRocket.position = cart;
+        // 3D 飞船上面级（机头沿航线切向）
+        if (updateRocketModel(getCraftSlot(), cart, flightDirENU(p))) {
+          earthRocket.billboard.show = false;
+          hideSlot(rocketSlot);
+        } else {
+          earthRocket.billboard.show = true;
+          earthRocket.billboard.rotation = flightRotation(p);
+          earthRocket.billboard.image = SPACECRAFT_ICON;
+        }
         earthRocket.label.text = '探月飞船 · 地月转移';
         updateTransferTrail(s);
         setPhase('第二幕 · 月地转移（距离已压缩 · 示意）');
@@ -590,7 +785,7 @@ export function createMoonMission(opts) {
       return;
     }
 
-    // —— 月球侧（第三幕：环月制动 → 动力下降着陆）——
+    // —— 月球侧（第三幕：环月制动 → 动力下降着陆；第四幕：玉兔巡视）——
     hideCard();
     noteOn(false);
     if (earthRocket) earthRocket.show = false;
@@ -607,28 +802,91 @@ export function createMoonMission(opts) {
       const alt = lerp(800000, 200000, s);
       const craftPos = Cesium.Cartesian3.fromDegrees(lon, site.lat, alt, MOON_ELLIPSOID);
       moonCraft.position = craftPos;
-      moonCraft.billboard.image = SPACECRAFT_ICON;
       moonCraft.label.text = '环月制动 · LOI';
       setPhase('第三幕 · 环月制动（LOI）');
+      // 3D 飞船上面级（机头沿环月切向）；未就绪回退 billboard
+      const slot = getLoiCraftSlot();
+      if (attachIfReady(slot)) {
+        moonCraft.billboard.show = false;
+        hideSlot(landerSlot);
+        hideSlot(roverSlot);
+        const e = 0.01;
+        const sa = Math.max(0, s - e), sb = Math.min(1, s + e);
+        const a = [wrapLon(site.lon - 180 + 180 * sa), site.lat, lerp(800000, 200000, sa)];
+        const b = [wrapLon(site.lon - 180 + 180 * sb), site.lat, lerp(800000, 200000, sb)];
+        placeModel(slot, craftPos, quatUpTo(tangentENU(a, b, _dir), _q), MOON_ELLIPSOID);
+      } else {
+        moonCraft.billboard.show = true;
+        moonCraft.billboard.image = SPACECRAFT_ICON;
+      }
       mv.camera.lookAt(
         Cesium.Cartesian3.ZERO,
         new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-62), MOON_R * 2.9)
       );
-    } else {
+    } else if (p < T.touchEnd) {
       // 动力下降着陆（末端按 DEM 真实地形高接地，避免沉入月面）
-      const s = clamp01((p - T.loiEnd) / (1 - T.loiEnd));
+      const s = clamp01((p - T.loiEnd) / (T.touchEnd - T.loiEnd));
       const ground = sampleMoonHeight(site.lon, site.lat);
       let alt = ground + Math.max(0, descentAltitude(s));
       if (!isFinite(alt)) alt = Math.max(0, descentAltitude(s));
       const craftPos = Cesium.Cartesian3.fromDegrees(site.lon, site.lat, alt, MOON_ELLIPSOID);
       moonCraft.position = craftPos;
-      moonCraft.billboard.image = LANDER_ICON;
       moonCraft.label.text = site.name + ' · 动力下降';
       setPhase(s >= 1 ? '第三幕 · 月面着陆完成' : '第三幕 · 月面着陆');
+      // 3D 着陆器（竖直下降：identity 旋转即竖直）；未就绪回退 billboard
+      const slot = getLanderSlot();
+      if (attachIfReady(slot)) {
+        moonCraft.billboard.show = false;
+        hideSlot(loiCraftSlot);
+        hideSlot(roverSlot);
+        placeModel(slot, craftPos, Cesium.Quaternion.IDENTITY, MOON_ELLIPSOID);
+      } else {
+        moonCraft.billboard.show = true;
+        moonCraft.billboard.image = LANDER_ICON;
+      }
       // 关键：必须传 Cartesian3 本体；传 Property 会得到 NaN 相机 → 渲染崩溃
+      // 末端机位 clamp 到 30m：着陆器仅 ~4.4m 高，不 clamp 的话触月瞬间只有 1~2 像素
       mv.camera.lookAt(
         craftPos,
-        new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-22), Math.max(1600, (alt - ground) * 2.4))
+        new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-22), Math.max(30, (alt - ground) * 2.4))
+      );
+    } else {
+      // 第四幕：玉兔驶出巡视（着陆器驻留 + 月球车 6 轮滚动节点动画）
+      const s4 = clamp01((p - T.touchEnd) / (1 - T.touchEnd));
+      const ground = sampleMoonHeight(site.lon, site.lat);
+      const landerPos = Cesium.Cartesian3.fromDegrees(site.lon, site.lat, ground, MOON_ELLIPSOID);
+      // 月球车自着陆器东侧驶出，14m 巡视路线（经度换算按站点纬度余弦）
+      const drive = s4 * 14;
+      const dLon = drive / (97700 * Math.cos(Cesium.Math.toRadians(site.lat)));
+      const roverPos = Cesium.Cartesian3.fromDegrees(site.lon + dLon, site.lat, ground, MOON_ELLIPSOID);
+      moonCraft.position = roverPos;
+      moonCraft.label.text = '玉兔号 · 月面巡视';
+      setPhase(s4 >= 1 ? '第四幕 · 巡视完成' : '第四幕 · 玉兔驶出巡视');
+      // 着陆器驻留（identity 竖直）
+      const ls = getLanderSlot();
+      if (attachIfReady(ls)) placeModel(ls, landerPos, Cesium.Quaternion.IDENTITY, MOON_ELLIPSOID);
+      hideSlot(loiCraftSlot);
+      // 月球车：前进 +X（Y→Z 轴校正后即 ENU 东向）；轮子动画 REPEAT ×1.2（≈1.5 转/秒，匹配 1.5m/s）
+      const rs = getRoverSlot();
+      if (attachIfReady(rs)) {
+        moonCraft.billboard.show = false;
+        placeModel(rs, roverPos, Cesium.Quaternion.IDENTITY, MOON_ELLIPSOID);
+        // 坑（2026-10-17 冒烟实测）：sceneGraph 要模型首次 update 后才有，未就绪时
+        // activeAnimations.add 抛 TypeError，且异常穿出 tick 会杀死整个 rAF 循环（第四幕冻住）。
+        // 判 sceneGraph 存在再 add；本帧未就绪则下一帧 render 自然重试（animOn 仍为 false）。
+        if (rs.animCount > 0 && !rs.animOn && !rs.model.isDestroyed() && rs.model.sceneGraph) {
+          rs.model.activeAnimations.add({ index: 0, loop: Cesium.ModelAnimationLoop.REPEAT, multiplier: 1.2 });
+          rs.animOn = true;
+        }
+      } else {
+        moonCraft.billboard.show = true;
+        moonCraft.billboard.image = SPACECRAFT_ICON;
+      }
+      // 相机取着陆器与月球车中点、30m 机位：两者同框，轮子滚动清晰可辨
+      const mid = Cesium.Cartesian3.midpoint(landerPos, roverPos, new Cesium.Cartesian3());
+      mv.camera.lookAt(
+        mid,
+        new Cesium.HeadingPitchRange(0.34, Cesium.Math.toRadians(-26), 30)
       );
     }
   }
@@ -675,7 +933,18 @@ export function createMoonMission(opts) {
         if (pb) pb.textContent = '重播';
       }
     }
-    render();
+    // 崩溃防护：单帧渲染异常不能杀死 rAF 循环（否则任务无声冻住）。
+    // 正常路径不应触发（各坑位已有针对性 guard）；真出现时按消息去重只警告一次。
+    try {
+      render();
+    } catch (e) {
+      const key = String(e && e.message);
+      if (!tick._warned) tick._warned = new Set();
+      if (!tick._warned.has(key)) {
+        tick._warned.add(key);
+        console.warn('[moonMission] 单帧渲染异常（循环继续）：', e);
+      }
+    }
     // requestRenderMode 下必须主动请求渲染，否则静态相机帧里火箭/飞船不重绘（画面冻住）
     earthViewer.scene.requestRender();
     const mv = env.getMoonViewer();
@@ -786,6 +1055,8 @@ export function createMoonMission(opts) {
     buildPathData();
     p = 0; mult = 1; playing = true; last = 0;
     inMoon = false;
+    // 防「月球模式下点火」：任务从地球起步，无条件切回地球（幂等）
+    env.showEarth();
     clearSeparators();
     ensureEarthRocket();
     ensureTransferScene();
@@ -808,7 +1079,9 @@ export function createMoonMission(opts) {
   function stop() {
     if (raf) cancelAnimationFrame(raf);
     raf = 0; playing = false;
-    clearSeparators();
+    clearSeparators();          // 内含分离件 slot 销毁
+    for (const s of slots.slice()) destroySlot(s);
+    rocketSlot = craftSlot = loiCraftSlot = landerSlot = roverSlot = null;
     if (earthRocket) { earthViewer.entities.remove(earthRocket); earthRocket = null; }
     if (launchTrailEnt) { earthViewer.entities.remove(launchTrailEnt); launchTrailEnt = null; }
     if (transferFullEnt) { earthViewer.entities.remove(transferFullEnt); transferFullEnt = null; }
@@ -831,6 +1104,31 @@ export function createMoonMission(opts) {
     start,
     stop,
     isActive: () => !!raf,
+    /** 预加载地球侧模型（面板打开时即可调用，点火时大概率已就绪） */
+    preload: () => { getRocketSlot(); getCraftSlot(); },
+    /** 冒烟/诊断：各模型槽位状态（含 minimumPixelSize/computedScale 等运行时量）
+     *  注意：Model.boundingSphere/computedScale 在 sceneGraph 未就绪（首次 update 前）时
+     *  访问会抛异常，必须逐项 safe 包装（2026-10-17 实测）。 */
+    debugState: () => ({
+      slots: slots.map((s) => {
+        const m = s.model;
+        const safe = (fn) => { try { return fn(); } catch { return null; } };
+        return {
+          key: s.key, ready: s.ready, failed: s.failed, added: s.added,
+          anim: s.animCount, animOn: !!s.animOn,
+          hasSceneGraph: safe(() => !!m && !!m.sceneGraph),
+          minPx: safe(() => (m ? m.minimumPixelSize : null)),
+          computedScale: safe(() => (m && isFinite(m.computedScale) ? Math.round(m.computedScale * 1000) / 1000 : null)),
+          bsRadius: safe(() => (m && m.sceneGraph && m.boundingSphere ? Math.round(m.boundingSphere.radius * 100) / 100 : null)),
+          camDist: safe(() => {
+            if (!m || m.isDestroyed() || !m.sceneGraph || !m.boundingSphere || !s.viewer) return null;
+            return Math.round(Cesium.Cartesian3.distance(s.viewer.camera.positionWC, m.boundingSphere.center));
+          }),
+        };
+      }),
+    }),
+    /** 调试/冒烟：跳转到指定进度（跨幕自动补建/清理场景） */
+    seek: (f) => seekTo(f),
     setLaunchSite: (k) => { launchSiteKey = k; },
     setLandingSite: (k) => { landingSiteKey = k; },
     getLaunchSite: () => launchSiteKey,

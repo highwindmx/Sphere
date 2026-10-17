@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # tools/make_mission_models.py — 生成探月任务 glTF 2.0（.glb）模型资产
-#   public/models/longmarch5.glb  长征五号（静态；Y-up，原点=发动机喷口面，单位米）
+#   public/models/longmarch5.glb  长征五号整箭（静态；Y-up，原点=发动机喷口面，单位米）
+#   public/models/spacecraft.glb  飞船上面级（芯级+设备舱；转移/环月段）
+#   public/models/booster.glb     捆绑助推器（分离件）
+#   public/models/fairing.glb     整流罩半瓣（分离件，半壳）
+#   public/models/moon_lander.glb 月面着陆器（4 腿 + 喷口，Y-up，接地 y=0）
 #   public/models/yutu_rover.glb  玉兔号月球车（6 轮滚动节点动画；前进 +X，接地 y=0，单位米）
 # 纯标准库手写 glTF/GLB，无第三方依赖。重新生成：./.venv/Scripts/python.exe tools/make_mission_models.py
 import json
@@ -192,26 +196,91 @@ class Glb:
         return total
 
 
-# ---------- 长征五号 ----------
-def build_rocket():
+# ---------- 长征五号 / 飞船上面级 ----------
+def build_rocket(with_boosters=True, with_fairing=True, filename='longmarch5.glb', name='长征五号'):
+    """长征五号整箭（Y-up，原点=发动机喷口面，单位米）。
+    with_boosters/with_fairing=False 时生成飞船上面级（芯级+设备舱，无助推无整流罩）。"""
     g = Glb()
     white = g.material([0.93, 0.94, 0.96, 1.0], 0.05, 0.55)
     dark = g.material([0.20, 0.22, 0.25, 1.0], 0.3, 0.6)
     red = g.material([0.82, 0.18, 0.14, 1.0], 0.05, 0.6)
+    gold = g.material([0.80, 0.62, 0.22, 1.0], 0.35, 0.5)
     parts = []
     parts.append(g.node(g.mesh(cylinder(1.65, 2.25, 2.6), dark), [0, 0, 0], '尾裙'))
     parts.append(g.node(g.mesh(cylinder(1.65, 1.65, 1.1), red), [0, 2.6, 0], '红色环带'))
     parts.append(g.node(g.mesh(cylinder(1.65, 1.65, 24.3), white), [0, 3.7, 0], '芯级'))
-    parts.append(g.node(g.mesh(cylinder(0.05, 1.65, 8.0), dark), [0, 28.0, 0], '整流罩'))
-    for i in range(4):  # 4 枚助推器（斜 45° 均布）
+    if with_fairing:
+        parts.append(g.node(g.mesh(cylinder(0.05, 1.65, 8.0), dark), [0, 28.0, 0], '整流罩'))
+    if with_boosters:
+        for i in range(4):  # 4 枚助推器（斜 45° 均布）
+            th = math.pi / 4 + i * math.pi / 2
+            r = 3.35
+            x, z = r * math.cos(th), r * math.sin(th)
+            parts.append(g.node(g.mesh(cylinder(0.62, 0.62, 14.5), white), [x, 3.7, z], f'助推器{i}'))
+            parts.append(g.node(g.mesh(cylinder(0.05, 0.62, 2.8), dark), [x, 18.2, z], f'助推器头{i}'))
+    else:
+        # 飞船上面级：芯级顶端接金色设备舱（转运/环月段形态）
+        parts.append(g.node(g.mesh(cylinder(0.90, 1.20, 1.6), gold), [0, 28.0, 0], '设备舱'))
+        parts.append(g.node(g.mesh(box(2.4, 0.10, 2.4), white), [0, 29.6, 0], '对接环'))
+    root = g.node(name=name, children=parts)
+    total = g.save(os.path.join(ROOT, filename), [root])
+    print(f'{filename:<18s}{total/1024:6.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')
+
+
+# ---------- 分离件：助推器 / 整流罩半壳 ----------
+def build_booster():
+    g = Glb()
+    white = g.material([0.93, 0.94, 0.96, 1.0], 0.05, 0.55)
+    dark = g.material([0.20, 0.22, 0.25, 1.0], 0.3, 0.6)
+    parts = [
+        g.node(g.mesh(cylinder(0.62, 0.62, 14.5), white), [0, 0, 0], '助推器体'),
+        g.node(g.mesh(cylinder(0.05, 0.62, 2.8), dark), [0, 14.5, 0], '助推器头'),
+    ]
+    root = g.node(name='捆绑助推器', children=parts)
+    total = g.save(os.path.join(ROOT, 'booster.glb'), [root])
+    print(f'{"booster.glb":<18s}{total/1024:6.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')
+
+
+def half_shell(geo):
+    """只保留质心 x>0 的三角形 → 半壳（整流罩半瓣，切口过轴线）。"""
+    pos, nrm, idx = geo
+    keep = []
+    for i in range(0, len(idx), 3):
+        cx = (pos[idx[i] * 3] + pos[idx[i + 1] * 3] + pos[idx[i + 2] * 3]) / 3
+        if cx > 0:
+            keep += [idx[i], idx[i + 1], idx[i + 2]]
+    return pos, nrm, keep
+
+
+def build_fairing():
+    g = Glb()
+    white = g.material([0.93, 0.94, 0.96, 1.0], 0.05, 0.55)
+    root = g.node(g.mesh(half_shell(cylinder(0.05, 1.65, 8.0)), white), name='整流罩半瓣')
+    total = g.save(os.path.join(ROOT, 'fairing.glb'), [root])
+    print(f'{"fairing.glb":<18s}{total/1024:6.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')
+
+
+# ---------- 月面着陆器（4 直腿 + 喷口 + 设备舱 + 天线，Y-up，接地 y=0） ----------
+def build_lander():
+    g = Glb()
+    gold = g.material([0.82, 0.66, 0.30, 1.0], 0.3, 0.5)
+    grey = g.material([0.55, 0.58, 0.62, 1.0], 0.45, 0.45)
+    dark = g.material([0.18, 0.19, 0.22, 1.0], 0.3, 0.6)
+    parts = [
+        g.node(g.mesh(cylinder(0.62, 0.16, 0.9), dark), [0, 0.6, 0], '发动机喷口'),
+        g.node(g.mesh(cylinder(0.85, 1.05, 1.5), gold), [0, 1.5, 0], '机身'),
+        g.node(g.mesh(box(1.6, 0.5, 1.6), grey), [0, 3.0, 0], '设备舱'),
+        g.node(g.mesh(cylinder(0.03, 0.03, 0.9), grey), [0, 3.5, 0], '天线杆'),
+        g.node(g.mesh(cylinder(0.26, 0.03, 0.20), grey), [0, 4.4, 0], '天线碟'),
+    ]
+    for i in range(4):  # 4 条直着陆腿（斜 45° 均布）+ 脚垫
         th = math.pi / 4 + i * math.pi / 2
-        r = 3.35
-        x, z = r * math.cos(th), r * math.sin(th)
-        parts.append(g.node(g.mesh(cylinder(0.62, 0.62, 14.5), white), [x, 3.7, z], f'助推器{i}'))
-        parts.append(g.node(g.mesh(cylinder(0.05, 0.62, 2.8), dark), [x, 18.2, z], f'助推器头{i}'))
-    root = g.node(name='长征五号', children=parts)
-    total = g.save(os.path.join(ROOT, 'longmarch5.glb'), [root])
-    print(f'longmarch5.glb  {total/1024:.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')
+        x, z = 1.05 * math.cos(th), 1.05 * math.sin(th)
+        parts.append(g.node(g.mesh(cylinder(0.06, 0.10, 1.5), grey), [x, 0, z], f'着陆腿{i}'))
+        parts.append(g.node(g.mesh(box(0.42, 0.06, 0.42), dark), [x * 1.12, 0.03, z * 1.12], f'脚垫{i}'))
+    root = g.node(name='月面着陆器', children=parts)
+    total = g.save(os.path.join(ROOT, 'moon_lander.glb'), [root])
+    print(f'{"moon_lander.glb":<18s}{total/1024:6.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')
 
 
 # ---------- 玉兔号月球车（6 轮滚动节点动画） ----------
@@ -259,6 +328,10 @@ def xz(x, z):
 
 
 if __name__ == '__main__':
-    build_rocket()
+    build_rocket(with_boosters=True, with_fairing=True, filename='longmarch5.glb', name='长征五号')
+    build_rocket(with_boosters=False, with_fairing=False, filename='spacecraft.glb', name='探月飞船')
+    build_booster()
+    build_fairing()
+    build_lander()
     build_rover()
     print('OK ->', ROOT)

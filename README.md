@@ -136,21 +136,33 @@ node tools/download-satellite-tiles.mjs --bbox -180,-85,180,85 --min-z 0 --max-z
 | 经度 / 纬度输入框 | **placeholder 即实时光标坐标**（鼠标在地球上滑动时实时写入「经度 105.00°」）；鼠标移出球体回落为视点坐标 |
 | 海拔（只读） | 光标/视点处地形高程，`⛰ 1,292 m`；**负值保留符号**并换图标 `🌊 -4,118 m`（terrarium 地形源含海底地形，负值即水下深度） |
 | 📍 定位 | 填入经纬度飞行；**留空 = 定位到光标处**；成功后自动清空输入框（让 placeholder 继续显示实时光标位置） |
-| 🕘 记录 | 可折叠浏览历史：每次定位自动记入（localStorage，最多 20 条，按 0.01° 去重），**倒序**展示，点击条目回飞，可一键清空 |
+| 🏠 回国 | 飞回中国全图（105°E, 33°N，1,600km 俯视）；月球模式下先自动切回地球（2026-10-17 从侧栏工具行迁入坐标栏） |
+| 🕘 记录 | 可折叠浏览历史：**默认折叠**，每次定位自动记入（localStorage，最多 20 条，按 0.01° 去重），**倒序**展示，点击条目回飞，可一键清空 |
 
 * * *
 
 ## 探月任务 3D 模型（glTF）
 
-探月任务（`src/rocket.js` 三幕动画）的 3D 模型资产由 `tools/make_mission_models.py` 纯标准库生成（无第三方依赖，重新生成：`./.venv/Scripts/python.exe tools/make_mission_models.py`）：
+探月任务（`src/rocket.js` 四幕动画）全程使用 glTF 3D 模型（billboard 仅作加载期/失败兜底）。模型资产由 `tools/make_mission_models.py` 纯标准库生成（无第三方依赖，重新生成：`./.venv/Scripts/python.exe tools/make_mission_models.py`）：
 
-| 文件 | 内容 | 动画 |
-| --- | --- | --- |
-| `public/models/longmarch5.glb` | 长征五号（13 节点：尾裙/红色环带/芯级/整流罩/4 助推器），Y-up 原点=发动机喷口面 | 静态 |
-| `public/models/yutu_rover.glb` | 玉兔号月球车（30 节点：车体/太阳翼/设备舱/桅杆/相机头 + 6 轮各带 3 根轮辐） | 6 轮滚动（绕轴半圈 0.5s，REPEAT 无缝循环） |
-| `public/models/CesiumMan.glb` | Cesium 官方骨骼动画样例（下载自 jsdelivr），作 skinning 可行性参照 | 骨骼行走 |
+| 文件 | 内容 | 动画 | 用途 |
+| --- | --- | --- | --- |
+| `public/models/longmarch5.glb` | 长征五号整箭（13 节点：尾裙/红色环带/芯级/整流罩/4 助推器），Y-up 原点=发动机喷口面 | 静态 | 第一幕点火起飞 |
+| `public/models/spacecraft.glb` | 飞船上面级（芯级 + 设备舱 + 对接环，无助推/整流罩） | 静态 | 第二幕地月转移 + 第三幕环月 |
+| `public/models/booster.glb` | 捆绑助推器（17.3m） | 静态（运行时翻滚） | 第一幕分离件 |
+| `public/models/fairing.glb` | 整流罩半瓣（半壳） | 静态（运行时自转） | 第一幕分离件 |
+| `public/models/moon_lander.glb` | 月面着陆器（4 腿 + 喷口 + 设备舱 + 天线碟） | 静态 | 第三幕动力下降 + 第四幕驻留 |
+| `public/models/yutu_rover.glb` | 玉兔号月球车（30 节点：车体/太阳翼/设备舱/桅杆/相机头 + 6 轮各带 3 根轮辐） | 6 轮滚动（绕轴半圈 0.5s，REPEAT 无缝循环） | 第四幕驶出巡视 |
+| `public/models/CesiumMan.glb` | Cesium 官方骨骼动画样例（下载自 jsdelivr），作 skinning 可行性参照 | 骨骼行走 | 验证用 |
 
-验证：`node tools/models-smoke.mjs`（headless Edge + CDP 端到端冒烟）——逐模型 `Model.fromGltfAsync` 加载 → ready 断言 → 包围球投影点邻域像素 diff（渲染证据）→ 0.21s 双帧 diff 经噪声标定（动画证据）。
+四幕结构（进度条节点：点火 0 / 转移 0.17 / 入月轨 0.60 / 着陆 0.80 / 巡视 0.90）：
+
+1. **点火起飞**（地球 Viewer）：3D 整箭垂直上升，机头沿速度方向；助推器/整流罩分离为 3D 件（斜弹 + 翻滚 + 下坠），发射轨迹亮线。
+2. **月地转移**（局部太阳系顶视图）：3D 飞船上面级沿航线切向飞行，规划航线虚线 + 已飞轨迹亮线，示意月球。
+3. **环月制动 + 动力下降**（月球 Viewer）：3D 上面级沿环月切向；下降段换 3D 着陆器，末端按真实月面 DEM 接地，机位 clamp 30m。
+4. **玉兔巡视**（月球 Viewer）：着陆器驻留，月球车自东侧驶出 14m，6 轮滚动节点动画（REPEAT ×1.2），相机取两者中点 30m 同框。
+
+验证：`node tools/models-smoke.mjs`（逐模型资产冒烟）与 `node tools/mission-smoke.mjs`（任务级端到端：点火 → seek 0.05 第一幕截图 → seek 0.95 第四幕截图 + 模型就绪/动画断言 + 收尾清场，均需先启动 app.py）。
 
 **已验证结论（2026-10-17）**：Cesium 1.146 原生 `Model` 完整支持 glTF 节点动画与 skinning 骨骼动画（CesiumMan 行走 animDiff=3.79，背景隔离后噪声=0）——火箭/探月器的 3D 动画角色无需引入 Three.js。
 
@@ -158,9 +170,11 @@ node tools/download-satellite-tiles.mjs --bbox -180,-85,180,85 --min-z 0 --max-z
 
 -   `Model.fromGltfAsync({url, gltfCallback})` 返回 Promise；glTF 动画数量从 `gltfCallback` 的 `gltf.animations` 取（Model 对象不再暴露 `animations`）。
 -   模型必须设 `modelMatrix`（如 `Cesium.Transforms.eastNorthUpToFixedFrame(pos)`）定位，否则躺在原点（地心）永远不可见。
--   动画挂载：`model.readyEvent` 或轮询 `model.ready` 后 `model.activeAnimations.add({index, loop: Cesium.ModelAnimationLoop.REPEAT, multiplier})`。
+-   动画挂载：`model.readyEvent` 或轮询 `model.ready` 后 `model.activeAnimations.add({index, loop: Cesium.ModelAnimationLoop.REPEAT, multiplier})`；**`add` 要求 `model.sceneGraph` 已构建（模型首次 update 后才有），未就绪调用会抛 TypeError**。
 -   `requestRenderMode` 下手动出图必须 `scene.requestRender()` + `scene.render(time)` 两步（只调 render() 可能是 no-op）。
 -   相机 `lookAt(target, hpr)` 后世界距离用 `camera.positionWC` 断言——`camera.position` 是 lookAt 参考系下的局部坐标，混用会误判「相机跑到原点」。
+-   `minimumPixelSize` 的放大用 `_initialRadius`（≠当前 boundingSphere.radius），**表观像素实测 ≈ 0.231 × minPx**（理论公式会高估约 4 倍）；本项目按「对齐旧 billboard 尺寸」标定：火箭/飞船 150、分离件/着陆器 120、月球车 80。
+-   月球 Viewer 每次进入月球模式都会重建（`destroyMoonViewer` → `viewer.destroy()`，其 primitives 随之销毁），任务侧按「viewer 换代即销毁重建模型槽位」处理。
 
 * * *
 

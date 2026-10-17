@@ -1279,6 +1279,10 @@ function getMission() {
         onStatus: (msg, kind) => setStatus(msg, kind),
       },
     });
+    // 调试/冒烟钩子：window.__moonMission.debugState() 看各 glTF 槽位状态
+    window.__moonMission = moonMission;
+    // 冒烟钩子：月球 viewer 句柄（任务第三/四幕对月球容器截图用）
+    window.__getMoonViewer = getMoonViewer;
   }
   return moonMission;
 }
@@ -1307,6 +1311,8 @@ function enterRocketMode() {
   const mmCb = document.getElementById('layer-moonmission');
   if (mmCb) mmCb.checked = true;
   getMission();
+  // 预加载地球侧 3D 模型（GLB 异步）：用户选场地/看点的时候就在加载，点火时已就绪
+  moonMission.preload?.();
   $('tourPanel')?.classList.remove('hidden');
   $('tourTitle').textContent = '探月任务 · 三幕剧';
   $('flyControls')?.classList.add('hidden');

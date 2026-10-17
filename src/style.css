@@ -72,8 +72,12 @@ body.panel-collapsed .coord-widget{left:12px}
 .coord-alt .v{color:#e8eeff}
 .coord-alt .na{color:#6b7ba6}
 /* 浏览历史（坐标控件内可折叠列表） */
-.nav-hist-toggle{flex:0 0 auto;width:auto!important;padding:6px 8px;font-size:11px;white-space:nowrap}
+/* [hidden] 优先级修复：.nav-hist-body 的 display:flex 会盖掉 UA 样式表的 [hidden]{display:none}，
+   导致默认折叠失效（2026-10-17 用户实测「没法折叠」）——必须显式写 [hidden] 规则。 */
 .nav-hist-body{display:flex;flex-direction:column;gap:4px;max-width:300px}
+.nav-hist-body[hidden]{display:none}
+.nav-hist-toggle{flex:0 0 auto;width:auto!important;padding:6px 8px;font-size:11px;white-space:nowrap}
+.coord-home{flex:0 0 auto;width:auto!important;padding:6px 8px;font-size:11px;white-space:nowrap}
 .nav-hist-list{max-height:184px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .nav-hist-empty{padding:6px 2px;font-size:11px;color:#6b7ba6}
 .nav-hist-item{display:flex;justify-content:space-between;gap:8px;width:100%;padding:4px 8px;font-size:11px;text-align:left;background:#0a1022a8;border:1px solid #2a3a63;border-radius:6px;color:#c8d6f2;cursor:pointer}

@@ -2,9 +2,10 @@
  * glTF 模型加载与动画端到端冒烟（headless Edge + CDP）
  * 验证（探月任务 3D 化前置门）：
  *   ① longmarch5.glb（自研静态火箭）→ ready + 实际渲染出像素（包围球投影邻域 diff）
- *   ② yutu_rover.glb（自研 6 轮滚动节点动画）→ ready + 渲染 + 动画运行（双帧 diff）
- *   ③ CesiumMan.glb（官方样例，骨骼 skinning 行走动画）→ ready + 渲染 + 动画运行
- *      ③ 是「骨骼动画能否实施」的核心证据：Cesium Model 官方支持 glTF skinning
+ *   ② spacecraft.glb / booster.glb / fairing.glb / moon_lander.glb（转移/分离件/着陆器）
+ *   ③ yutu_rover.glb（自研 6 轮滚动节点动画）→ ready + 渲染 + 动画运行（双帧 diff）
+ *   ④ CesiumMan.glb（官方样例，骨骼 skinning 行走动画）→ ready + 渲染 + 动画运行
+ *      ④ 是「骨骼动画能否实施」的核心证据：Cesium Model 官方支持 glTF skinning
  * 方法：每个模型以 modelMatrix（ENU 固定帧）定位到北京上空 140m，相机 lookAt 同一点（26m）。
  *       渲染证据 = boundingSphere 中心投影点 60px 邻域像素差（有/无模型），小模型也灵敏；
  *       动画证据 = 双帧 diff 经噪声标定（隐藏模型的双帧 diff 为基线，animDiff > max(0.5, noise×3) 才算在跑）。
@@ -257,6 +258,10 @@ async function testModel(name, file, opts = {}) {
 await testModel('longmarch5', 'longmarch5.glb', { animate: false, lonOffset: 0 });
 await testModel('yutu_rover', 'yutu_rover.glb', { animate: true, lonOffset: 0.002 });
 await testModel('CesiumMan', 'CesiumMan.glb', { animate: true, lonOffset: 0.004 });
+await testModel('spacecraft', 'spacecraft.glb', { animate: false, lonOffset: 0.006 });
+await testModel('moon_lander', 'moon_lander.glb', { animate: false, lonOffset: 0.008 });
+await testModel('booster', 'booster.glb', { animate: false, lonOffset: 0.010 });
+await testModel('fairing', 'fairing.glb', { animate: false, lonOffset: 0.012 });
 
 // 收尾：清场 + 复位相机 lookAt（页面随后即关闭）
 await cleanupScene();

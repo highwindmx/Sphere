@@ -50,7 +50,6 @@
         </div>
         <div class="tool-row">
           <button id="lighting" class="tool-btn" title="配合巡游面板的 ⏩ 加速键看日出与晨昏线移动">🌗 晨夜光影</button>
-          <button id="btnHome" class="tool-btn">🏠 回到中国</button>
         </div>
         <!-- 图源选择/排序/下载统一进「图源设置」抽屉（右侧面板，地球仍可见）。
              旧的 底图模式/在线源/天地图key 控件已删除：优先级链 + 本地优先 + 启用开关完全覆盖其功能，
@@ -191,13 +190,15 @@
       <button id="btnCopyDiag" class="build-btn" title="复制版本号与极冠/图层诊断信息，直接粘贴发我">⧉ 复制诊断</button>
     </div>
 
-    <!-- 统一坐标控件：placeholder 即光标/视点实时经纬度（省掉独立读数行），海拔只读回显 -->
-    <div id="coordWidget" class="coord-widget" title="实时坐标跟随鼠标写入输入框 placeholder；输入经纬度后点「📍 定位」，留空 = 定位到光标处；🕘 记录 = 浏览历史（倒序，点击回飞，可清空）">
+    <!-- 统一坐标控件：placeholder 即光标/视点实时经纬度（省掉独立读数行），海拔只读回显；
+         定位 / 回到中国 / 🕘 浏览历史（默认折叠，倒序，点击回飞，可清空）都收在这一行 -->
+    <div id="coordWidget" class="coord-widget" title="实时坐标跟随鼠标写入输入框 placeholder；输入经纬度后点「📍 定位」，留空 = 定位到光标处；🏠 = 飞回中国全图；🕘 记录 = 浏览历史（倒序，点击回飞，可清空）">
       <div class="coord-inputs">
         <input type="number" id="gotoLon" class="goto-input" placeholder="经度" step="any" min="-180" max="180" />
         <input type="number" id="gotoLat" class="goto-input" placeholder="纬度" step="any" min="-90" max="90" />
         <span id="coordAlt" class="coord-alt" title="地形高程（瓦片未就绪时显示 —；负值为水下深度）">⛰ <span class="na">—</span></span>
         <button id="btnGoto" class="tool-btn goto-btn">📍 定位</button>
+        <button id="btnHome" class="tool-btn coord-home" title="飞回中国全图（月球模式下先切回地球）">🏠 回国</button>
         <button id="navHistToggle" class="tool-btn nav-hist-toggle" aria-expanded="false" title="浏览历史（倒序，点击条目回飞）">🕘 记录 ▾</button>
       </div>
       <div id="navHistBody" class="nav-hist-body" hidden>
