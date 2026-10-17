@@ -244,6 +244,10 @@ def proxy_tile_cache(path):
         return proxy_terrain_tile(path)
     if source == 'lunar':
         return proxy_lunar_tile(path)
+    if source == 'mars':
+        return proxy_mars_tile(path)
+    if source == 'marshill':
+        return proxy_marshill_tile(path)
     if source == 'ocean':
         return proxy_ocean_tile(path)
     abort(404)
@@ -340,19 +344,23 @@ def proxy_terrain_tile(path):
 
 
 # =====================================================================
-# 月面高清瓦片（NASA Moon Trek 官方 RESTful WMTS）
+# 月面高清瓦片（NASA/USGS LRO WAC 全球镶嵌 100m，经 Esri Astrogeology AGOL）
 # ---------------------------------------------------------------------
-# 本地 public/lunar/lunar_wac.jpg 只有 8192×4096（≈660 m/像素），近距离看不出
-# 月面细节；LRO WAC 全局镶嵌 303 ppd ≈ 100 m/像素，量级提升 ~6.6×。
-# 官方 apidoc（trek.nasa.gov/tiles/apidoc/trekAPI.html?body=moon）：
-#   .../1.0.0/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg
-#   覆盖全球的产品：第 0 级 = 2 列 × 1 行（与 Cesium GeographicTilingScheme 一致）。
+# 2026-10-18 换源：原 trek.nasa.gov Moon Trek WMTS 在本机沙箱 egress 不可达
+#   （CONNECT 502，curl/urllib 双实测；public/tiles/lunar 长期空目录即为证据）。
+#   改用 Esri Astrogeology AGOL 上的**同一份数据**（NASA/USGS 公共域）：
+#     https://astro.arcgis.com/arcgis/rest/services/OnMoon/LRO_WAC/MapServer
+#   - GCS_Moon_2000（wkid 104903，半径 1737400），L0 = 2 列 × 1 行
+#     （LOD 分辨率 0.3515625°/px × 512px = 180°/tile）——与 Cesium
+#     GeographicTilingScheme 默认 numberOfLevelZeroTilesX=2 逐级吻合；
+#   - 实测 z0–z7 全缓存（L7 ≈ 523 m/px，本地 lunar_wac.jpg ≈ 1.33 km/px，
+#     提升 ~2.5× 且瓦片化渐进加载，不再一次性拉 10MB 大图）；
+#   - z8+ 返回 400，前端 maximumLevel 取 7。
 # 失败语义：回 1×1 透明 PNG（200）——该层叠在本地底图之上，透明即「透出本地底图」，
 #           同时避免 Cesium "Failed to obtain image tile" 报错刷屏。
 # =====================================================================
 _LUNAR_TILE = (
-    'https://trek.nasa.gov/tiles/Moon/EQ/'
-    'LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/{z}/{y}/{x}.jpg'
+    'https://astro.arcgis.com/arcgis/rest/services/OnMoon/LRO_WAC/MapServer/tile/{z}/{y}/{x}'
 )
 
 
@@ -362,10 +370,11 @@ def proxy_lunar_tile(path):
     if len(parts) != 5 or not parts[4].endswith('.jpg'):
         abort(404)
     z, x, y = parts[2], parts[3], parts[4][:-4]
-    # 越界保护：第 0 级只有 2 列 1 行，深层列数 = 2^(z+1)、行数 = 2^z
+    # 越界保护：第 0 级只有 2 列 1 行，深层列数 = 2^(z+1)、行数 = 2^z；
+    # 上游 AGOL 服务 z0–z7 有缓存（z8+ 返回 400），故 zi>7 直接 404，不发无谓请求
     try:
         zi = int(z)
-        if int(y) >= 2 ** zi or int(x) >= 2 ** (zi + 1) or zi > 12:
+        if int(y) >= 2 ** zi or int(x) >= 2 ** (zi + 1) or zi > 7:
             abort(404)
     except ValueError:
         abort(404)
@@ -375,7 +384,7 @@ def proxy_lunar_tile(path):
             # 上游对纯服务端 UA 有时会返回非图片内容，带浏览器 UA 更稳
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
                           '(KHTML, like Gecko) Chrome/126.0 Safari/537.36',
-            'Referer': 'https://trek.nasa.gov/moon/',
+            'Referer': 'https://astro.arcgis.com/',
         })
     except Exception as e:
         _log_proxy_fail(path, e)
@@ -392,6 +401,68 @@ def proxy_lunar_tile(path):
     except OSError:
         pass
     return Response(data, mimetype='image/jpeg')
+
+
+# =====================================================================
+# 火星瓦片（Esri Astrogeology AGOL，NASA/USGS 公共域数据，免 key）
+# ---------------------------------------------------------------------
+# ① 影像 Mars MDIM 2.1 彩色全球镶嵌（Viking Orbiter VIS，232 m/像素）：
+#     https://astro.arcgis.com/arcgis/rest/services/OnMars/MDIM/MapServer
+# ② 晕渲 Mars HRSC-MOLA Colorized Shaded Relief（同矩阵同缓存深度）：
+#     https://astro.arcgis.com/arcgis/rest/services/OnMars/MColorDEM/MapServer
+# 矩阵：GCS_Mars_2000_Sphere（wkid 104971，半径 3396190），L0 = 2 列 × 1 行，
+#   与 Cesium GeographicTilingScheme 默认一致；实测 z0–z7 全缓存，z8+ 返回 400。
+# 失败语义：1×1 透明 PNG（200）——火星没有本地底图兜底，透明时露出 globe.baseColor。
+# =====================================================================
+_MARS_TILE = 'https://astro.arcgis.com/arcgis/rest/services/OnMars/MDIM/MapServer/tile/{z}/{y}/{x}'
+_MARS_HILL_TILE = (
+    'https://astro.arcgis.com/arcgis/rest/services/OnMars/MColorDEM/MapServer/tile/{z}/{y}/{x}'
+)
+_ASTRO_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                  '(KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+    'Referer': 'https://astro.arcgis.com/',
+}
+
+
+def _proxy_astro_tile(path, upstream):
+    """AGOL 瓦片代理（月/火共用）：tiles/<源>/{z}/{x}/{y}.jpg，上游 z/y/x 顺序。"""
+    parts = path.split('/')
+    if len(parts) != 5 or not parts[4].endswith('.jpg'):
+        abort(404)
+    z, x, y = parts[2], parts[3], parts[4][:-4]
+    try:
+        zi = int(z)
+        if int(y) >= 2 ** zi or int(x) >= 2 ** (zi + 1) or zi > 7:
+            abort(404)
+    except ValueError:
+        abort(404)
+    url = upstream.format(z=z, y=y, x=x)
+    try:
+        data = _fetch_bytes(url, timeout=25, extra_headers=_ASTRO_HEADERS)
+    except Exception as e:
+        _log_proxy_fail(path, e)
+        return _transparent_response()
+    if not data or data[:2] != b'\xff\xd8':      # 非 JPEG（HTML 错误页等）→ 当作失败
+        _log_proxy_fail(path, ValueError('non-jpeg response'))
+        return _transparent_response()
+    try:
+        local = os.path.join(PUBLIC, path)
+        os.makedirs(os.path.dirname(local), exist_ok=True)
+        with open(local, 'wb') as fh:
+            fh.write(data)
+        _scan_invalidate()
+    except OSError:
+        pass
+    return Response(data, mimetype='image/jpeg')
+
+
+def proxy_mars_tile(path):
+    return _proxy_astro_tile(path, _MARS_TILE)
+
+
+def proxy_marshill_tile(path):
+    return _proxy_astro_tile(path, _MARS_HILL_TILE)
 
 
 # =====================================================================
@@ -868,6 +939,10 @@ def downloader_scan():
         'tianditu': scan_dir(os.path.join(PUBLIC, 'tiles', 'tianditu'), '.jpg'),
         'terrain': scan_dir(os.path.join(PUBLIC, 'tiles', 'terrain'), '.png'),
         'lunar': lunar,
+        'lunarTiles': scan_dir(os.path.join(PUBLIC, 'tiles', 'lunar'), '.jpg'),
+        'mars': scan_dir(os.path.join(PUBLIC, 'tiles', 'mars'), '.jpg'),
+        'marshill': scan_dir(os.path.join(PUBLIC, 'tiles', 'marshill'), '.jpg'),
+        'lunarAssets': lunar,
         'lunarSources': {k: os.path.isfile(v) for k, v in _LUNAR_SOURCES.items()},
     }
     _SCAN_CACHE['at'] = now

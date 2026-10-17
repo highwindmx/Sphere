@@ -62,7 +62,7 @@ function $(id) {
   return document.getElementById(id);
 }
 
-// 加载高程底图（lunar_dem.png，等距圆柱投影，灰度编码高度）
+// 加载高程底图（lunar_dem.png，等距圆柱投影，Terrarium 编码高度）
 function loadHeightData(src) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -77,9 +77,12 @@ function loadHeightData(src) {
           const d = ctx.getImageData(0, 0, c.width, c.height).data;
           const n = c.width * c.height;
           const values = new Float32Array(n);
-          // LOLA 高程范围约 -9.1 km ~ +10.9 km，按灰度线性映射（0→-9100m，255→10900m）
+          // ⚠ 2026-10-18 修真 bug：lunar_dem.png 是 **Terrarium 编码**
+          //   （convert_lunar_dem.py：height = R*256 + G + B/256 - 32768），不是灰度图！
+          //   旧代码按 (R/255)*20000-9100 解码 → 高程幅度被压扁约一半且整体偏移
+          //   （实测雨海 -1966m 被读成 +312m）。LOLA 全球范围 -9178~+10786 m。
           for (let i = 0; i < n; i++) {
-            values[i] = (d[i * 4] / 255) * 20000 - 9100;
+            values[i] = (d[i * 4] * 256 + d[i * 4 + 1] + d[i * 4 + 2] / 256) - 32768;
           }
           _heightRaw = { width: c.width, height: c.height, values };
           _heightBuf = d;
@@ -104,13 +107,15 @@ function sampleHeight(lon, lat) {
   return values[y * width + x];
 }
 
+// 月球瓦片方案（heightmapCallback 每瓦片调用，scheme 提到模块级复用，避免逐瓦片 new）
+const _moonTiling = new Cesium.GeographicTilingScheme({ ellipsoid: MOON_ELLIPSOID });
+
 // 为 CustomHeightmapTerrainProvider 提供的瓦片高度回调
 function heightmapCallback(x, y, level) {
   const W = 32, H = 32;
   const out = new Float32Array(W * H);
   if (!_heightRaw) return out;
-  const tiling = new Cesium.GeographicTilingScheme({ ellipsoid: MOON_ELLIPSOID });
-  const rect = tiling.tileXYToRectangle(x, y, level);
+  const rect = _moonTiling.tileXYToRectangle(x, y, level);
   const lonW = Cesium.Math.toDegrees(rect.west);
   const lonE = Cesium.Math.toDegrees(rect.east);
   const latN = Cesium.Math.toDegrees(rect.north);
@@ -125,17 +130,21 @@ function heightmapCallback(x, y, level) {
   return out;
 }
 
-// ====== 月面高清瓦片层（2026-10-17 接入） ======
-// 本地资产只有 lunar_wac.jpg（8192×4096 ≈ 660 m/像素）与 lunar_dem.png（4096×2048 ≈ 8.5 km/像素），
+// ====== 月面高清瓦片层（2026-10-17 接入，2026-10-18 换源） ======
+// 本地资产只有 lunar_wac.jpg（8192×4096 ≈ 1.33 km/像素）与 lunar_dem.png（4096×2048 ≈ 2.7 km/像素），
 // 近距离（探月第三/四幕几十米机位）看不出月面细节——必须补在线瓦片源。
-// 源：NASA Moon Trek 官方 RESTful WMTS（LRO WAC 全局镶嵌 303 ppd ≈ 100 m/像素）：
-//   https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/default/default028mm/{z}/{y}/{x}.jpg
-//   （官方 apidoc 明确：覆盖全球的产品的第 0 级 = 2 列 × 1 行 → 与 GeographicTilingScheme 一致）
+// 2026-10-18 换源记录：原 NASA Moon Trek WMTS（trek.nasa.gov）在本机沙箱 egress
+//   不可达（CONNECT 502，curl 与 urllib 双实测，public/tiles/lunar 长期空目录即为证据），
+//   改用 Esri Astrogeology AGOL 上的**同一份 LRO WAC 100m 全球镶嵌**（NASA/USGS 公共域）：
+//     https://astro.arcgis.com/arcgis/rest/services/OnMoon/LRO_WAC/MapServer/tile/{z}/{y}/{x}
+//   - GCS_Moon_2000（wkid 104903），L0 = 2 列 × 1 行 → 与 GeographicTilingScheme 默认逐级吻合；
+//   - 实测 z0–z7 全缓存（L7 ≈ 523 m/像素，较本地图提升 ~2.5× 且瓦片化渐进加载）；
+//   - z8+ 上游返回 400，故 maximumLevel 取 7。
 // 通道：前端请求本地端点 /tiles/lunar/{z}/{x}/{y}.jpg，app.py 未命中时代理上游并回写
 //   public/tiles/lunar/…（与 esri/eox/gibs 同一套「本地优先 + 在线缓存」机制）。
 // 降级：先探测 0/0/0，失败即不挂层（离线或被墙时静默保持本地底图，不产生瓦片报错刷屏）。
 const LUNAR_TILE_URL = '/tiles/lunar/{z}/{x}/{y}.jpg';
-const LUNAR_TILE_MAX_LEVEL = 9;
+const LUNAR_TILE_MAX_LEVEL = 7;
 let _lunarHiRes = localStorage.getItem('sphere.lunarHiRes') !== '0';
 let _lunarHiResLayer = null;
 let _lunarHiResState = 'idle';   // idle | on | off | failed
@@ -156,12 +165,16 @@ function addHighResLunarLayer(viewer, onStatus) {
         tileWidth: 256,
         tileHeight: 256,
         maximumLevel: LUNAR_TILE_MAX_LEVEL,
-        credit: 'NASA Moon Trek · LRO WAC Mosaic（303 ppd）',
+        credit: 'NASA/USGS LRO WAC 全球镶嵌（100m）· Esri Astrogeology',
       });
       // ⚠ Cesium 1.146 坑：addImageryProvider(provider, {}) 的第二参会被当 index（ToInteger({})===0）
       //   → 新层插到 0 抢掉底图位。必须 ImageryLayer + 单参 add()。
+      // ⚠ 同版本 add() **不返回 layer**（仅 addImageryProvider 返回）——显式构造、自己持引用，
+      //   否则 setLunarHiRes(false) 时 remove(undefined) 永远关不掉（2026-10-18 实测）。
       // 高清层同样套提亮参数（否则在线瓦片加载后月面又变回暗的）。
-      _lunarHiResLayer = viewer.imageryLayers.add(brightLayer(p));
+      const layer = brightLayer(p);
+      viewer.imageryLayers.add(layer);
+      _lunarHiResLayer = layer;
       _lunarHiResState = 'on';
       if (onStatus) onStatus('月面高清瓦片已加载（LRO WAC ≈100 m/像素，已缓存到本地）', 'ok');
     })

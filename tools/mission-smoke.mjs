@@ -450,7 +450,22 @@ report.steps.descent = await evaluate(`(() => {
     craftLat, craftLon, camRange,
   };
 })()`);
-report.steps.descentPixel = await evaluate(`window.__t.centerPixel(window.__getMoonViewer && window.__getMoonViewer())`);
+// 下降段中心像素：轮询到提亮生效（lum>60）或超时。
+// ⚠ 教训（2026-10-18）：单次采样偶发 <60——seek 后地形/影像还在流式加载，
+//   且真实太阳角随日期变化；轮询比固定单次稳（2026-10-17 全绿运行的复现要求）。
+report.steps.descentPixel = await evaluate(`(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const mv = window.__getMoonViewer && window.__getMoonViewer();
+  if (!mv) return null;
+  let last = null;
+  for (let i = 0; i < 24; i++) {
+    last = window.__t.centerPixel(mv);
+    const lum = (last[0] + last[1] + last[2]) / 3;
+    if (lum > 60) return { px: last, lum: +lum.toFixed(1), waitedMs: i * 1000 };
+    await sleep(1000);
+  }
+  return { px: last, lum: +((last[0] + last[1] + last[2]) / 3).toFixed(1), timedOut: true };
+})()`);
 
 // ④b 跳第四幕（p=0.95，巡视中段）→ 月球侧模型就绪 + rover 动画激活
 // 兜底：p 会随播放推进到 1（约 6s），若模型就绪时 tick 已停（animOn 未置位），
@@ -539,7 +554,20 @@ report.steps.act4Phase = await evaluate(`(() => ({
   phase: document.getElementById('rocketPhase') ? document.getElementById('rocketPhase').textContent : '',
   progress: document.getElementById('tourProgressText') ? document.getElementById('tourProgressText').textContent : '',
 }))()`);
-report.steps.act4Pixel = await evaluate(`window.__t.centerPixel(window.__getMoonViewer && window.__getMoonViewer())`);
+// 第四幕中心像素：同样轮询（ rover 行进中相机 blend + 影像流式加载，单次采样偶发低亮度）
+report.steps.act4Pixel = await evaluate(`(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const mv = window.__getMoonViewer && window.__getMoonViewer();
+  if (!mv) return null;
+  let last = null;
+  for (let i = 0; i < 24; i++) {
+    last = window.__t.centerPixel(mv);
+    const lum = (last[0] + last[1] + last[2]) / 3;
+    if (lum > 60) return { px: last, lum: +lum.toFixed(1), waitedMs: i * 1000 };
+    await sleep(1000);
+  }
+  return { px: last, lum: +((last[0] + last[1] + last[2]) / 3).toFixed(1), timedOut: true };
+})()`);
 // 月球 viewer 截图：优先 moon viewer 画布（__getMoonViewer 钩子），失败退回整页 CDP 截图
 let act4Shot = null;
 try {
@@ -570,7 +598,6 @@ report.steps.afterStop = await evaluate(`(() => ({
 
 // ===== 断言汇总（六项用户反馈的回归线）=====
 const S = report.steps;
-const lum = (px) => px ? (px[0] + px[1] + px[2]) / 3 : 0;
 report.checks = {
   noJsErrors: errors.length === 0,
   noConsoleErrors: consoleErrors.length === 0,
@@ -609,8 +636,8 @@ report.checks = {
   roverAnimOn: S.act4.ok === true,
   roverTrackGrows: S.roverPath.trackGrew,
   // I. 月面提亮（gamma 1.45 / brightness 1.35）
-  moonBrightDescent: lum(S.descentPixel) > 60,
-  moonBrightAct4: lum(S.act4Pixel) > 60,
+  moonBrightDescent: S.descentPixel && S.descentPixel.lum > 60,
+  moonBrightAct4: S.act4Pixel && S.act4Pixel.lum > 60,
   // 原有步骤回归
   camOverride: S.camOverride.duringOverride === true && S.camOverride.blending === true,
   timelineIsolation: S.timelineIsolation.canvasDragNoSeek === true && S.timelineIsolation.trackSeeks === true,

@@ -30,8 +30,19 @@ import {
   sampleMoonHeight,
   setLunarHiRes,
   isLunarHiRes,
+  isMoonTerrainReady,
   MOON_ELLIPSOID,
 } from './lunar.js';
+import {
+  createMarsViewer,
+  destroyMarsViewer,
+  toggleMarsGroup,
+  getMarsViewer,
+  getMarsGroups,
+  setMarsHillshade,
+  isMarsHillshade,
+  MARS_ELLIPSOID,
+} from './mars.js';
 
 // ====== Cesium Ion Token ======
 // 必须设置才能使用 Bing Maps Aerial 在线底图（默认 Viewer baseLayer）。
@@ -114,10 +125,12 @@ const exagValEl = $('exagVal');
 const layerSearchEl = $('layerSearch');
 const layersTreeEl = $('layersTree');
 
-// ====== 活动视图（地球/月球）与统一坐标控件 ======
+// ====== 活动视图（地球/月球/火星）与统一坐标控件 ======
 // 地球 viewer / globe 在下方初始化；本块只声明状态与函数，运行期才访问它们。
 let isMoonMode = false;
+let isMarsMode = false;
 let moonCoordBound = false;
+let marsCoordBound = false;
 let hoveringGlobe = false;
 // 左上统一坐标控件：实时经纬度写输入框 placeholder（不打扰用户已输入的值），海拔只读回显
 const coordLonEl = $('gotoLon'), coordLatEl = $('gotoLat'), coordAltEl = $('coordAlt');
@@ -146,13 +159,16 @@ function writeCoord(lon, lat, ground) {
 }
 const _carto2 = new Cesium.Cartographic();   // 采样海拔用的临时 Cartographic
 
-// 当前应读取的 Viewer：月球模式返回月球 viewer，否则地球 viewer
+// 当前应读取的 Viewer：月球/火星模式返回各自 viewer，否则地球 viewer
 function activeViewer() {
-  return isMoonMode ? getMoonViewer() : viewer;
+  if (isMoonMode) return getMoonViewer();
+  if (isMarsMode) return getMarsViewer();
+  return viewer;
 }
 
 // 刷新「视点」坐标（相机正下方地面海拔）到左上控件；悬停光标时由光标读数接管。
-// 地球用 globe.getHeight（含垂直夸张还原），月球用 sampleMoonHeight。
+// 地球用 globe.getHeight（含垂直夸张还原），月球用 sampleMoonHeight（Terrarium DEM），
+// 火星暂无 3D 地形（MOLA 瓦片源缓存为空，见 mars.js），海拔显示 —。
 function refreshCoordUI() {
   const v = activeViewer();
   if (!v) return;
@@ -165,7 +181,7 @@ function refreshCoordUI() {
     let ground = null;
     if (isMoonMode) {
       try { ground = sampleMoonHeight(lon, lat); } catch { /* 未就绪 */ }
-    } else {
+    } else if (!isMarsMode) {
       try {
         _carto2.longitude = pos.longitude;
         _carto2.latitude = pos.latitude;
@@ -201,7 +217,7 @@ function updateCursorCoord(clientX, clientY) {
   let ground = null;
   if (isMoonMode) {
     try { ground = sampleMoonHeight(lon, lat); } catch { /* 未就绪 */ }
-  } else {
+  } else if (!isMarsMode) {
     try {
       _carto2.longitude = c.longitude;
       _carto2.latitude = c.latitude;
@@ -1198,8 +1214,8 @@ function flyToLonLat() {
     setStatus('请输入有效经纬度（经度 -180~180，纬度 -90~90）', 'warn');
     return;
   }
-  // 月球模式用月球椭球定位，否则用 WGS84
-  const ellipsoid = isMoonMode ? MOON_ELLIPSOID : Cesium.Ellipsoid.WGS84;
+  // 月球/火星模式用各自椭球定位，否则用 WGS84
+  const ellipsoid = isMoonMode ? MOON_ELLIPSOID : isMarsMode ? MARS_ELLIPSOID : Cesium.Ellipsoid.WGS84;
   activeViewer().camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(lon, lat, 200000, ellipsoid),
     orientation: { heading: 0, pitch: Cesium.Math.toRadians(-55), roll: 0 },
@@ -1279,9 +1295,9 @@ $('navHistToggle')?.addEventListener('click', () => {
 $('navHistClear')?.addEventListener('click', navHistoryClear);
 navHistoryRender();
 
-// 回到中国（若处于月球模式，先切回地球）
+// 回到中国（若处于月球/火星模式，先切回地球）
 $('btnHome').addEventListener('click', () => {
-  if (isMoonMode) enterEarthMode();
+  if (isMoonMode || isMarsMode) enterEarthMode();
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(105, 33, 16000000),
     orientation: {
@@ -1293,7 +1309,7 @@ $('btnHome').addEventListener('click', () => {
   });
 });
 
-// ====== 地球 / 月球 模式切换 ======
+// ====== 地球 / 月球 / 火星 模式切换 ======
 function buildMoonGroupUI() {
   const wrap = $('moonGroups');
   if (!wrap) return;
@@ -1312,11 +1328,32 @@ function buildMoonGroupUI() {
   }
 }
 
+function buildMarsGroupUI() {
+  const wrap = $('marsGroups');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  for (const g of getMarsGroups()) {
+    const label = document.createElement('label');
+    label.className = 'check';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.addEventListener('change', () => toggleMarsGroup(g.id, cb.checked));
+    label.appendChild(cb);
+    const span = document.createElement('span');
+    span.textContent = g.name;
+    label.appendChild(span);
+    wrap.appendChild(label);
+  }
+}
+
 function enterMoonMode() {
   $('btnMoonMode').classList.add('active');
   $('btnEarthMode').classList.remove('active');
+  $('btnMarsMode').classList.remove('active');
   $('cesiumContainer').classList.add('hidden');
+  $('marsContainer').classList.add('hidden');
   $('moonContainer').classList.remove('hidden');
+  $('marsSection').classList.add('hidden');
   $('moonSection').classList.remove('hidden');
   createMoonViewer('moonContainer', (msg, kind) => setStatus(msg, kind));
   buildMoonGroupUI();
@@ -1333,23 +1370,97 @@ function enterMoonMode() {
   return getMoonViewer();
 }
 
+function enterMarsMode() {
+  $('btnMarsMode').classList.add('active');
+  $('btnEarthMode').classList.remove('active');
+  $('btnMoonMode').classList.remove('active');
+  $('cesiumContainer').classList.add('hidden');
+  $('moonContainer').classList.add('hidden');
+  $('marsContainer').classList.remove('hidden');
+  $('moonSection').classList.add('hidden');
+  $('marsSection').classList.remove('hidden');
+  createMarsViewer('marsContainer', (msg, kind) => setStatus(msg, kind));
+  buildMarsGroupUI();
+  isMarsMode = true;
+  if (!marsCoordBound) {
+    const mv = getMarsViewer();
+    if (mv) {
+      mv.camera.changed.addEventListener(() => refreshCoordUI());
+      marsCoordBound = true;
+    }
+  }
+  refreshCoordUI();
+  return getMarsViewer();
+}
+
 function enterEarthMode() {
   $('btnMoonMode').classList.remove('active');
+  $('btnMarsMode').classList.remove('active');
   $('btnEarthMode').classList.add('active');
   $('cesiumContainer').classList.remove('hidden');
   $('moonContainer').classList.add('hidden');
+  $('marsContainer').classList.add('hidden');
   $('moonSection').classList.add('hidden');
+  $('marsSection').classList.add('hidden');
   destroyMoonViewer();
+  destroyMarsViewer();
   isMoonMode = false;
+  isMarsMode = false;
   refreshCoordUI();
+}
+
+// 探月任务进行中禁止切星球：第三/四幕就在月球容器里演出，切走会销毁其场景
+function planetBusy() {
+  if (moonMission && moonMission.isActive()) {
+    setStatus('探月任务进行中，请先「停止」任务再切换星球', 'warn');
+    return true;
+  }
+  return false;
 }
 
 $('btnMoonMode').addEventListener('click', () => {
   if ($('btnMoonMode').classList.contains('active')) enterEarthMode();
-  else enterMoonMode();
+  else if (!planetBusy()) enterMoonMode();
+});
+$('btnMarsMode').addEventListener('click', () => {
+  if ($('btnMarsMode').classList.contains('active')) enterEarthMode();
+  else if (!planetBusy()) enterMarsMode();
 });
 $('btnEarthMode').addEventListener('click', () => {
-  if ($('btnMoonMode').classList.contains('active')) enterEarthMode();
+  if ($('btnMoonMode').classList.contains('active') || $('btnMarsMode').classList.contains('active')) {
+    if (!planetBusy()) enterEarthMode();
+  }
+});
+
+// 火星地形晕渲开关（见 mars.js：火星无可用 3D 高程源，用晕渲图层做视觉地形）
+{
+  const cb = $('marsHillshade');
+  if (cb) {
+    cb.checked = isMarsHillshade();
+    cb.addEventListener('change', () => {
+      setMarsHillshade(cb.checked, (msg, kind) => setStatus(msg, kind));
+    });
+  }
+}
+
+// 冒烟/调试钩子：星球 viewer 句柄 + 月面高程采样（tools/planet-smoke.mjs 用）
+window.__getMarsViewer = getMarsViewer;
+window.__getMoonViewer = getMoonViewer;
+window.__sampleMoonHeight = sampleMoonHeight;
+window.__isMoonTerrainReady = isMoonTerrainReady;
+
+// 火星一键归位：飞回默认俯瞰视角（水手谷—塔尔西斯一带）
+$('btnMarsHome')?.addEventListener('click', () => {
+  const mv = getMarsViewer();
+  if (!mv) return;
+  try { mv.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); } catch { /* 忽略 */ }
+  const r = MARS_ELLIPSOID.radii.x;
+  mv.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(300, -10, r * 3.0, MARS_ELLIPSOID),
+    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-90), roll: 0 },
+    duration: 1.5,
+  });
+  setStatus('已回到火星默认俯瞰视角', 'ok');
 });
 
 // ====== 探月任务控制器（三幕剧）======
@@ -1393,8 +1504,8 @@ function enterRocketMode() {
     const tgBtn = document.getElementById('btnTiangong');
     if (tgBtn) tgBtn.textContent = '📡 天宫轨道';
   }
-  // 探月任务在地球 Viewer 上演出：若停在月球模式先切回（否则预览火箭画在隐藏容器里）
-  if (isMoonMode) enterEarthMode();
+  // 探月任务在地球 Viewer 上演出：若停在月球/火星模式先切回（否则预览火箭画在隐藏容器里）
+  if (isMoonMode || isMarsMode) enterEarthMode();
   // 勾选同步：任务面板打开 ⇔ 探月任务顶层勾选
   const mmCb = document.getElementById('layer-moonmission');
   if (mmCb) mmCb.checked = true;
@@ -1898,6 +2009,7 @@ const SCENARIOS = [
   { id: 'worldgeo',  name: '🌍 世界地理',   layerIds: ['worldcapitals', 'worldrivers', 'plates'] },
   { id: 'worldhist', name: '🏛️ 世界史',     layerIds: ['civilizations', 'wonders', 'heritage'] },
   { id: 'moon',      name: '🌕 探月',       layerIds: [], tools: ['moonmission'] },
+  { id: 'mars',      name: '🔴 火星',       layerIds: [], tools: ['marsmode'], title: '切换到火星视图' },
 ];
 
 // 把渲染器实体显隐状态同步回侧栏勾选框（场景预设 / 全清后调用）
@@ -1927,6 +2039,9 @@ function applyScenario(sc) {
   if (sc.tools && sc.tools.includes('moonmission')) {
     if (!(moonMission && moonMission.isActive())) enterRocketMode();
   }
+  if (sc.tools && sc.tools.includes('marsmode')) {
+    if (!planetBusy()) enterMarsMode();
+  }
   syncLayerCheckboxes();
   setStatus('已载入场景：' + sc.name, 'ok');
 }
@@ -1950,7 +2065,7 @@ function buildSceneButtons() {
     const b = document.createElement('button');
     b.className = 'scene-btn';
     b.textContent = sc.name;
-    b.title = '一键载入：' + (sc.layerIds.join('、') || '（探月任务）');
+    b.title = '一键载入：' + (sc.layerIds.join('、') || sc.title || '（探月任务）');
     b.addEventListener('click', () => applyScenario(sc));
     host.appendChild(b);
   }

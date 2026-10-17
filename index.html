@@ -39,6 +39,7 @@
       <div class="planet-switch">
         <button id="btnEarthMode" class="planet-btn active">🌍 地球</button>
         <button id="btnMoonMode" class="planet-btn">🌙 月球</button>
+        <button id="btnMarsMode" class="planet-btn">🔴 火星</button>
       </div>
 
       <!-- 场景工具：地形夸张 / 晨夜光影 / 回到中国 -->
@@ -119,12 +120,29 @@
         </label>
         <div id="moonGroups" class="moon-groups"></div>
       </section>
+
+      <!-- 火星标注（仅火星模式显示） -->
+      <section id="marsSection" class="hidden">
+        <h2>火星标注</h2>
+        <div class="tool-row">
+          <button id="btnMarsHome" class="tool-btn" title="飞回水手谷—塔尔西斯一带默认俯瞰视角">🏠 火星归位</button>
+        </div>
+        <!-- 火星地形晕渲：火星没有可用 3D 高程源（AGOL MOLA 瓦片缓存实测为空），
+             用 HRSC-MOLA 彩色晕渲图层做视觉地形补偿（奥林匹斯山、水手谷一目了然）。 -->
+        <label class="hover-preview-cb" title="叠加 NASA/USGS HRSC-MOLA 彩色晕渲（Esri Astrogeology，经本地代理缓存）：直观看出奥林匹斯山、水手谷等巨型地貌">
+          <input type="checkbox" id="marsHillshade" />
+          <span>火星地形晕渲（HRSC-MOLA 晕渲图）</span>
+        </label>
+        <div id="marsGroups" class="moon-groups"></div>
+      </section>
     </aside>
 
     <!-- 三维地球 -->
     <main id="cesiumContainer"></main>
     <!-- 月球视图（切换到月球时显示） -->
     <main id="moonContainer" class="hidden"></main>
+    <!-- 火星视图（切换到火星时显示） -->
+    <main id="marsContainer" class="hidden"></main>
 
     <!-- 图源设置抽屉：右侧浮层（宽度 ≤40%，地球仍占 ≥60%，可边配置边观察）。
          内容由 src/source-settings.js 构建；侧栏原有的底图/在线源/天地图控件会被迁移进来。 -->

@@ -301,6 +301,9 @@ async function refreshScan() {
     one('Blue Marble tiles/gibs', s.gibs || { total: 0, bytes: 0, levels: {} });
     one('天地图 tiles/tianditu', s.tianditu || { total: 0, bytes: 0, levels: {} });
     one('地形瓦片 tiles/terrain', s.terrain);
+    one('月面高清 tiles/lunar', s.lunarTiles || { total: 0, bytes: 0, levels: {} });
+    one('火星影像 tiles/mars', s.mars || { total: 0, bytes: 0, levels: {} });
+    one('火星晕渲 tiles/marshill', s.marshill || { total: 0, bytes: 0, levels: {} });
     const lunar = Object.entries(s.lunar || {})
       .map(([k, v]) => `<tr><td>${k}</td><td>—</td><td>${fmtBytes(v)}</td><td style="text-align:left;color:#8d9dc4">产物</td></tr>`).join('');
     $('scanTable').querySelector('tbody').innerHTML = rows.join('') + lunar ||
