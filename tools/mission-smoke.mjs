@@ -59,7 +59,10 @@ ws.on('message', (raw) => {
     return;
   }
   if (msg.method === 'Runtime.exceptionThrown') {
-    errors.push(msg.params.exceptionDetails?.text + ' ' + (msg.params.exceptionDetails?.exception?.description ?? ''));
+    const txt = msg.params.exceptionDetails?.text + ' ' + (msg.params.exceptionDetails?.exception?.description ?? '');
+    // 合成 pointer 事件（无活动指针）触发 Cesium setPointerCapture 抛错——冒烟伪影，真实鼠标不会发生
+    if (/setPointerCapture/.test(txt)) return;
+    errors.push(txt);
   }
   if (msg.method === 'Runtime.consoleAPICalled') {
     const t = msg.params.args.map((a) => a.value ?? a.description ?? '').join(' ');
@@ -150,7 +153,110 @@ report.steps.act1 = await evaluate(`(() => {
 const shot1 = await evaluate(`window.__t.snap(window.viewer)`);
 writeFileSync('tools/.mission-act1.png', Buffer.from(shot1.split(',')[1], 'base64'));
 
-// ④ 跳第四幕（p=0.95，巡视中段）→ 月球侧模型就绪 + rover 动画激活
+// ③b 分离换模型 + 火焰特效（p=0.08：BOOSTER_SEP(0.063) 后 → 应显示 rocketCore 而非整箭）
+// 播放中 CDP evaluate 开销大（SwiftShader 页面单次可达数秒），p 会漂移过界——
+// seek 后先暂停再轮询，保证 eval 时 p 恒为 8%（2026-10-17 实测教训）。
+await evaluate(`window.__moonMission.seek(0.08); document.getElementById('tourPause').click();`);
+await sleep(900);
+report.steps.stageSwitch = await evaluate(`(() => {
+  const st = window.__moonMission.debugState().slots;
+  const pick = (k) => st.find((s) => s.key === k);
+  const core = pick('rocketCore'), rocket = pick('rocket'), flame = pick('flame');
+  return {
+    atProgress: document.getElementById('tourProgressText')?.textContent || '',
+    coreShown: core ? core.show === true : null,
+    coreState: core || null,
+    fullRocketHidden: rocket ? rocket.show === false : null,
+    flameShown: flame ? flame.show === true : null,
+    boosterSlots: st.filter((s) => s.key === 'booster').length,
+  };
+})()`);
+
+// ③e 第二幕（p=0.35）：顶视转移 + 飞船上面级 + 压缩说明可见
+await evaluate(`window.__moonMission.seek(0.35)`);
+await sleep(700);
+report.steps.transfer = await evaluate(`(() => {
+  const st = window.__moonMission.debugState().slots;
+  const craft = st.find((s) => s.key === 'craft');
+  return {
+    craftShown: craft ? craft.show === true : null,
+    phase: document.getElementById('rocketPhase')?.textContent || '',
+    compressNoteVisible: !document.getElementById('compressNote')?.classList.contains('hidden'),
+  };
+})()`);
+const shotTransfer = await evaluate(`window.__t.snap(window.viewer)`);
+writeFileSync('tools/.mission-act2.png', Buffer.from(shotTransfer.split(',')[1], 'base64'));
+
+// ③c 相机接管：canvas 按下 → override=true；松手 → blend 回归启动
+report.steps.camOverride = await evaluate(`(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const canvas = window.viewer.scene.canvas;
+  canvas.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1 }));
+  await sleep(120);
+  const during = window.__moonMission.debugState().cam;
+  window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }));
+  await sleep(300);
+  const after = window.__moonMission.debugState().cam;
+  return { duringOverride: during.override, afterOverride: after.override, blending: after.blend > 0 };
+})()`);
+
+// ③d 时间轴隔离：画布拖动不改进度；只有 #tourTrack 按下才 seek
+// （任务在 ③b 已暂停，此处无需再点暂停——多点一次会把 paused 切回 playing）
+report.steps.timelineIsolation = await evaluate(`(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const m = window.__moonMission;
+  m.seek(0.05);
+  await sleep(150);
+  const canvas = window.viewer.scene.canvas;
+  const r = canvas.getBoundingClientRect();
+  const opts = (x) => ({ bubbles: true, pointerId: 2, clientX: x, clientY: r.top + r.height / 2 });
+  canvas.dispatchEvent(new PointerEvent('pointerdown', opts(r.left + 100)));
+  window.dispatchEvent(new PointerEvent('pointermove', opts(r.left + 700)));
+  window.dispatchEvent(new PointerEvent('pointerup', opts(r.left + 700)));
+  await sleep(200);
+  const afterCanvasDrag = document.getElementById('tourProgressText').textContent;
+  // 时间轴按下 → 应 seek 到按下位置（~50%）
+  const track = document.getElementById('tourTrack');
+  const tr = track.getBoundingClientRect();
+  track.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 3, clientX: tr.left + tr.width * 0.5, clientY: tr.top + 4 }));
+  window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 3 }));
+  await sleep(200);
+  const afterTrackDown = document.getElementById('tourProgressText').textContent;
+  return { afterCanvasDrag, afterTrackDown, canvasDragNoSeek: afterCanvasDrag === '5%', trackSeeks: Math.abs(parseFloat(afterTrackDown) - 50) <= 2 };
+})()`);
+
+
+// ④ 跳环月制动（p=0.70）→ 飞船上面级显示、着陆器隐藏；再跳动力下降（p=0.85）→ 反转 + 着陆火焰
+await evaluate(`window.__moonMission.seek(0.70)`);
+await sleep(600);
+report.steps.loi = await evaluate(`(() => {
+  const st = window.__moonMission.debugState().slots;
+  const pick = (k) => st.find((s) => s.key === k);
+  const loi = pick('loiCraft'), lander = pick('lander');
+  return {
+    phase: document.getElementById('rocketPhase')?.textContent || '',
+    loiCraftShown: loi ? loi.show === true : null,
+    landerHidden: lander ? lander.show === false : null,
+  };
+})()`);
+await evaluate(`window.__moonMission.seek(0.85)`);
+await sleep(600);
+report.steps.descent = await evaluate(`(() => {
+  const st = window.__moonMission.debugState().slots;
+  const pick = (k) => st.find((s) => s.key === k);
+  const loi = pick('loiCraft'), lander = pick('lander');
+  // flame 槽位按 viewer 各一份（earth/moon）；这里要的是月球 viewer 的（数组靠后的那个）
+  const flames = st.filter((s) => s.key === 'flame').map((s) => s.show === true);
+  return {
+    phase: document.getElementById('rocketPhase')?.textContent || '',
+    landerShown: lander ? lander.show === true : null,
+    loiCraftHidden: loi ? loi.show === false : null,
+    landingFlameShown: flames.length > 1 ? flames[flames.length - 1] : flames[0] ?? null,
+    flameSlots: flames,
+  };
+})()`);
+
+// ④b 跳第四幕（p=0.95，巡视中段）→ 月球侧模型就绪 + rover 动画激活
 // 兜底：p 会随播放推进到 1（约 6s），若模型就绪时 tick 已停（animOn 未置位），
 //       再 seek 一次强制 render 补挂动画（seekTo 内部必跑 render）。
 await evaluate(`window.__moonMission.seek(0.95)`);

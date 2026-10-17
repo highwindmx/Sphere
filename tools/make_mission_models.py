@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # tools/make_mission_models.py — 生成探月任务 glTF 2.0（.glb）模型资产
-#   public/models/longmarch5.glb  长征五号整箭（静态；Y-up，原点=发动机喷口面，单位米）
-#   public/models/spacecraft.glb  飞船上面级（芯级+设备舱；转移/环月段）
-#   public/models/booster.glb     捆绑助推器（分离件）
-#   public/models/fairing.glb     整流罩半瓣（分离件，半壳）
-#   public/models/moon_lander.glb 月面着陆器（4 腿 + 喷口，Y-up，接地 y=0）
-#   public/models/yutu_rover.glb  玉兔号月球车（6 轮滚动节点动画；前进 +X，接地 y=0，单位米）
+#   public/models/longmarch5.glb      长征五号整箭（静态；Y-up，原点=发动机喷口面，单位米）
+#   public/models/longmarch5_core.glb 芯级+整流罩（助推器分离后形态）
+#   public/models/spacecraft.glb      飞船上面级（芯级+设备舱；转移/环月段）
+#   public/models/booster.glb         捆绑助推器（分离件）
+#   public/models/fairing.glb         整流罩半瓣（分离件，半壳）
+#   public/models/moon_lander.glb     月面着陆器（4 腿 + 喷口，Y-up，接地 y=0）
+#   public/models/yutu_rover.glb      玉兔号月球车（6 轮滚动节点动画；前进 +X，接地 y=0，单位米）
+#   public/models/flame.glb           发动机火焰锥（三层嵌套；原点=喷口，焰柱 +Y，半透明）
+#   public/models/rcs.glb             RCS 姿控喷气（短锥；原点=喷口，喷柱 +Y，半透明）
 # 纯标准库手写 glTF/GLB，无第三方依赖。重新生成：./.venv/Scripts/python.exe tools/make_mission_models.py
 import json
 import math
@@ -327,11 +330,45 @@ def xz(x, z):
     return f'{x:+.2f},{z:+.2f}'
 
 
+# ---------- 特效模型：发动机火焰 / RCS 姿控喷气 ----------
+def build_flame():
+    """发动机火焰锥：原点=喷口，焰柱沿 +Y（放置时 quatUpTo(喷气方向) 即对准）。
+    三层锥嵌套（外焰/中焰/焰心）+ 半透明材质；运行时按油门缩放（placeModelS）。"""
+    g = Glb()
+    outer = g.material([1.0, 0.42, 0.10, 0.30], 0.0, 1.0)
+    mid = g.material([1.0, 0.70, 0.22, 0.50], 0.0, 1.0)
+    core = g.material([1.0, 0.96, 0.82, 0.85], 0.0, 1.0)
+    parts = [
+        g.node(g.mesh(cylinder(0.12, 1.00, 7.0, seg=18), outer), [0, 0, 0], '外焰'),
+        g.node(g.mesh(cylinder(0.06, 0.58, 4.6, seg=18), mid), [0, 0, 0], '中焰'),
+        g.node(g.mesh(cylinder(0.02, 0.30, 2.4, seg=16), core), [0, 0, 0], '焰心'),
+    ]
+    root = g.node(name='发动机火焰', children=parts)
+    total = g.save(os.path.join(ROOT, 'flame.glb'), [root])
+    print(f'{"flame.glb":<22s}{total/1024:6.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')
+
+
+def build_rcs():
+    """RCS 姿控喷气：原点=喷口，喷柱沿 +Y（蓝白半透明，两级锥）。"""
+    g = Glb()
+    jet = g.material([0.72, 0.85, 1.0, 0.75], 0.0, 1.0)
+    parts = [
+        g.node(g.mesh(cylinder(0.02, 0.14, 1.4, seg=12), jet), [0, 0, 0], '喷柱'),
+        g.node(g.mesh(cylinder(0.02, 0.07, 0.8, seg=12), jet), [0, 0, 0], '焰心'),
+    ]
+    root = g.node(name='RCS喷气', children=parts)
+    total = g.save(os.path.join(ROOT, 'rcs.glb'), [root])
+    print(f'{"rcs.glb":<22s}{total/1024:6.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')
+
+
 if __name__ == '__main__':
     build_rocket(with_boosters=True, with_fairing=True, filename='longmarch5.glb', name='长征五号')
+    build_rocket(with_boosters=False, with_fairing=True, filename='longmarch5_core.glb', name='长征五号·芯级')
     build_rocket(with_boosters=False, with_fairing=False, filename='spacecraft.glb', name='探月飞船')
     build_booster()
     build_fairing()
     build_lander()
     build_rover()
+    build_flame()
+    build_rcs()
     print('OK ->', ROOT)

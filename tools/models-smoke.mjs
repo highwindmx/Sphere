@@ -262,6 +262,9 @@ await testModel('spacecraft', 'spacecraft.glb', { animate: false, lonOffset: 0.0
 await testModel('moon_lander', 'moon_lander.glb', { animate: false, lonOffset: 0.008 });
 await testModel('booster', 'booster.glb', { animate: false, lonOffset: 0.010 });
 await testModel('fairing', 'fairing.glb', { animate: false, lonOffset: 0.012 });
+await testModel('longmarch5_core', 'longmarch5_core.glb', { animate: false, lonOffset: 0.014 });
+await testModel('flame', 'flame.glb', { animate: false, lonOffset: 0.016 });
+await testModel('rcs', 'rcs.glb', { animate: false, lonOffset: 0.018 });
 
 // 收尾：清场 + 复位相机 lookAt（页面随后即关闭）
 await cleanupScene();
