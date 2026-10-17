@@ -1,0 +1,264 @@
+#!/usr/bin/env python3
+# tools/make_mission_models.py — 生成探月任务 glTF 2.0（.glb）模型资产
+#   public/models/longmarch5.glb  长征五号（静态；Y-up，原点=发动机喷口面，单位米）
+#   public/models/yutu_rover.glb  玉兔号月球车（6 轮滚动节点动画；前进 +X，接地 y=0，单位米）
+# 纯标准库手写 glTF/GLB，无第三方依赖。重新生成：./.venv/Scripts/python.exe tools/make_mission_models.py
+import json
+import math
+import os
+import struct
+
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'models')
+os.makedirs(ROOT, exist_ok=True)
+
+
+# ---------- 几何生成（Y-up，右手系） ----------
+def cylinder(r_top, r_bot, h, seg=20, capped=True):
+    """圆台/圆柱/圆锥（r_top=0 即圆锥）。返回 (pos, nrm, idx)。"""
+    pos, nrm, idx = [], [], []
+    k = (r_top - r_bot) / h if h else 0.0
+    for i in range(seg + 1):
+        th = 2 * math.pi * i / seg
+        c, s = math.cos(th), math.sin(th)
+        pos += [r_bot * c, 0.0, r_bot * s]
+        nrm += [c, -k, s]
+        pos += [r_top * c, h, r_top * s]
+        nrm += [c, -k, s]
+    for i in range(seg):
+        a, b, c, d = 2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 3
+        idx += [a, c, b, b, c, d]
+    if capped:
+        if r_bot > 0:
+            base = len(pos) // 3
+            pos += [0.0, 0.0, 0.0]
+            nrm += [0.0, -1.0, 0.0]
+            for i in range(seg + 1):
+                th = 2 * math.pi * i / seg
+                pos += [r_bot * math.cos(th), 0.0, r_bot * math.sin(th)]
+                nrm += [0.0, -1.0, 0.0]
+            for i in range(seg):
+                idx += [base, base + 1 + i, base + 2 + i]
+        if r_top > 0:
+            base = len(pos) // 3
+            pos += [0.0, h, 0.0]
+            nrm += [0.0, 1.0, 0.0]
+            for i in range(seg + 1):
+                th = 2 * math.pi * i / seg
+                pos += [r_top * math.cos(th), h, r_top * math.sin(th)]
+                nrm += [0.0, 1.0, 0.0]
+            for i in range(seg):
+                idx += [base, base + 2 + i, base + 1 + i]
+    return pos, nrm, idx
+
+
+def box(w, h, d):
+    x, y, z = w / 2, h / 2, d / 2
+    faces = [
+        ((0, 0, 1), [(-x, -y, z), (x, -y, z), (x, y, z), (-x, y, z)]),
+        ((0, 0, -1), [(x, -y, -z), (-x, -y, -z), (-x, y, -z), (x, y, -z)]),
+        ((1, 0, 0), [(x, -y, z), (x, -y, -z), (x, y, -z), (x, y, z)]),
+        ((-1, 0, 0), [(-x, -y, -z), (-x, -y, z), (-x, y, z), (-x, y, -z)]),
+        ((0, 1, 0), [(-x, y, z), (x, y, z), (x, y, -z), (-x, y, -z)]),
+        ((0, -1, 0), [(-x, -y, -z), (x, -y, -z), (x, -y, z), (-x, -y, z)]),
+    ]
+    pos, nrm, idx = [], [], []
+    for n, pts in faces:
+        base = len(pos) // 3
+        for p in pts:
+            pos += list(p)
+            nrm += list(n)
+        idx += [base, base + 1, base + 2, base, base + 2, base + 3]
+    return pos, nrm, idx
+
+
+def rot_x_90(geo):
+    """(x,y,z) -> (x,-z,y)：把 Y 轴向几何绕到 Z 轴（轮子滚动轴）。"""
+    pos, nrm, idx = geo
+    p2 = [None] * len(pos)
+    for i in range(0, len(pos), 3):
+        p2[i], p2[i + 1], p2[i + 2] = pos[i], -pos[i + 2], pos[i + 1]
+    n2 = [None] * len(nrm)
+    for i in range(0, len(nrm), 3):
+        n2[i], n2[i + 1], n2[i + 2] = nrm[i], -nrm[i + 2], nrm[i + 1]
+    return p2, n2, idx
+
+
+# ---------- GLB 组装 ----------
+class Glb:
+    def __init__(self):
+        self.accessors, self.views, self.meshes = [], [], []
+        self.nodes, self.materials, self.anims = [], [], []
+        self.bin = bytearray()
+
+    def _view(self, data, target=None):
+        while len(self.bin) % 4:
+            self.bin.append(0)
+        off = len(self.bin)
+        self.bin += data
+        v = {'buffer': 0, 'byteOffset': off, 'byteLength': len(data)}
+        if target:
+            v['target'] = target
+        self.views.append(v)
+        return len(self.views) - 1
+
+    def accessor(self, data, ctype, count, atype, mn=None, mx=None, target=None):
+        vi = self._view(data, target)
+        a = {'bufferView': vi, 'componentType': ctype, 'count': count, 'type': atype}
+        if mn is not None:
+            a['min'], a['max'] = mn, mx
+        self.accessors.append(a)
+        return len(self.accessors) - 1
+
+    def mesh(self, geo, mat):
+        pos, nrm, idx = geo
+        pv = struct.pack(f'<{len(pos)}f', *pos)
+        nv = struct.pack(f'<{len(nrm)}f', *nrm)
+        iv = struct.pack(f'<{len(idx)}H', *idx)
+        mn = [min(pos[i::3]) for i in range(3)]
+        mx = [max(pos[i::3]) for i in range(3)]
+        ai = self.accessor(iv, 5123, len(idx), 'SCALAR', target=34963)
+        ap = self.accessor(pv, 5126, len(pos) // 3, 'VEC3', mn, mx, target=34962)
+        an = self.accessor(nv, 5126, len(nrm) // 3, 'VEC3', target=34962)
+        self.meshes.append({'primitives': [{
+            'attributes': {'POSITION': ap, 'NORMAL': an},
+            'indices': ai, 'material': mat, 'mode': 4,
+        }]})
+        return len(self.meshes) - 1
+
+    def raw_accessor(self, data, ctype, count, atype, mn=None, mx=None):
+        """直接登记一块已打包的原始数据（用于动画 sampler 的 times/quats）。"""
+        while len(self.bin) % 4:
+            self.bin.append(0)
+        off = len(self.bin)
+        self.bin += data
+        self.views.append({'buffer': 0, 'byteOffset': off, 'byteLength': len(data)})
+        a = {'bufferView': len(self.views) - 1, 'componentType': ctype,
+             'count': count, 'type': atype}
+        if mn is not None:
+            a['min'], a['max'] = mn, mx
+        self.accessors.append(a)
+        return len(self.accessors) - 1
+
+    def node(self, mesh=None, translation=None, name='', children=None):
+        n = {'name': name}
+        if mesh is not None:
+            n['mesh'] = mesh
+        if translation:
+            n['translation'] = translation
+        if children:
+            n['children'] = children
+        self.nodes.append(n)
+        return len(self.nodes) - 1
+
+    def material(self, rgba, metallic=0.1, roughness=0.65):
+        self.materials.append({
+            'pbrMetallicRoughness': {
+                'baseColorFactor': rgba, 'metallicFactor': metallic, 'roughnessFactor': roughness,
+            },
+            'doubleSided': True,
+        })
+        return len(self.materials) - 1
+
+    def save(self, path, roots, animations=None):
+        gltf = {
+            'asset': {'version': '2.0', 'generator': 'sphere make_mission_models.py'},
+            'scene': 0, 'scenes': [{'nodes': roots}],
+        }
+        if self.nodes:
+            gltf['nodes'] = self.nodes
+        if self.meshes:
+            gltf['meshes'] = self.meshes
+        if self.materials:
+            gltf['materials'] = self.materials
+        if self.accessors:
+            gltf['accessors'] = self.accessors
+        if self.views:
+            gltf['bufferViews'] = self.views
+        gltf['buffers'] = [{'byteLength': len(self.bin)}]
+        if animations:
+            gltf['animations'] = animations
+        js = json.dumps(gltf, separators=(',', ':')).encode()
+        while len(js) % 4:
+            js += b' '
+        while len(self.bin) % 4:
+            self.bin.append(0)
+        total = 12 + 8 + len(js) + 8 + len(self.bin)
+        with open(path, 'wb') as f:
+            f.write(struct.pack('<III', 0x46546C67, 2, total))
+            f.write(struct.pack('<II', len(js), 0x4E4F534A))
+            f.write(js)
+            f.write(struct.pack('<II', len(self.bin), 0x004E4942))
+            f.write(self.bin)
+        return total
+
+
+# ---------- 长征五号 ----------
+def build_rocket():
+    g = Glb()
+    white = g.material([0.93, 0.94, 0.96, 1.0], 0.05, 0.55)
+    dark = g.material([0.20, 0.22, 0.25, 1.0], 0.3, 0.6)
+    red = g.material([0.82, 0.18, 0.14, 1.0], 0.05, 0.6)
+    parts = []
+    parts.append(g.node(g.mesh(cylinder(1.65, 2.25, 2.6), dark), [0, 0, 0], '尾裙'))
+    parts.append(g.node(g.mesh(cylinder(1.65, 1.65, 1.1), red), [0, 2.6, 0], '红色环带'))
+    parts.append(g.node(g.mesh(cylinder(1.65, 1.65, 24.3), white), [0, 3.7, 0], '芯级'))
+    parts.append(g.node(g.mesh(cylinder(0.05, 1.65, 8.0), dark), [0, 28.0, 0], '整流罩'))
+    for i in range(4):  # 4 枚助推器（斜 45° 均布）
+        th = math.pi / 4 + i * math.pi / 2
+        r = 3.35
+        x, z = r * math.cos(th), r * math.sin(th)
+        parts.append(g.node(g.mesh(cylinder(0.62, 0.62, 14.5), white), [x, 3.7, z], f'助推器{i}'))
+        parts.append(g.node(g.mesh(cylinder(0.05, 0.62, 2.8), dark), [x, 18.2, z], f'助推器头{i}'))
+    root = g.node(name='长征五号', children=parts)
+    total = g.save(os.path.join(ROOT, 'longmarch5.glb'), [root])
+    print(f'longmarch5.glb  {total/1024:.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)}')
+
+
+# ---------- 玉兔号月球车（6 轮滚动节点动画） ----------
+def build_rover():
+    g = Glb()
+    body = g.material([0.82, 0.84, 0.87, 1.0], 0.2, 0.55)
+    panel = g.material([0.80, 0.62, 0.22, 1.0], 0.35, 0.5)
+    wheel = g.material([0.16, 0.16, 0.18, 1.0], 0.1, 0.85)
+    silver = g.material([0.55, 0.58, 0.62, 1.0], 0.5, 0.4)
+    dark = g.material([0.18, 0.19, 0.22, 1.0], 0.3, 0.6)
+    kids = [
+        g.node(g.mesh(box(1.55, 0.30, 1.05), body), [0, 0.45, 0], '车体'),
+        g.node(g.mesh(box(1.70, 0.05, 1.00), panel), [-0.05, 0.66, 0], '太阳翼'),
+        g.node(g.mesh(box(0.70, 0.26, 0.62), silver), [-0.25, 0.73, 0], '设备舱'),
+        g.node(g.mesh(cylinder(0.03, 0.03, 0.52), silver), [0.72, 0.42, 0], '桅杆'),
+        g.node(g.mesh(box(0.14, 0.12, 0.14), dark), [0.72, 1.00, 0], '相机头'),
+    ]
+    # 6 轮：滚动 = 绕 Z 轴节点动画（半圈 0.5s，REPEAT 循环即 1 转/秒，首尾恒等无缝）
+    # 轮辐：每轮 3 根银色小辐条作为轮子节点的子节点——纯色光滑圆柱绕自身轴旋转
+    #       视觉上几乎不变（2026-10-17 冒烟实测 animDiff≈0.10 假阴性），辐条让旋转可判读。
+    wheel_nodes = []
+    for wx in (0.60, 0.0, -0.60):
+        for wz in (0.62, -0.62):
+            spokes = [g.node(g.mesh(box(0.08, 0.08, 0.22), silver),
+                             [0.13 * math.cos(math.pi * 2 * k / 3), 0.13 * math.sin(math.pi * 2 * k / 3), 0.0],
+                             f'轮辐{xz(wx, wz)}-{k}') for k in range(3)]
+            wheel_nodes.append(g.node(
+                g.mesh(rot_x_90(cylinder(0.16, 0.16, 0.14, seg=16)), wheel),
+                [wx, 0.16, wz], f'轮{xz(wx, wz)}', children=spokes))
+    # 动画：input times=[0,0.5]，output 四元数 [identity, 绕Z半圈]
+    tv = struct.pack('<2f', 0.0, 0.5)
+    qv = struct.pack('<8f', 0, 0, 0, 1, 0, 0, 1, 0)
+    t_idx = g.raw_accessor(tv, 5126, 2, 'SCALAR', [0.0], [0.5])
+    q_idx = g.raw_accessor(qv, 5126, 2, 'VEC4')
+    channels = [{'sampler': 0, 'target': {'path': 'rotation', 'node': n}} for n in wheel_nodes]
+    anims = [{'channels': channels, 'samplers': [
+        {'input': t_idx, 'output': q_idx, 'interpolation': 'LINEAR'}]}]
+    root = g.node(name='玉兔号', children=kids + wheel_nodes)
+    total = g.save(os.path.join(ROOT, 'yutu_rover.glb'), [root], animations=anims)
+    print(f'yutu_rover.glb  {total/1024:.1f} KB  nodes={len(g.nodes)} meshes={len(g.meshes)} anim_channels={len(channels)}')
+
+
+def xz(x, z):
+    return f'{x:+.2f},{z:+.2f}'
+
+
+if __name__ == '__main__':
+    build_rocket()
+    build_rover()
+    print('OK ->', ROOT)

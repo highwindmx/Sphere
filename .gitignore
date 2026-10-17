@@ -22,9 +22,6 @@ __pycache__/
 *.pyc
 # pyproject.toml 与 uv.lock 作为 uv 项目依赖清单纳入版本库（保证可复现，详见 pyproject.toml 头注释）
 
-# ============== 原始大文件 (16GB+，永远不上传) ==============
-raw-data/
-
 # ============== 离线瓦片下载产物 (按需下载，不上传；随库的 21 个 terrain z0–z3 已跟踪不受影响) ==============
 public/tiles/*
 
@@ -42,12 +39,9 @@ extracted-layers.json
 # ============== Trae (运行时记忆) ==============
 .trae-memory/
 
-# ============== 冒烟截图 & 调试诊断图（可随时重新生成，不入库） ==============
+# ============== 冒烟截图 & 存档都不上传 ==============
 tools/.*.png
-archive/demos/.*.png
-archive/debug/*.png
-archive/debug/*.jpeg
-archive/debug/*.json
+archive/
 
 # ============== WorkBuddy 代理工作区（项目记忆/验证脚本，本地留存不入库） ==============
 .workbuddy/

@@ -140,6 +140,30 @@ node tools/download-satellite-tiles.mjs --bbox -180,-85,180,85 --min-z 0 --max-z
 
 * * *
 
+## 探月任务 3D 模型（glTF）
+
+探月任务（`src/rocket.js` 三幕动画）的 3D 模型资产由 `tools/make_mission_models.py` 纯标准库生成（无第三方依赖，重新生成：`./.venv/Scripts/python.exe tools/make_mission_models.py`）：
+
+| 文件 | 内容 | 动画 |
+| --- | --- | --- |
+| `public/models/longmarch5.glb` | 长征五号（13 节点：尾裙/红色环带/芯级/整流罩/4 助推器），Y-up 原点=发动机喷口面 | 静态 |
+| `public/models/yutu_rover.glb` | 玉兔号月球车（30 节点：车体/太阳翼/设备舱/桅杆/相机头 + 6 轮各带 3 根轮辐） | 6 轮滚动（绕轴半圈 0.5s，REPEAT 无缝循环） |
+| `public/models/CesiumMan.glb` | Cesium 官方骨骼动画样例（下载自 jsdelivr），作 skinning 可行性参照 | 骨骼行走 |
+
+验证：`node tools/models-smoke.mjs`（headless Edge + CDP 端到端冒烟）——逐模型 `Model.fromGltfAsync` 加载 → ready 断言 → 包围球投影点邻域像素 diff（渲染证据）→ 0.21s 双帧 diff 经噪声标定（动画证据）。
+
+**已验证结论（2026-10-17）**：Cesium 1.146 原生 `Model` 完整支持 glTF 节点动画与 skinning 骨骼动画（CesiumMan 行走 animDiff=3.79，背景隔离后噪声=0）——火箭/探月器的 3D 动画角色无需引入 Three.js。
+
+模型加载要点（1.146 API）：
+
+-   `Model.fromGltfAsync({url, gltfCallback})` 返回 Promise；glTF 动画数量从 `gltfCallback` 的 `gltf.animations` 取（Model 对象不再暴露 `animations`）。
+-   模型必须设 `modelMatrix`（如 `Cesium.Transforms.eastNorthUpToFixedFrame(pos)`）定位，否则躺在原点（地心）永远不可见。
+-   动画挂载：`model.readyEvent` 或轮询 `model.ready` 后 `model.activeAnimations.add({index, loop: Cesium.ModelAnimationLoop.REPEAT, multiplier})`。
+-   `requestRenderMode` 下手动出图必须 `scene.requestRender()` + `scene.render(time)` 两步（只调 render() 可能是 no-op）。
+-   相机 `lookAt(target, hpr)` 后世界距离用 `camera.positionWC` 断言——`camera.position` 是 lookAt 参考系下的局部坐标，混用会误判「相机跑到原点」。
+
+* * *
+
 ## 项目结构
 
 ```
@@ -172,11 +196,14 @@ Sphere/
 │   ├── emit_places.mjs               ← 山脉折线中点导出（被 download_terrain_tiles.py 调用）
 │   ├── validate_layers.mjs           ← 图层注册表完整性校验
 │   ├── add_provenance_headers.mjs    ← 图层源数据出处头注入
+│   ├── make_mission_models.py        ← 生成探月任务 glTF 模型（长征五号 / 玉兔号，纯标准库）
+│   ├── models-smoke.mjs              ← glTF 模型加载+动画端到端冒烟（headless Edge + CDP）
 │   └── convert_lunar.py              ← 原始 TIF → lunar_dem.png / lunar_wac.jpg
 ├── public/
 │   ├── vendor/
 │   │   ├── cesium/             ← npm run vendor 生成（Cesium 构建产物，不入库）
 │   │   └── cesium-navigation/  ← npm run vendor 生成（导航控件，不入库）
+│   ├── models/                 ← 探月任务 glTF 模型：longmarch5.glb / yutu_rover.glb / CesiumMan.glb
 │   ├── patch/                  ← 极冠补丁图 + bluemarble.jpg（补丁源图）
 │   ├── lunar/                  ← 月球模式资产：lunar_wac.jpg / lunar_dem.png + 源 TIF
 │   └── tiles/
