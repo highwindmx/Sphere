@@ -9,6 +9,7 @@ import CesiumNavigation from 'cesium-navigation-es6';
 import { createLocalTerrainProvider } from './terrarium-provider.js';
 import { LAYERS, LAYER_MAP, LAYER_CATEGORIES, resolveCategories } from './layers/index.js';
 import { createLayerRenderer } from './layer-renderer.js';
+import { createOffscreenIndicator } from './offscreen.js';
 import { loadTiangong, isTiangongLoaded, removeTiangong } from './tiangong.js';
 import { startRouteTour, isRouteTourFollowing, isRouteTourActive } from './route-tour.js';
 import {
@@ -287,6 +288,50 @@ viewer.camera.setView({
 
 // ====== 图层渲染器 ======
 const renderer = createLayerRenderer(viewer, globe);
+// 调试/冒烟导出（tools/layers-smoke.mjs 依赖）
+window.renderer = renderer;
+
+// ====== 屏幕边缘指示器：球背面/屏外标注的折线引出（2026-10-17）======
+// 与渲染器的背面剔除配套：背面标记在球体上隐藏，改在画布边缘标出名称与方向。
+const EDGE_IND_KEY = 'sphere-edge-indicator';
+const OCCLUDE_BACK_KEY = 'sphere-occlude-back';
+let edgeIndicator = null;
+function initOffscreenIndicator() {
+  const container = $('cesiumContainer');
+  if (!container) return;
+  edgeIndicator = createOffscreenIndicator(viewer, container);
+  if (edgeIndicator) {
+    renderer.attachOffscreen(edgeIndicator);
+    window.__edge = edgeIndicator;   // 调试/冒烟导出
+  }
+}
+function initBackfaceToggles() {
+  const cbBack = $('cbOccludeBack');
+  const cbEdge = $('cbEdgeIndicator');
+  let occ = true, edge = true;
+  try {
+    occ = localStorage.getItem(OCCLUDE_BACK_KEY) !== '0';
+    edge = localStorage.getItem(EDGE_IND_KEY) !== '0';
+  } catch { /* 忽略 */ }
+  if (cbBack) {
+    cbBack.checked = occ;
+    cbBack.addEventListener('change', () => {
+      try { localStorage.setItem(OCCLUDE_BACK_KEY, cbBack.checked ? '1' : '0'); } catch { /* 忽略 */ }
+      renderer.setOccludeBack(cbBack.checked);
+      setStatus(cbBack.checked ? '球背面标记已隐藏（不再有背面虚影）' : '球背面标记恢复半透明虚影显示', 'ok');
+    });
+  }
+  if (cbEdge) {
+    cbEdge.checked = edge;
+    cbEdge.addEventListener('change', () => {
+      try { localStorage.setItem(EDGE_IND_KEY, cbEdge.checked ? '1' : '0'); } catch { /* 忽略 */ }
+      if (edgeIndicator) edgeIndicator.setEnabled(cbEdge.checked);
+      setStatus(cbEdge.checked ? '屏幕边缘指示已开启' : '屏幕边缘指示已关闭', 'ok');
+    });
+  }
+  renderer.setOccludeBack(occ);
+  if (edgeIndicator) edgeIndicator.setEnabled(edge);
+}
 
 // ====== 加载所有图层 ======
 for (const layer of LAYERS) {
@@ -1093,6 +1138,45 @@ $('lighting').addEventListener('click', () => {
   $('lighting').classList.toggle('active', on);
   globe.enableLighting = on;
   viewer.scene.requestRender();
+});
+
+// ====== 海底地形底图（Esri World Ocean Base，GEBCO/NOAA NGDC 测深编译）======
+// 走 app.py 的 tiles/ocean 代理（本地优先 + 成功回写，与 esri/eox 同一套），
+// 前端模板用 Cesium 约定的 z/x/y，代理内部换成上游的 z/y/x。
+// ⚠ 该服务是 Web Mercator（3857），必须用 WebMercatorTilingScheme，不能按 Geographic 拼。
+// ⚠ Cesium 1.146 的 addImageryProvider(provider, opts) 会把 opts 当 index（ToInteger({})===0），
+//    必须 new Cesium.ImageryLayer(provider, opts) + 单参 add()（2026-10-16 踩过的坑）。
+let oceanLayer = null;
+function setOceanBasemap(on) {
+  const btn = $('btnOceanBase');
+  if (!viewer || !viewer.imageryLayers) return;
+  if (!on) {
+    if (oceanLayer) {
+      try { viewer.imageryLayers.remove(oceanLayer); } catch { /* 忽略 */ }
+      oceanLayer = null;
+    }
+    if (btn) btn.classList.remove('active');
+    setStatus('已回到卫星底图', 'ok');
+    return;
+  }
+  if (oceanLayer) return;
+  try {
+    const provider = new Cesium.UrlTemplateImageryProvider({
+      url: 'tiles/ocean/{z}/{x}/{y}',
+      tilingScheme: new Cesium.WebMercatorTilingScheme(),
+      maximumLevel: 13,
+      credit: 'Esri, Garmin, GEBCO, NOAA NGDC and other contributors',
+    });
+    oceanLayer = new Cesium.ImageryLayer(provider, {});
+    viewer.imageryLayers.add(oceanLayer);
+    if (btn) btn.classList.add('active');
+    setStatus('海底地形底图已开启（GEBCO / NOAA NGDC 测深；再点一次回到卫星底图）', 'ok');
+  } catch (e) {
+    setStatus(`海底地形底图加载失败：${e && e.message ? e.message : e}`, 'warn');
+  }
+}
+$('btnOceanBase')?.addEventListener('click', () => {
+  setOceanBasemap(!oceanLayer);
 });
 
 // ====== 侧栏折叠 ======
@@ -1922,6 +2006,8 @@ function initBuildTag() {
 
 buildLayerTree();
 initHoverPreviewToggle();
+initOffscreenIndicator();
+initBackfaceToggles();
 initBuildTag();
 buildSceneButtons();
 

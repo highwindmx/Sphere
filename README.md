@@ -13,6 +13,9 @@
 | 🌍 地形观察 | 全球高精度卫星底图 + Terrarium 高程瓦片 + 垂直夸张滑块（1–4×） |
 | 🌗 晨昏光影 | 真实太阳方向，晨昏线随时间移动；极区随 enableLighting 自动加深色调 |
 | 🗺 标注图层 | 30+ 图层（分类树 + 搜索 + 全选/全清），点击标注可飞到推荐视角 |
+| 🏙 世界大城市 | 中国以外 261 座城市，8 个区域分组；美国 / 日本 / 欧洲 / 中国周边加密 |
+| 🧭 背面剔除 + 边缘指示 | 球背面标注不再「透视」贴在球面上，改在画布边缘用折线 + 箭头 + 名称引出 |
+| 🌊 海底地形底图 | Esri World Ocean Base（GEBCO / NOAA NGDC 测深），一键与卫星底图互换 |
 | 🌐 海峡与航道 | 7 大经典海峡 + 北极航道关键锚点（德朗/帕里/兰开斯特） |
 | 🌋 海底地形 | 马里亚纳/汤加/波多黎各/爪哇海沟、红海裂谷，带 exaggeration 推荐 |
 | ⛰ 国内山脉 | 喜马拉雅/横断/昆仑/秦岭/祁连/天山/阴山 走向折线 |
@@ -126,6 +129,39 @@ node tools/download-satellite-tiles.mjs --bbox -180,-85,180,85 --min-z 0 --max-z
     -   **全部** = 该层级全球完整覆盖（z9–11 全球 550 万张、量级 60 GB+，慎点）。
     -   各源瓦片网格相同，标注点张数一致、体积按源略有差异；天地图按中国 bbox 下载（全球下它没意义）。
 -   **下载分段建议**：骨架 z0–4（全球概览，分钟级）→ 低清 z5–8（大洲级，小时级）→ 高清 z9–11（城市级，建议先只下标注点子集）。
+
+* * *
+
+## 标注的背面剔除、边缘指示与避让
+
+三个问题、三个官方或半官方的解法（都在 `src/layer-renderer.js` / `src/offscreen.js`）：
+
+| 问题 | 成因 | 解法 |
+| --- | --- | --- |
+| 球背面的标注「透视」贴在球面上 | 标注为了不被地形吃掉，统一设了 `disableDepthTestDistance = ∞` | 用 **Cesium 官方 `EllipsoidalOccluder`**（地平线剔除用的就是它）逐点判定，背面直接 `show = false`。侧栏「隐藏球背面标记」开关，关掉可回到旧的半透明虚影 |
+| 背面/屏外标注就此消失，不知道对面有什么 | — | **屏幕边缘指示器**（`src/offscreen.js`，SVG 覆盖层）：把点方向投影到相机右/上基向量，从画布中心沿该方向射线与内缩矩形求交，画折线 + 朝外箭头 + 名称；按 15° 扇区限流（每扇区 2 条、总数 16），沿边缘均匀散开。侧栏「屏幕边缘指示」开关 |
+| 标注叠字 | 旧版按「经纬度阈值」判断，与屏幕像素距离不对应（低空过度错开、高空不够） | **Cesium 官方 `RectangleCollisionChecker`**（`LabelCollection` 内部就是它）：投影到窗口坐标 → 估算包围盒（CJK 视为 1em、拉丁 0.55em）→ 依次试 0 / ±20 / ±40 px 偏移，五档全冲突才隐藏该条。近处标注优先占位 |
+
+⚠ **1.146 实测坑**：`RectangleCollisionChecker.insert` 的**实参顺序是 `(id, rectangle)`**，与官方文档写的 `(rectangle, id)` 相反。传反了不抛错，只会**静默恒判「不冲突」**（标注照旧叠字）；只传一个参数则抛 `Cannot read properties of undefined (reading 'west')`，异常穿出 tick 会直接让 Cesium 停止渲染（`Rendering has stopped`）。
+
+* * *
+
+## 天体数据源（海底 / 月球 / 火星）
+
+| 目标 | 用途 | 源 | 说明 |
+| --- | --- | --- | --- |
+| 地球海底 | 测深底图 | **Esri World Ocean Base** `server.arcgisonline.com/.../Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}` | ✅ 已接入（侧栏「🌊 海底地形」，走 `tiles/ocean` 代理、本地缓存）。Web Mercator，全球 ~1:577k，美国沿海 ~1:72k，免 key |
+| 地球海底 | 原始网格 | GEBCO_2025 Grid（`download.gebco.net`）／ETOPO 2022（NOAA NCEI） | 15 arc-sec ≈ 450 m，需下载后自行切片（本地已有 terrarium 管线可复用） |
+| 地球海底 | WMS | GEBCO WMS（`layers=gebco_latest_3` 等） | 可直接用 `WebMapServiceImageryProvider`，无需切片 |
+| 月球 | 影像 | **NASA Moon Trek LRO WAC 303ppd** | ✅ 已接入（走 `tiles/lunar` 代理，≈100 m/像素，相对本地 `lunar_wac.jpg` 的 ~660 m/像素提升约 6.6×） |
+| 月球 | 真高程 | LOLA DEM（USGS Astropedia GeoTIFF，如 `LDEM_1024`） | 需下载后本地切片成 terrarium/quantized-mesh；本地 `lunar_dem.png` 仅 4096×2048（≈8.5 km/像素） |
+| 月球 | 视觉地形 | Moon Trek / USGS `moon_simp_cyl` WMS 的 LOLA 晕渲层 | 只能当影像叠加，不能当地形 provider |
+| 火星 | 影像 | **USGS WMS `mars_simp_cyl.map`**：`MDIM21`（Viking 232 m）、`MDIM21_color`、`THEMIS`（红外 100 m） | ✅ 沙箱实测 GetCapabilities 通过，共 18 个图层 |
+| 火星 | 地形晕渲 | 同一 WMS 的 `MOLA_color` / `MOLA_bw` / `MOLA_THEMIS_blend` / `HRSC_MOLA_Blend_Hillshade`（463 m / 200 m） | 影像叠加层，不是高程 |
+| 火星 | 真高程 | MOLA DEM 463 m、HRSC_MOLA_Blend 200 m（Astropedia） | 下载后本地切片；火星椭球半径 3,386,190 m（极半径 3,376,200 m） |
+| 火星 | 高清 | Murray Lab CTX 瓦片（5–6 m，赤道带）／Mars Trek WMTS／HiRISE DTM（1 m，局部） | 区域覆盖，适合做「着陆区」专题 |
+
+> 火星 Viewer 尚未落地（需要新椭球 + 新容器 + 图层，改动量在数百行）。上面 USGS 的 18 个图层名已实测拿到，随时可以接。
 
 * * *
 

@@ -244,6 +244,8 @@ def proxy_tile_cache(path):
         return proxy_terrain_tile(path)
     if source == 'lunar':
         return proxy_lunar_tile(path)
+    if source == 'ocean':
+        return proxy_ocean_tile(path)
     abort(404)
 
 
@@ -379,6 +381,58 @@ def proxy_lunar_tile(path):
         _log_proxy_fail(path, e)
         return _transparent_response()
     if not data or data[:2] != b'\xff\xd8':      # 非 JPEG（HTML 错误页等）→ 当作失败
+        _log_proxy_fail(path, ValueError('non-jpeg response'))
+        return _transparent_response()
+    try:
+        local = os.path.join(PUBLIC, path)
+        os.makedirs(os.path.dirname(local), exist_ok=True)
+        with open(local, 'wb') as fh:
+            fh.write(data)
+        _scan_invalidate()
+    except OSError:
+        pass
+    return Response(data, mimetype='image/jpeg')
+
+
+# =====================================================================
+# 海底地形瓦片（Esri World Ocean Base，测深底图）
+# ---------------------------------------------------------------------
+# 源：Esri / Garmin / GEBCO / NOAA NGDC 等编译的海底测深底图（沙箱实测 200，JPEG）。
+#     https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}
+#     全球覆盖到 ~1:577k，美国沿海与部分区域到 ~1:72k，个别水文区更细。
+#     免 key；Web Mercator（3857），因此前端必须用 WebMercatorTilingScheme。
+# 语义：影像源 → 失败回 1×1 透明 PNG（200），避免 Cesium 刷 "Failed to obtain image tile"。
+#       （对照：terrain 必须回 404 让 provider 走父级回退，别混用。）
+# =====================================================================
+_OCEAN_TILE = (
+    'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/'
+    'World_Ocean_Base/MapServer/tile/{z}/{y}/{x}'
+)
+
+
+def proxy_ocean_tile(path):
+    # tiles/ocean/{z}/{x}/{y}（前端用 Cesium 约定的 z/x/y；上游是 z/y/x）
+    parts = path.split('/')
+    if len(parts) != 5:
+        abort(404)
+    z, x, y = parts[2], parts[3], parts[4]
+    try:
+        zi = int(z)
+        if zi < 0 or zi > 13 or int(x) >= 2 ** zi or int(y) >= 2 ** zi:
+            abort(404)
+    except ValueError:
+        abort(404)
+    url = _OCEAN_TILE.format(z=z, y=y, x=x)
+    try:
+        data = _fetch_bytes(url, timeout=20, extra_headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                          '(KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+            'Referer': 'https://www.arcgis.com/',
+        })
+    except Exception as e:
+        _log_proxy_fail(path, e)
+        return _transparent_response()
+    if not data or data[:2] != b'\xff\xd8':
         _log_proxy_fail(path, ValueError('non-jpeg response'))
         return _transparent_response()
     try:

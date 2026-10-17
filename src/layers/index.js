@@ -32,6 +32,7 @@ import { LAYER as mongol } from './mongol.js';
 import { LAYER as alexander } from './alexander.js';
 import { LAYER as wwars } from './wwars.js';
 import { LAYER as worldcapitals } from './worldcapitals.js';
+import { LAYER as worldcities } from './worldcities.js';
 import { LAYER as peaks } from './peaks.js';
 import { LAYER as worldrivers } from './worldrivers.js';
 
@@ -45,7 +46,7 @@ export const LAYERS = [
   shanhai, wall, longmarch, silkroad, zhenghe, xuanzang, g318, cities, dynasties, waterworks,
   // 世界史
   civilizations, wonders, heritage, ageofsail, rome, crusades, mongol, alexander, wwars,
-  worldcapitals, peaks, worldrivers,
+  worldcapitals, worldcities, peaks, worldrivers,
 ];
 
 // 快速查找表
@@ -82,7 +83,7 @@ export const LAYER_CATEGORIES = [
     layerIds: [
       'ageofsail', 'rome', 'crusades', 'mongol', 'alexander',
       'wwars', 'civilizations', 'heritage', 'wonders',
-      'worldcapitals', 'peaks', 'worldrivers',
+      'worldcapitals', 'worldcities', 'peaks', 'worldrivers',
     ],
   },
 ];

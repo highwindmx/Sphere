@@ -51,6 +51,9 @@
         <div class="tool-row">
           <button id="lighting" class="tool-btn" title="配合巡游面板的 ⏩ 加速键看日出与晨昏线移动">🌗 晨夜光影</button>
         </div>
+        <div class="tool-row">
+          <button id="btnOceanBase" class="tool-btn" title="切换到 Esri 海底测深底图（GEBCO / NOAA NGDC 编译）：洋中脊、海沟、大陆架一目了然；再点一次回到卫星底图">🌊 海底地形</button>
+        </div>
         <!-- 图源选择/排序/下载统一进「图源设置」抽屉（右侧面板，地球仍可见）。
              旧的 底图模式/在线源/天地图key 控件已删除：优先级链 + 本地优先 + 启用开关完全覆盖其功能，
              main.js 侧的绑定代码一并移除（引用处均有 null 守卫，getBaseMode 等仍走 localStorage）。 -->
@@ -78,6 +81,17 @@
         <label class="hover-preview-cb" title="开启后：鼠标停在图层行 0.35 秒即临时只显示该图层，移开自动恢复（会临时改动勾选框）">
           <input type="checkbox" id="layerHoverPreview" />
           <span>悬停预览图层（停 0.35 秒即只显示该项，移开恢复）</span>
+        </label>
+        <!-- 球背面标记：Cesium 的 disableDepthTestDistance=∞ 会让背面标记「透视」贴在球面上，
+             这里用官方 EllipsoidalOccluder 判定地平线遮挡后直接隐藏；隐藏掉的部分改在画布边缘
+             用「折线 + 箭头 + 名称」引出，兼顾干净与可知（2026-10-17）。 -->
+        <label class="hover-preview-cb" title="球背面的标注不再以半透明虚影贴在球面上，而是彻底不显示">
+          <input type="checkbox" id="cbOccludeBack" checked />
+          <span>隐藏球背面标记（不再有背面虚影）</span>
+        </label>
+        <label class="hover-preview-cb" title="被隐藏的背面/屏外标注，在画布边缘用折线与箭头引出名称">
+          <input type="checkbox" id="cbEdgeIndicator" checked />
+          <span>屏幕边缘指示（背面标记的折线引出）</span>
         </label>
         <div id="layersTree" class="layer-tree"></div>
         <p class="hint">勾选图层或子组即显示；需要"临时只看某一层"时，先勾选上方「悬停预览图层」，再把鼠标停在图层行上 0.35 秒（状态栏会提示正在预览，移开即恢复）。线路类图层组名旁有「▶ 巡礼」可沿路线行进（播放/暂停/加减速/节点跳转），「航天探索」可加载天宫轨道、发起探月任务，「山川形胜」点标注可飞到推荐视角。</p>
