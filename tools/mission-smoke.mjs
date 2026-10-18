@@ -239,7 +239,9 @@ await sleep(2200);
 const TL = await evaluate(`(() => {
   const t = window.__moonMission.timeline();
   return { ...t, pAct1: 0.05, pStage: (t.boosterSep + t.fairingSep) / 2,
-           pTransfer: (t.card1End + t.transferEnd) / 2, pLoi: (t.card2End + t.loiEnd) / 2,
+           pTransfer: (t.card1End + t.transferEnd) / 2,
+           pCapture: (t.card2End + t.captureEnd) / 2, pOverview: (t.captureEnd + t.card3End) / 2,
+           pLoi: (t.card3End + t.loiEnd) / 2,
            pDescent: (t.loiEnd + t.touchEnd) / 2, pAct4: (t.touchEnd + 1) / 2 };
 })()`);
 report.steps.timeline = TL;
@@ -410,6 +412,59 @@ report.steps.orbitVisible = await evaluate(`(async () => {
   out.basis = m.debugAct2().basis;
   out.e1e2 = m.debugAct2().e1e2;
   return out;
+})()`);
+
+// ③e3 月球尺度 LOD（2026-10-19 用户反馈「月球比地球大」）：
+//     远景（第二幕）实际生效倍率必须 = ×3、显示半径 < 地球 6,378 km；
+//     幕卡 2 处于 ×3→×8 过渡中（飞船隐藏、镜头推进，地球逐步出画）；
+//     捕获幕锁定 ×8——会合半径 encR 按 ×8 算，倍率不满就会跳变上万 km。
+report.steps.moonLod = await evaluate(`(() => {
+  const m = window.__moonMission;
+  const at = (f) => { m.seek(f); return m.debugAct2(); };
+  const far = [at(0.24), at(0.34), at(0.45)];
+  const cardMid = at(${(TL.transferEnd + TL.card2End) / 2});
+  const near = [at(${TL.pCapture}), at(${TL.captureEnd - 0.001})];
+  const mx = (a, k) => Math.max(...a.map((d) => d[k]));
+  const mn = (a, k) => Math.min(...a.map((d) => d[k]));
+  return {
+    farExag: mx(far, 'moonExag'), farR: mx(far, 'moonRadiusKm'),
+    cardExag: cardMid.moonExag,
+    nearExag: mn(near, 'moonExag'), nearR: mn(near, 'moonRadiusKm'),
+    earthR: 6378,
+  };
+})()`);
+
+// ③e4 近月捕获幕（2026-10-19 从第二幕拆出独立成幕）：飞船贴月飞行（月心距 1~9 万 km）、
+//     取景随制动收紧 5~16 万 km、进度条文案含「第三幕」。旧版这段只占 5.7 s，现 14.0 s。
+report.steps.captureAct = await evaluate(`(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const m = window.__moonMission;
+  m.seek(${TL.pCapture});
+  await sleep(900);
+  const d = m.debugAct2();
+  return {
+    phase: document.getElementById('rocketPhase')?.textContent || '',
+    craftMoonKm: Math.round(Math.hypot(d.craft[0] - d.moon[0], d.craft[1] - d.moon[1])),
+    moonMagKm: d.moonMagKm,
+    camRangeKm: m.debugState().cam.act2RangeKm,
+    exag: d.moonExag,
+  };
+})()`);
+
+// ③e5 幕卡 3「地月全景定场」：整条轨迹唯一一次同框（按包围盒取景 ≈ 39.6 万 km）。
+//     尺度跨度 6,971 → 405,000 km = 58 倍，正片里没有任何一帧能同时看清三段。
+report.steps.overviewShot = await evaluate(`(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const m = window.__moonMission;
+  m.seek(${TL.pOverview});
+  await sleep(900);
+  const st = m.debugState();
+  return {
+    camRangeKm: st.cam.act2RangeKm,
+    targetKm: st.cam.act2TargetKm,
+    cardVisible: !document.getElementById('actCard')?.classList.contains('hidden'),
+    cardText: document.getElementById('actCardText')?.textContent || '',
+  };
 })()`);
 
 // ③c 相机双模式（2026-10-18 重做）：canvas 按下 → override=true 进 MANUAL；
@@ -771,6 +826,19 @@ report.checks = {
     && S.orbitVisible.captureRangeKm >= 50000 && S.orbitVisible.captureRangeKm <= 160000,
   // J3. ⭐ 轨道面基向量正交归一（根因守卫）：TR.e2 曾被共享暂存就地缩放，椭圆退化成直线。
   //     这是唯一能挡住该类 bug 复发的断言——像素扫描在退化态下也能通过（直线也有蓝色像素）。
+  // J4. ⭐ 月球尺度 LOD（用户反馈「月球比地球大」的根治断言）：
+  //     远景必须 ≤ ×3 且显示半径小于地球；捕获幕必须 = ×8（encR 按 ×8 算）。
+  moonExagLod: S.moonLod.farExag <= 3.001 && S.moonLod.farR <= S.moonLod.earthR
+    && S.moonLod.cardExag > 3.5 && S.moonLod.cardExag < 7.5
+    && S.moonLod.nearExag >= 7.98 && S.moonLod.nearR >= 13000,
+  // J5. 近月捕获幕：贴月飞行 + 收紧取景 + 独立成幕的文案
+  captureActSplit: /第三幕/.test(S.captureAct.phase || '')
+    && S.captureAct.craftMoonKm >= 10000 && S.captureAct.craftMoonKm <= 90000
+    && S.captureAct.camRangeKm >= 50000 && S.captureAct.camRangeKm <= 160000
+    && S.captureAct.exag >= 7.98,
+  // J6. 幕卡 3 全景定场：取景 ~39.6 万 km（整条轨迹同框）+ 幕卡可见
+  overviewShot: S.overviewShot.camRangeKm >= 300000 && S.overviewShot.camRangeKm <= 550000
+    && S.overviewShot.cardVisible === true && /整条轨迹/.test(S.overviewShot.cardText || ''),
   trBasisUnit: !!S.orbitVisible.basis
     && S.orbitVisible.basis.every((m) => Math.abs(m - 1) < 1e-3)
     && Math.abs(S.orbitVisible.e1e2) < 1e-3,
