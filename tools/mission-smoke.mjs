@@ -140,26 +140,30 @@ await evaluate(`(() => {
     scanOrbit(viewer) {
       const v = viewer || window.viewer;
       const cv = v.scene.canvas;
-      const W = 400, H = 250;
       if (cv.width === 0 || cv.height === 0) { try { v.cesiumWidget.resize(); } catch (e) {} }
       if (cv.width === 0 || cv.height === 0) return { zero: true, cvW: cv.width, cvH: cv.height };
+      // ⚠ 关键：必须 1:1 取样（不可降采样）。轨道线只有 2.2px 宽，缩放到 400×250 会被
+      // 与黑色背景混合冲淡到 #9ec1ff 亮度的 70%，绝对值阈值（b>180/g>150）全部失效
+      // ——2026-10-19 真实轨道改大后踩到：轨道明明在画，扫描却报 0。
+      const W = Math.min(800, cv.width), H = Math.min(500, cv.height);
       const c2 = document.createElement('canvas'); c2.width = W; c2.height = H;
       const x2 = c2.getContext('2d');
       for (let k = 0; k < 4; k++) {
         try { v.scene.requestRender(); v.scene.render(Cesium.JulianDate.now()); } catch (e) { /* 伪影 */ }
       }
-      x2.drawImage(cv, 0, 0, W, H);
+      x2.drawImage(cv, (cv.width - W) / 2, (cv.height - H) / 2, W, H, 0, 0, W, H);
       const d = x2.getImageData(0, 0, W, H).data;
-      let blue = 0, orange = 0, earth = 0, nonblack = 0;
+      let blue = 0, orange = 0, nonblack = 0;
       const total = W * H;
       for (let i = 0; i < d.length; i += 4) {
         const r = d[i], g = d[i + 1], b = d[i + 2];
         if (r + g + b > 30) nonblack++;
-        if (b > 180 && r > 110 && r < 215 && g > 150 && g < 230 && b > r + 25) blue++;
+        // 尺度无关判据：轨道/标注线色 #9ec1ff(158,193,255) 与 #bcd6ff(188,214,255) 的
+        // 「蓝远高于红、次高于绿」关系，在与黑色按任意比例混合后仍成立（差值同比缩放）
+        if (b > 120 && b - r > 45 && b - g > 25) blue++;
         if (r > 165 && g > 85 && g < 185 && b < 150 && (r - b) > 40) orange++;
-        if (b > 120 && r < 130 && g < 160 && b > r + 25) earth++;
       }
-      return { zero: false, W, H, total, nonblack, blue, orange, earth };
+      return { zero: false, cvW: cv.width, cvH: cv.height, W, H, total, nonblack, blue, orange };
     },
   };
   return true;
@@ -376,12 +380,36 @@ writeFileSync('tools/.mission-act2.png', Buffer.from(shotTransfer.split(',')[1],
 // ⚠ 必须在 ③c 相机双模式测试之前（那时会进 MANUAL 改机位，取景不再框轨道）。
 report.steps.orbitVisible = await evaluate(`(async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const m = window.__moonMission;
-  m.seek(0.28); await sleep(700);
-  const phasing = window.__t.scanOrbit(window.viewer);
-  m.seek(0.45); await sleep(700);
-  const transfer = window.__t.scanOrbit(window.viewer);
-  return { phasing, transfer };
+  const C = window.Cesium, v = window.viewer, m = window.__moonMission;
+  // ⚠ SwiftShader 每帧渲染可达数秒，seek 后固定等待会读到「上一幕机位」的画面
+  // （实测 900ms 时画布非黑像素只有 6.5k，轮询稳定后才是 23k）。必须轮询到相机静止。
+  // ⚠ 两段式等待：① seek 后先强制等 2.6s（SwiftShader 一帧可达数秒，轮询会「假稳定」——
+  //    帧没跑完时两次读数相等就误判静止，实测 900ms 时相机还停在上一幕机位）；
+  //    ② 再轮询到相机静止。
+  const settle = async () => {
+    await sleep(2600);
+    let prev = -1;
+    for (let i = 0; i < 20; i++) {
+      await sleep(350);
+      const mag = C.Cartesian3.magnitude(v.camera.positionWC);
+      if (prev > 0 && Math.abs(mag - prev) < prev * 0.004) return true;
+      prev = mag;
+    }
+    return false;
+  };
+  const camRange = () => m.debugState().cam.act2RangeKm;
+  const out = {};
+  m.seek(0.28); out.phasingSettled = await settle();
+  out.phasingRangeKm = camRange(); out.phasing = window.__t.scanOrbit(v);
+  m.seek(0.45); out.transferSettled = await settle();
+  out.transferRangeKm = camRange(); out.transfer = window.__t.scanOrbit(v);
+  m.seek(0.56); out.captureSettled = await settle();
+  out.captureRangeKm = camRange(); out.capture = window.__t.scanOrbit(v);
+  // ⭐ 轨道面基向量必须正交归一（2026-10-19 根因级回归）：旧版 TR.e2 与共享暂存 _tTmp 是
+  // 同一个对象，被就地缩放 → 椭圆 y 分量归零退化为直线，用户「看不到一圈圈椭圆」。
+  out.basis = m.debugAct2().basis;
+  out.e1e2 = m.debugAct2().e1e2;
+  return out;
 })()`);
 
 // ③c 相机双模式（2026-10-18 重做）：canvas 按下 → override=true 进 MANUAL；
@@ -731,8 +759,21 @@ report.checks = {
   ooWidgetGone: S.transfer.ooWidgetGone === true,
   // J. 第二幕轨道椭圆可见性（用户反馈「看不到一圈圈」）：调相/转移段画布应出现浅蓝轨道像素
   orbitRingsVisible: !!(S.orbitVisible && S.orbitVisible.phasing && S.orbitVisible.transfer)
+    && S.orbitVisible.phasingSettled === true && S.orbitVisible.transferSettled === true
     && S.orbitVisible.phasing.zero !== true && S.orbitVisible.transfer.zero !== true
-    && S.orbitVisible.phasing.blue > 30 && S.orbitVisible.transfer.blue > 30,
+    // 阈值按「真实椭圆」标定（退化成直线时只有 ~1400 px，真实三椭圆 ~9400 px）
+    && S.orbitVisible.phasing.blue > 4000 && S.orbitVisible.transfer.blue > 700
+    && S.orbitVisible.capture.blue > 900,
+  // J2. 第二幕取景距离（直接断言轨道在画面内，比像素扫描更能定位问题）：
+  //     调相 131e3（框三条椭圆）· 转移 393~606e3（框地月）· 捕获 138→60e3（随制动收紧）
+  act2Framing: S.orbitVisible.phasingRangeKm >= 100000 && S.orbitVisible.phasingRangeKm <= 200000
+    && S.orbitVisible.transferRangeKm >= 330000 && S.orbitVisible.transferRangeKm <= 700000
+    && S.orbitVisible.captureRangeKm >= 50000 && S.orbitVisible.captureRangeKm <= 160000,
+  // J3. ⭐ 轨道面基向量正交归一（根因守卫）：TR.e2 曾被共享暂存就地缩放，椭圆退化成直线。
+  //     这是唯一能挡住该类 bug 复发的断言——像素扫描在退化态下也能通过（直线也有蓝色像素）。
+  trBasisUnit: !!S.orbitVisible.basis
+    && S.orbitVisible.basis.every((m) => Math.abs(m - 1) < 1e-3)
+    && Math.abs(S.orbitVisible.e1e2) < 1e-3,
   transferEntities: S.transfer.entityPoints.moonEmLine.n >= 2
     && S.transfer.entityPoints.moonTransferMirror.n >= 2
     && S.transfer.entityPoints.moonTransferPath.n >= 2,

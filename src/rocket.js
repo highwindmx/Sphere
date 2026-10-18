@@ -38,46 +38,96 @@ const MOON_R = 1737400;
 const SPEED_STEPS = [0.5, 1, 2, 4, 8];
 const BASE_DURATION = 120; // 1× 全程秒数
 
-// ====== 第二幕：地月转移（真实比例 + 霍曼椭圆，2026-10-17 重做） ======
-// 全部距离以 km 计（日心→地心），最终落位时换算成米。
+// ====== 第二幕：地月转移（嫦娥一号真实轨道，2026-10-19 重做） ======
+// 数据源：国防科工委 2007-11-01 发布会实录 + 卫星百科「嫦娥一号」词条（四处互证）。
+// 全部距离以 km 计（地心/月心），最终落位时换算成米。
 const EM = {
   mu: 398600.4418,        // 地球引力常数 km³/s²
   rE: 6378.137,           // 地球赤道半径 km
-  leoAlt: 8000,           // 转移轨道近地点高度 km。⚠ 示意抬升：真实入轨 200 km，但真实比例的
-                          // 调相/转移椭圆 e≈0.99，99% 弧长插在地球内部被球体吃掉，「一圈一圈」
-                          // 永远不可见（2026-10-18 用户反馈）。与「月球体积 ×8」同类视觉处理，
-                          // 抬到 8000 km 让整圈浮出地球圆盘；调相起点仍从 200 km 渐变衔接第一幕。
-  moonDist: 384400,       // 地月平均距离 km（月心距）
+  moonDist: 384400,       // 地月平均距离 km（月心距，真实值；不再为凑衔接外推）
   moonR: 1737.4,          // 月球真实半径 km
   moonExag: 8,            // 月球视觉放大倍数（轨道尺度真实，仅月球体积放大以便观察，UI 有标注）
   moonPeriod: 27.321661,  // 月球恒星周期（天）
 };
-EM.rp = EM.rE + EM.leoAlt;
-EM.ra = EM.moonDist;
-EM.a = (EM.rp + EM.ra) / 2;
-EM.e = (EM.ra - EM.rp) / (EM.rp + EM.ra);
-EM.tHalf = Math.PI * Math.sqrt(EM.a ** 3 / EM.mu);                 // 霍曼转移半周期（秒）≈ 4.96 天
-EM.moonSweep = (2 * Math.PI / (EM.moonPeriod * 86400)) * EM.tHalf;  // 转移期间月球绕地角位移（rad）≈ 1.14
 
-// —— 嫦娥一号式三段轨道（2026-10-18 重做，用户参考图拍板） ——
-// 调相段（地球侧 2 圈渐扩椭圆，近地点点火抬升远地点 = 逐圈加速）
-// → 地月转移大椭圆（近地快远月慢）→ 月球捕获段（绕月 2 圈渐收椭圆，近月点制动 = 逐圈减速）。
-// 全部在 TR 轨道面内。⚠ 月球体积 ×8 示意（EM.moonExag），捕获段轨道相对**显示月球**取值
-// 保证视觉自洽（真实 100km 轨道会钻进放大月球内部）。
-const CH_RV_KM = EM.moonR * EM.moonExag;              // 显示月半径 km = 13,899
-const CH_APO1 = 2.6 * CH_RV_KM;                       // 捕获圈 1 远月点（= 转移远地点与月心的间距）
-const CH_RP0 = EM.rE + 200;                           // 调相起点近地点（衔接第一幕 200km 入轨）
-const CH_RP1 = EM.rE + EM.leoAlt;                     // 示意近地点（= 转移近地点，圈内渐变衔接）
-const CH = {
-  phasing: [14000, 60000],   // 调相椭圆远地点高度 km（起点/终点各圈渐扩；近地点 200→8000 渐抬）
-  capture: [                 // 捕获椭圆 [远月点, 近月点]（月心距 km，相对显示月球）
-    [CH_APO1, 1.07 * CH_RV_KM],   // 圈 1（12h 量级示意）
-    [1.45 * CH_RV_KM, 1.03 * CH_RV_KM],  // 圈 2（3.5h 量级示意）
-  ],
+// —— 嫦娥一号三段真实轨道（高度 km / 圈数 / 周期 h）——
+// ⭐⭐ 三条**离散**椭圆，不是连续渐变：连续渐变在几何上渲染成一条螺旋，根本读不出「一圈一圈」；
+//     离散档位让三条椭圆在近地点汇聚于一点、向远地点层层张开——这才是用户反馈「看不到一圈圈
+//     椭圆」的真根因（参考卫星百科「变种霍曼转移方式」动图 sat.huijiwiki.com/wiki/地月转移轨道）。
+const CH_PHASING = [                  // 调相段：每次过近地点点火，远地点逐档抬高
+  { rp: 205, ra: 50900,  laps: 3, per: 16, name: '16 小时轨道' },       // 10/24 18:05 入轨
+  { rp: 593, ra: 71600,  laps: 3, per: 24, name: '24 小时轨道' },       // 10/26 第1次近地点加速（连飞 3 圈：把 1 天发射窗口扩成 3 天）
+  { rp: 593, ra: 119800, laps: 1, per: 48, name: '48 小时轨道' },       // 10/29 第2次近地点加速（远地点 119,800 km，当时我国最远纪录）
+];
+const CH_CAPTURE = [                  // 捕获段：每次过近月点制动，逐档收圆
+  { rp: 211, ra: 8500, laps: 2, per: 12,       name: '12 小时轨道' },   // 11/5 LOI-1（点火 22 分钟）
+  { rp: 200, ra: 1729, laps: 4, per: 3.5,      name: '3.5 小时轨道' },  // 11/6 LOI-2
+  { rp: 195, ra: 195,  laps: 1, per: 127 / 60, name: '127 分钟圆轨道' },// 11/7 LOI-3（点火 10 分钟，200 km 极月轨道）
+];
+const CH_RV_KM = EM.moonR * EM.moonExag;      // 显示月半径 km = 13,899
+// 轨道几何预计算：调相取地心距，捕获取月心距（与显示月球同步 ×8 缩放，否则环月轨道会插进
+// 放大月球内部）。月球 ×8 的连锁后果：12h 轨道远月点 = 5.9 Rv，在地月全景里必然显得很大。
+function prepOrbits(list, baseR, scale) {
+  return list.map((o) => {
+    const rp = baseR + o.rp * scale, ra = baseR + o.ra * scale;
+    return { rp, ra, a: (rp + ra) / 2, e: (ra - rp) / (ra + rp), laps: o.laps, per: o.per, name: o.name };
+  });
+}
+const PH = prepOrbits(CH_PHASING, EM.rE, 1);
+const CA = prepOrbits(CH_CAPTURE, CH_RV_KM, EM.moonExag);
+
+// 转移椭圆（嫦娥一号真实：10/31 第 3 次近地点加速进入，近地点 593 km、远地点 405,000 km）
+EM.rp = EM.rE + 593;
+EM.ra = 405000;
+EM.a = (EM.rp + EM.ra) / 2;
+EM.e = (EM.ra - EM.rp) / (EM.ra + EM.rp);
+// 抵达点：飞船在月球轨道**外侧**与月球会合（距月心 = 12h 环月轨道近月点 = 15,587 km），
+// 即月球背面——正是真实嫦娥 LOI-1 的制动位置（背面无地面测控，故点火必须在那儿完成）。
+// 该处平近点角由开普勒方程反解：r = a(1 − e·cosE) → E → M。
+EM.encR = EM.moonDist + CA[0].rp;
+(function initEncounter() {
+  const { a, e } = EM;
+  const E = Math.acos(Math.max(-1, Math.min(1, (1 - EM.encR / a) / e)));
+  EM.Menc = E - e * Math.sin(E);                                  // 抵达点平近点角（rad）
+  EM.nuEnc = Math.atan2(Math.sqrt(1 - e * e) * Math.sin(E), Math.cos(E) - e);  // 抵达点真近点角
+  if (EM.nuEnc < 0) EM.nuEnc += Math.PI * 2;
+}());
+// 真实耗时（h）：调相 7 天绕地 7 圈 168 h / 转移 114 h / 捕获 3 次制动 40.1 h
+const CH_H = {
+  phasing: CH_PHASING.reduce((s, o) => s + o.laps * o.per, 0),
+  transfer: 114,
+  capture: CH_CAPTURE.reduce((s, o) => s + o.laps * o.per, 0),
 };
-// 第二幕内三段时间分配（s∈[0,1]）：调相 2 圈 → 转移 → 捕获 2 圈
-const P2 = { phasingEnd: 0.30, transferEnd: 0.72 };
-EM.moonC = EM.moonDist + CH_APO1;   // 捕获段月心距（km）：转移远地点 = 捕获圈 1 远月点
+const CH_TOTAL_H = CH_H.phasing + CH_H.transfer + CH_H.capture;   // 322.1 h ≈ 13.4 天
+const CH_TPH = CH_H.phasing + CH_H.transfer;                      // 会合时刻（h）
+// 第二幕内三段时间分配（s∈[0,1]）：按真实耗时等比 → s 与真实时间严格线性
+const P2 = {
+  phasingEnd: CH_H.phasing / CH_TOTAL_H,
+  transferEnd: CH_TPH / CH_TOTAL_H,
+};
+EM.moonC = EM.moonDist;                                            // 月心距（真实值）
+EM.moonOmega = (2 * Math.PI) / (EM.moonPeriod * 86400);             // 月球绕地角速度 rad/s
+EM.moonThetaEnc = EM.nuEnc;   // 会合时刻月球方向 = 飞船抵达方向（同一射线，二者必重合）
+
+// —— 顶视取景几何 ——
+// Cesium 默认 fov 60°（横屏时按**水平**计）→ 水平半张角 tan30°=0.5774；
+// 竖直 fov 只有 36°（60° ÷ 16:9）→ 竖直半张角 tan18°=0.3249。
+// ⚠ 竖直 fov 小得多，是第二幕取景的关键约束：月球转到画面上下方时必须拉远才不会出画。
+const TAN_H = Math.tan(Math.PI / 6);
+const TAN_V = TAN_H / (16 / 9);
+/** 由轨道面内包围盒半尺寸（km）反算顶视取景距离，保证目标不出画 */
+function fitRangeKm(halfX, halfY, margin = 0.88) {
+  return Math.max(halfX / TAN_H, halfY / TAN_V) / margin;
+}
+const PH_B = PH.map((o) => o.a * Math.sqrt(1 - o.e * o.e));   // 调相三条椭圆半短轴
+const CA_B = CA.map((o) => o.a * Math.sqrt(1 - o.e * o.e));   // 环月三条轨道半短轴
+const PH_RANGE = fitRangeKm(PH[2].a, PH_B[2]);                // 调相段定焦（含最外 48h 椭圆）
+// 捕获段三档取景（随制动逐档收紧）；margin 0.8 比 0.88 留白更多——127min 轨道贴着月面，
+// 画面太满会把环月轨道挤到边角
+const CA_RANGE = CA.map((o, i) => fitRangeKm(o.a, CA_B[i], 0.8));
+// 捕获段内两次换轨时刻（段内进度 0..1）：LOI-2 / LOI-3
+const CA_SWITCH = [0, 1].map((i) =>
+  CH_CAPTURE.slice(0, i + 1).reduce((s, o) => s + o.laps * o.per, 0) / CH_H.capture);
 
 // 四个发射场中用于探月任务的低纬两个（数据与 moonmission 图层一致）
 export const LAUNCH_SITES = {
@@ -89,7 +139,7 @@ export const LAUNCH_SITES = {
 const T = {
   liftEnd: 0.19,      // 第一幕结束（入轨 ~200km）★2026-10-17 加长：0.14 → 0.19
   card1End: 0.22,     // 幕卡 1 结束
-  transferEnd: 0.60,  // 第二幕结束（抵达月球 = 转移轨道远地点）
+  transferEnd: 0.60,  // 第二幕结束（与月球会合 → 三次近月制动完成）
   card2End: 0.64,     // 幕卡 2 结束
   loiEnd: 0.83,       // 环月制动段结束（开始离轨/动力下降）
   touchEnd: 0.93,     // 第三幕结束（触月）；0.93~1.00 为第四幕「玉兔巡视」
@@ -102,6 +152,16 @@ function rateAt(pp) {
   if (pp < T.liftEnd) return ACT_RATE.act1;
   if (pp >= T.touchEnd) return ACT_RATE.act4;
   return 1;
+}
+// 演示时间加速倍率：第二幕真实 322 小时压缩进 (transferEnd−card1End)×120s ≈ 45.6 s。
+// 用户拍板「时间可以加速」→ 保留真实时间比例，但把倍率显式标在进度条上，让真实节奏可读。
+const CH_SPEEDUP = Math.round(
+  (CH_TOTAL_H * 3600) / ((T.transferEnd - T.card1End) * BASE_DURATION)
+);
+/** 真实任务时间格式化：T+3 天 12 时 */
+function fmtElapsed(h) {
+  const d = Math.floor(h / 24), hh = Math.floor(h % 24);
+  return d > 0 ? `T+${d} 天 ${hh} 时` : `T+${hh} 时`;
 }
 // 幕节点（进度条跳转锚点）
 const ACTS = [
@@ -674,17 +734,27 @@ export function createMoonMission(opts) {
     // 顺行发射 → 注入速度 ≈ 当地东向
     Cesium.Cartesian3.normalize(new Cesium.Cartesian3(
       -Math.sin(lonR) * Math.cos(latR), Math.cos(lonR) * Math.cos(latR), Math.sin(latR)), _eastV);
+    // ⭐⭐ 必须用**专属对象**，绝不能用共享暂存 _tTmp（2026-10-19 根因级修复）。
+    // 旧版 e2 = normalize(..., _tTmp) 返回的就是 _tTmp 本身 → TR.e2 与共享暂存是同一个对象；
+    // 之后任何 multiplyByScalar(TR.e2, k, _tTmp) 都会**就地缩放基向量**：
+    //   ① 首帧 i=0 时 sinν=0 → e2 被乘成零向量 → 所有椭圆 y 分量归零 → **退化成过地心的直线**
+    //      （这才是用户「看不到一圈一圈霍曼椭圆」的真根因，前几轮的相机/近地点修复全在打偏）；
+    //   ② 之后 lookAtTransfer 的 nrm×range 写入 _tTmp → e2 变成 1.3e8 倍法向量，
+    //      再被逐帧累乘到 3e15 → 飞船位置爆到 1e16 m。
     const e2 = Cesium.Cartesian3.normalize(Cesium.Cartesian3.subtract(
-      _eastV, Cesium.Cartesian3.multiplyByScalar(e1, Cesium.Cartesian3.dot(_eastV, e1), _tTmp),
-      _tTmp), _tTmp);
+      _eastV,
+      Cesium.Cartesian3.multiplyByScalar(e1, Cesium.Cartesian3.dot(_eastV, e1), new Cesium.Cartesian3()),
+      new Cesium.Cartesian3()), new Cesium.Cartesian3());
     const nrm = Cesium.Cartesian3.cross(e1, e2, new Cesium.Cartesian3());
     TR = { e1, e2, nrm, inj };
   }
 
-  /** 转移椭圆上位置（世界坐标）：s∈[0,1] 近地点→远地点，位置 = r·(cos ν·e1 + sin ν·e2) */
+  /** 转移椭圆上位置（世界坐标）：s∈[0,1] 近地点→与月球会合处（略过远地点前），
+   *  位置 = r·(cos ν·e1 + sin ν·e2)。⚠ s=1 对应 M=Menc（会合点）而非 π（远地点）——
+   *  飞船在抵达月球轨道外侧时即被月球捕获，不会飞到 405,000 km 的远地点。 */
   function transferCartAt(s) {
     const s01 = clamp01(s);
-    const M = Math.PI * s01;
+    const M = EM.Menc * s01;
     const E = keplerE(M, EM.e);
     const r = EM.a * (1 - EM.e * Math.cos(E));
     const nu = Math.atan2(Math.sqrt(1 - EM.e * EM.e) * Math.sin(E), Math.cos(E) - EM.e);
@@ -700,16 +770,16 @@ export function createMoonMission(opts) {
     return [Cesium.Math.toDegrees(c.longitude), Cesium.Math.toDegrees(c.latitude), c.height];
   }
 
-  /** 月球方向单位向量（世界）：s=1 时抵达远地点（与飞船会合），转移期间沿轨道面扫过 moonSweep */
+  /** 月球方向单位向量（世界）：第二幕全长（322 h）内沿轨道面顺行扫过 ~177°，
+   *  会合时刻（s = P2.transferEnd）方向恰 = 飞船抵达方向 EM.nuEnc。 */
   function moonDirAt(s) {
-    const ang = Math.PI - EM.moonSweep * (1 - clamp01(s));
+    const ang = EM.moonThetaEnc + EM.moonOmega * (CH_TOTAL_H * clamp01(s) - CH_TPH) * 3600;
     Cesium.Quaternion.fromAxisAngle(TR.nrm, ang, _q);
     Cesium.Matrix3.fromQuaternion(_q, _m3t);
     return Cesium.Matrix3.multiplyByVector(_m3t, TR.e1, _vt);
   }
 
-  /** 月球中心（世界坐标）。⚠ 嫦娥轨道（2026-10-18）：月心比转移远地点远 CH_APO1——
-   *  转移远地点（= 飞船抵达点）恰为捕获圈 1 的远月点（月球朝地侧），衔接无缝。 */
+  /** 月球中心（世界坐标）：月心距 = 真实地月距 384,400 km（不再外推 +9.4%）。 */
   function moonCartAt(s) {
     return Cesium.Cartesian3.multiplyByScalar(moonDirAt(s), EM.moonC * 1000, new Cesium.Cartesian3());
   }
@@ -722,52 +792,66 @@ export function createMoonMission(opts) {
     return [r * Math.cos(nu), r * Math.sin(nu)];   // [沿 d1, 沿 d2]
   }
 
-  /** 调相段位置（世界坐标，米）：u∈[0,1] 两圈整体进度，圈内自近地点起跑（keplerE 天然近地快）。
-   *  近地点 200→8000km、远地点 14000→60000km 随进度**连续渐变**（渐扩螺旋，参考嫦娥轨道图）——
-   *  近地点渐抬让椭圆浮出地球圆盘（真实 200km 近地点的极扁椭圆 99% 在球内，圈永远不可见）。 */
+  /** 通用档位解析：进度 u∈[0,1]（与真实小时线性对应）→ { oi 轨道序号, li 圈序号, cu 圈内进度 }。
+   *  三段轨道共 7 圈，每圈耗时 = 该档真实周期（16h/24h/48h），圈内自近地点(近月点)起跑。 */
+  function orbitState(orbits, totalH, u) {
+    const h = clamp01(u) * totalH;
+    let acc = 0;
+    for (let oi = 0; oi < orbits.length; oi++) {
+      for (let li = 0; li < orbits[oi].laps; li++) {
+        const per = orbits[oi].per;
+        const last = oi === orbits.length - 1 && li === orbits[oi].laps - 1;
+        if (h < acc + per || last) return { oi, li, cu: last ? 1 : clamp01((h - acc) / per) };
+        acc += per;
+      }
+    }
+    return { oi: orbits.length - 1, li: orbits[orbits.length - 1].laps - 1, cu: 1 };
+  }
+  const phasingState = (u) => orbitState(PH, CH_H.phasing, u);
+  const captureState = (u) => orbitState(CA, CH_H.capture, u);
+
+  /** 调相段位置（世界坐标，米）：三条离散椭圆 16h→24h→48h 共 7 圈，每圈自近地点起跑。
+   *  ⭐ 三条椭圆的近地点几乎重合（6583 / 6971 / 6971 km）→ 左端汇聚一点、向远地点层层张开，
+   *    一眼就是三个渐扩的圈（旧版连续渐变 = 螺旋，读不出圈）。 */
   function phasingCartAt(u) {
-    const per = clamp01(u) * CH.phasing.length;
-    const i = Math.min(CH.phasing.length - 1, Math.floor(per));
-    const cu = per - i;
-    const k = per / CH.phasing.length;
-    const rpi = lerp(CH_RP0, CH_RP1, k);                              // 近地点（地心距 km）渐抬
-    const rai = EM.rE + lerp(CH.phasing[0], CH.phasing[1], k);        // 远地点（地心距 km）渐扩
-    const aKm = (rpi + rai) / 2;
-    const eK = (rai - rpi) / (rpi + rai);
-    const [px, py] = ellipseKM(aKm, eK, Math.PI * 2 * cu, TR.e1, TR.e2);
+    const { oi, cu } = phasingState(u);
+    const o = PH[oi];
+    const [px, py] = ellipseKM(o.a, o.e, Math.PI * 2 * cu, TR.e1, TR.e2);
     const cart = Cesium.Cartesian3.multiplyByScalar(TR.e1, px * 1000, new Cesium.Cartesian3());
     Cesium.Cartesian3.multiplyByScalar(TR.e2, py * 1000, _tTmp);
     return Cesium.Cartesian3.add(cart, _tTmp, cart);
   }
 
-  /** 捕获段位置（世界坐标，米）：u∈[0,1] 两圈整体进度，自远月点起跑（M 从 π 起）。
-   *  近月点方向 = -e1（背地侧），绕行方向与转移末端速度（-e2）连续。 */
+  /** 捕获段位置（世界坐标，米）：三条离散环月轨道 12h→3.5h→127min 共 7 圈，每圈自近月点起跑。
+   *  近月点方向 = 月心**背地**方向（径向外）——正是真实嫦娥 LOI 制动所在的月球背面；
+   *  绕行方向取逆行（d2 = r̂ × nrm），与飞船抵达时相对月球的运动方向一致。
+   *  ⚠ 椭圆整体跟随月球当前位置（旧版用固定 moonCartAt(1)，捕获段月球会与其轨道分离 5.2 万 km）。 */
   function captureCartAt(u) {
-    const per = clamp01(u) * CH.capture.length;
-    const i = Math.min(CH.capture.length - 1, Math.floor(per));
-    const cu = per - i;
-    const [ra, rp] = CH.capture[i];
-    const aKm = (ra + rp) / 2;
-    const eK = (ra - rp) / (ra + rp);
-    const [px, py] = ellipseKM(aKm, eK, Math.PI + Math.PI * 2 * cu, TR.e1, TR.e2);
-    const moonC = moonCartAt(1);
-    const cart = Cesium.Cartesian3.multiplyByScalar(TR.e1, px * 1000, new Cesium.Cartesian3());
-    Cesium.Cartesian3.multiplyByScalar(TR.e2, py * 1000, _tTmp);
-    return Cesium.Cartesian3.add(moonC, Cesium.Cartesian3.add(cart, _tTmp, cart), new Cesium.Cartesian3());
+    const u01 = clamp01(u);
+    const { oi, cu } = captureState(u01);
+    const o = CA[oi];
+    const s = P2.transferEnd + (1 - P2.transferEnd) * u01;   // 该时刻第二幕进度（月球在动）
+    const mc = moonCartAt(s);
+    const rhat = Cesium.Cartesian3.clone(moonDirAt(s), new Cesium.Cartesian3());   // 径向外 = 背地
+    const that = Cesium.Cartesian3.cross(rhat, TR.nrm, new Cesium.Cartesian3());   // 逆行切向
+    const [px, py] = ellipseKM(o.a, o.e, Math.PI * 2 * cu, rhat, that);
+    const cart = Cesium.Cartesian3.multiplyByScalar(rhat, px * 1000, new Cesium.Cartesian3());
+    Cesium.Cartesian3.multiplyByScalar(that, py * 1000, _tTmp);
+    Cesium.Cartesian3.add(mc, Cesium.Cartesian3.add(cart, _tTmp, cart), cart);
+    return cart;
   }
 
-  /** 调相段喷焰强度：每圈近地点窗口点火（抬升远地点 = 逐圈加速的可视化） */
+  /** 调相段喷焰：只在「换轨」那一圈的近地点点火（16h→24h、24h→48h）。
+   *  ⚠ 同轨道内重复绕行不点火——真实 24h 轨道连飞 3 圈是把 1 天发射窗口扩成 3 天，期间无动力。 */
   function phasingBurn(u) {
-    const per = clamp01(u) * CH.phasing.length;
-    const cu = per - Math.floor(per);
-    return (cu < 0.07 || cu > 0.93) ? 1.5 : 0;
+    const { oi, li, cu } = phasingState(u);
+    return (li === 0 && oi > 0 && cu < 0.06) ? 1.5 : 0;
   }
 
-  /** 捕获段喷焰强度：每圈近月点窗口逆向点火（制动减速 = 逐圈减速的可视化） */
+  /** 捕获段喷焰：三条轨道各自首圈的近月点逆向制动（LOI-1 / LOI-2 / LOI-3）。 */
   function captureBurn(u) {
-    const per = clamp01(u) * CH.capture.length;
-    const cu = per - Math.floor(per);
-    return (cu > 0.44 && cu < 0.56) ? 1.2 : 0;
+    const { li, cu } = captureState(u);
+    return (li === 0 && cu < 0.08) ? 1.2 : 0;
   }
 
   function buildPathData() {
@@ -796,11 +880,12 @@ export function createMoonMission(opts) {
       const d = Cesium.Matrix3.multiplyByVector(_m3t, TR.e1, new Cesium.Cartesian3());
       moonOrbitCarts.push(Cesium.Cartesian3.multiplyByScalar(d, EM.moonC * 1000, new Cesium.Cartesian3()));
     }
-    // 嫦娥三段轨道线：调相 2 圈渐扩椭圆（地心系）+ 捕获 2 圈渐收椭圆（绕显示月球）
+    // 嫦娥三段轨道线：调相 7 圈（三条离散椭圆，地心系）+ 捕获 7 圈（三条离散环月轨道）
+    // 采样密度随圈数提高：7 圈共 1200 点 ≈ 171 点/圈，保证最外圈（48h 大椭圆）不呈折线。
     phasingCarts = [];
-    for (let i = 0; i <= 480; i++) phasingCarts.push(phasingCartAt(i / 480));
+    for (let i = 0; i <= 1200; i++) phasingCarts.push(phasingCartAt(i / 1200));
     captureCarts = [];
-    for (let i = 0; i <= 480; i++) captureCarts.push(captureCartAt(i / 480));
+    for (let i = 0; i <= 840; i++) captureCarts.push(captureCartAt(i / 840));
     launchCarts = [];
     lastLaunch = null;
     trailCarts = transferCarts.slice(0, 1);
@@ -966,8 +1051,9 @@ export function createMoonMission(opts) {
       });
     }
     if (!phasingEnt) {
-      // 调相段：2 圈渐扩椭圆（近地点 200km，远地点 1.4 万→6 万 km）——逐圈加速
-      // depthFail：椭圆近地点半圈插在地球内部，无它则被地球实体吃掉只剩「两条触角」（用户看不到圈）
+      // 调相段：三条离散椭圆 16h→24h→48h 共 7 圈（远地点 5.1 万→7.2 万→12 万 km），每次过
+      // 近地点点火换轨。depthFail：椭圆近地点半圈插在地球内部，无它则被地球实体吃掉只剩
+      // 「两条触角」（用户看不到圈）。
       phasingEnt = earthViewer.entities.add({
         id: 'moonPhasingOrbits',
         polyline: {
@@ -980,7 +1066,8 @@ export function createMoonMission(opts) {
       });
     }
     if (!captureEnt) {
-      // 捕获段：绕显示月球 2 圈渐收椭圆（相对放大月球取值，视觉自洽）——逐圈减速
+      // 捕获段：绕显示月球三条离散环月轨道 12h→3.5h→127min 共 7 圈，每次过近月点制动减速。
+      // 轨道尺寸与显示月球同步 ×8（真实 211×8500 km 轨道会钻进放大月球内部）。
       captureEnt = earthViewer.entities.add({
         id: 'moonCaptureOrbits',
         polyline: {
@@ -993,7 +1080,7 @@ export function createMoonMission(opts) {
       });
     }
     if (!phaseLabelEnts.length) {
-      // 三段标注（嫦娥一号轨道图样式）：圈 2 远地点 / 转移中段 / 捕获圈 1 近月点
+      // 三段标注（嫦娥一号轨道图样式）：48h 轨道远地点 / 转移中段 / 12h 环月轨道远月点
       const mk = (id, text, pos) => earthViewer.entities.add({
         id,
         position: pos,
@@ -1010,10 +1097,12 @@ export function createMoonMission(opts) {
           backgroundPadding: new Cesium.Cartesian2(6, 4),
         },
       });
+      // 采样点 = 各段最外档椭圆的远地点（进度按「该档累计小时 / 段总小时」换算）
       phaseLabelEnts = [
-        mk('moonPhaseLabel1', '调相段 · 逐圈加速', phasingCartAt(1.5 / CH.phasing.length)),
-        mk('moonPhaseLabel2', '地月转移段', transferCartAt(0.5)),
-        mk('moonPhaseLabel3', '月球捕获段 · 逐圈减速', captureCartAt(0.5 / CH.capture.length)),
+        mk('moonPhaseLabel1', '调相段 · 16h → 24h → 48h（7 圈 · 7 天）',
+          phasingCartAt((CH_PHASING[0].laps * CH_PHASING[0].per + CH_PHASING[1].laps * CH_PHASING[1].per + CH_PHASING[2].per * 0.5) / CH_H.phasing)),
+        mk('moonPhaseLabel2', '地月转移段 · 114 小时', transferCartAt(0.5)),
+        mk('moonPhaseLabel3', '月球捕获段 · 12h → 3.5h → 127min', captureCartAt(CH_CAPTURE[0].per * 0.5 / CH_H.capture)),
       ];
     }
     if (!emLineEnt) {
@@ -1168,11 +1257,11 @@ export function createMoonMission(opts) {
 
   // 转移已飞轨迹 = 规划航线前缀
   function updateTransferTrail(s) {
-    // 已飞弧 = 调相（480 点）+ 转移（256 点）+ 捕获（480 点）三段按进度拼接
-    const N = 480;
+    // 已飞弧 = 调相（1200 点）+ 转移（256 点）+ 捕获（840 点）三段按进度拼接
+    const NP = 1200, NC = 840;
     let pts;
     if (s < P2.phasingEnd) {
-      const k = Math.max(1, Math.round((s / P2.phasingEnd) * N));
+      const k = Math.max(1, Math.round((s / P2.phasingEnd) * NP));
       pts = phasingCarts.slice(0, k + 1);
     } else if (s < P2.transferEnd) {
       const u = (s - P2.phasingEnd) / (P2.transferEnd - P2.phasingEnd);
@@ -1180,7 +1269,7 @@ export function createMoonMission(opts) {
       pts = phasingCarts.concat(transferCarts.slice(0, k + 1));
     } else {
       const u = (s - P2.transferEnd) / (1 - P2.transferEnd);
-      const k = Math.max(1, Math.round(u * N));
+      const k = Math.max(1, Math.round(u * NC));
       pts = phasingCarts.concat(transferCarts, captureCarts.slice(0, k + 1));
     }
     trailCarts = pts;
@@ -1532,41 +1621,73 @@ export function createMoonMission(opts) {
     $('compressNote')?.classList.toggle('hidden', !on);
   }
 
+  // 世界坐标 → 轨道面内坐标 [x 沿 e1, y 沿 e2]（km）
+  function toPlaneKM(pc) {
+    return [Cesium.Cartesian3.dot(pc, TR.e1) / 1000, Cesium.Cartesian3.dot(pc, TR.e2) / 1000];
+  }
+  // 轨道面内坐标（km）→ 世界坐标
+  function planeToCart(xKm, yKm, out) {
+    Cesium.Cartesian3.multiplyByScalar(TR.e1, xKm * 1000, out);
+    Cesium.Cartesian3.multiplyByScalar(TR.e2, yKm * 1000, _tTmp);
+    return Cesium.Cartesian3.add(out, _tTmp, out);
+  }
+
+  // 最近一次第二幕取景（km）：冒烟诊断用
+  let _act2Cam = { rangeKm: 0, targetMagKm: 0 };
+
   // 第二幕顶视相机：相机悬在转移轨道面法向上方，正对椭圆面俯瞰（真实比例）。
   // 铁律：lookAt 的 pitch 相对目标点局部 ENU——中点处的「下方」恰是地月连线方向，
   // 用 HPR 顶视实际得到沿地月轴的侧视（椭圆压成一条线，地月两点重叠，2026-10-17 实测）。
   // 必须用轨道面法向 TR.nrm 直接摆世界位姿。
   function lookAtTransfer() {
     const s = clamp01((p - T.card1End) / (T.transferEnd - T.card1End));
-    // 三段自适应取景（顶视轨道面，沿法向 TR.nrm 摆放）：
-    //   调相段 → 框地球 + 调相 2 圈（远地点 ≤60,000 km）
-    //   转移段 → 框整个地月转移椭圆（远地点 384,400 km）
-    //   捕获段 → 框月球 + 捕获 2 圈（绕放大月球半径 ≤36,000 km）
-    // ⚠ 旧值 7.5e8 km 远达 5 AU，地月系统缩成针尖、轨道圈全部重叠不可见（用户反馈）。
-    const earthT = new Cesium.Cartesian3(0, 0, 0);
-    const moonMid = Cesium.Cartesian3.multiplyByScalar(moonCartAt(s), 0.5, new Cesium.Cartesian3());
-    const moonT = moonCartAt(s);
-    const A = { t: earthT, r: 1.3e5 };   // km：调相段框地球 + 调相圈
-    const B = { t: moonMid, r: 8.0e5 };  // km：转移段框全地月系统
-    const C = { t: moonT, r: 1.8e5 };    // km：捕获段框月球 + 捕获圈
-    const band = 0.07;                   // 段间过渡带（smoothstep 平滑，避免镜头突变）
-    let tgt, rangeKm;
-    if (s < P2.phasingEnd - band) { tgt = A.t; rangeKm = A.r; }
-    else if (s < P2.transferEnd - band) {
+    const mc = moonCartAt(s);
+    // —— A 调相段：定焦在最外 48h 椭圆的包围盒（三条椭圆如教科书般居中、向远地点层层张开）
+    const aT = planeToCart(-PH[2].a * PH[2].e, 0, new Cesium.Cartesian3());
+    const aR = PH_RANGE;
+    // —— B 转移段：目标 = {地球, 月球, 飞船} 包围盒中心，距离随月球方位自适应
+    //     （竖直 fov 仅 36°，月球转到画面上下方时必须拉远，否则地月会出画——旧版 8.0e5 km
+    //      是拍脑袋的固定值，月球在上下方时照样出画）
+    const uT = clamp01((s - P2.phasingEnd) / (P2.transferEnd - P2.phasingEnd));
+    let minX = 0, maxX = 0, minY = 0, maxY = 0;
+    for (const c of [mc, transferCartAt(uT)]) {
+      const [x, y] = toPlaneKM(c);
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+    }
+    const bT = planeToCart((minX + maxX) / 2, (minY + maxY) / 2, new Cesium.Cartesian3());
+    const bR = fitRangeKm((maxX - minX) / 2, (maxY - minY) / 2);
+    // —— C 捕获段：跟随月球，取景随环月轨道收缩（12h 5.9Rv → 3.5h 2.0Rv → 127min 1.11Rv），
+    //     在每次制动瞬间平滑拉近（与 LOI 点火同步，像真实任务那样「刹一脚看清楚一点」）
+    const uC = clamp01((s - P2.transferEnd) / (1 - P2.transferEnd));
+    const cT = mc;
+    let cR = CA_RANGE[0];
+    for (let i = 0; i < CA_SWITCH.length; i++) {
+      cR = lerp(cR, CA_RANGE[i + 1], easeInOut(clamp01((uC - CA_SWITCH[i]) / 0.1 + 0.5)));
+    }
+    // 段间混合（smoothstep，避免镜头突变）
+    const band = 0.03;
+    let tgt = aT, rangeKm = aR;
+    if (s < P2.phasingEnd + band) {
       const w = easeInOut(clamp01((s - (P2.phasingEnd - band)) / (2 * band)));
-      tgt = Cesium.Cartesian3.lerp(A.t, B.t, w, new Cesium.Cartesian3());
-      rangeKm = lerp(A.r, B.r, w);
-    } else if (s < P2.transferEnd + band) { tgt = B.t; rangeKm = B.r; }
-    else if (s < 1 - band) {
-      const w = easeInOut(clamp01((s - (P2.transferEnd - band)) / (2 * band)));
-      tgt = Cesium.Cartesian3.lerp(B.t, C.t, w, new Cesium.Cartesian3());
-      rangeKm = lerp(B.r, C.r, w);
-    } else { tgt = C.t; rangeKm = C.r; }
+      tgt = Cesium.Cartesian3.lerp(aT, bT, w, new Cesium.Cartesian3());
+      rangeKm = lerp(aR, bR, w);
+    } else if (s < P2.transferEnd + band) {
+      if (s < P2.transferEnd - band) { tgt = bT; rangeKm = bR; }
+      else {
+        const w = easeInOut(clamp01((s - (P2.transferEnd - band)) / (2 * band)));
+        tgt = Cesium.Cartesian3.lerp(bT, cT, w, new Cesium.Cartesian3());
+        rangeKm = lerp(bR, cR, w);
+      }
+    } else { tgt = cT; rangeKm = cR; }
     const camPos = Cesium.Cartesian3.add(
       tgt, Cesium.Cartesian3.multiplyByScalar(TR.nrm, rangeKm * 1000, _tTmp), new Cesium.Cartesian3());
     const dir = Cesium.Cartesian3.normalize(
       Cesium.Cartesian3.subtract(tgt, camPos, _tTmp), new Cesium.Cartesian3());
     applyCameraPose(earthViewer, camPos, dir, TR.e2);   // up 取面内 e2，画面北向稳定
+    // 冒烟诊断：暴露本次取景（直接断言「轨道在画面内」，比像素扫描更能定位问题）
+    _act2Cam.rangeKm = rangeKm;
+    _act2Cam.targetMagKm = Cesium.Cartesian3.magnitude(tgt) / 1000;
   }
 
   let _lastFocusRange = 3.0e5;   // 最近一次跟火箭机位距离（分离镜头混合起点用）
@@ -1735,7 +1856,7 @@ export function createMoonMission(opts) {
         updateRcs(earthViewer, null, null, 0, Cesium.Ellipsoid.WGS84);
         if (padDustEnt) padDustEnt.ellipse.material = Cesium.Color.WHITE.withAlpha(0);
         noteOn(false);
-        showCard('第一幕 · 点火起飞完成\n「进入地月转移轨道」');
+        showCard('第一幕 · 点火起飞完成\n「进入 16 小时轨道，开始 7 天调相」');
         setPhase('幕间');
         if (camOverride && earthRocket.position) {
           applyManualFollow(earthViewer, earthRocket.position.getValue(Cesium.JulianDate.now()));
@@ -1791,18 +1912,25 @@ export function createMoonMission(opts) {
           const mid = Cesium.Cartesian3.multiplyByScalar(moonEnt.position, 0.42, new Cesium.Cartesian3());
           emLineEnt.position = mid;
         }
+        // 演示时间加速：真实 322 小时压缩进 45.6 秒 → 约 2.5 万倍。进度条上标出真实任务时间，
+        // 让「7 天调相 / 114 小时转移 / 三次近月制动」这些真实节奏可被读出（用户：时间可以加速）。
+        const uP = s / P2.phasingEnd;
+        const uC = (s - P2.transferEnd) / (1 - P2.transferEnd);
+        const seg = s < P2.phasingEnd ? '调相段 · ' + PH[phasingState(uP).oi].name
+          : s < P2.transferEnd ? '地月转移段'
+            : '捕获段 · ' + CA[captureState(uC).oi].name;
         earthRocket.label.text = burn > 0
-          ? (burnRetro ? '探月飞船 · 近月制动减速' : '探月飞船 · 近地点点火加速')
-          : '探月飞船 · ' + (s < P2.phasingEnd ? '调相段' : s < P2.transferEnd ? '地月转移' : '月球捕获');
+          ? (burnRetro ? '探月飞船 · ' + seg + ' 近月制动' : '探月飞船 · ' + seg + ' 近地点点火')
+          : '探月飞船 · ' + seg;
         updateTransferTrail(s);
-        setPhase('第二幕 · 嫦娥轨道（调相 → 转移 → 捕获）');
+        setPhase('第二幕 · ' + seg + ' · ' + fmtElapsed(CH_TOTAL_H * s) + '（演示加速 ×' + CH_SPEEDUP + '）');
         lookAtTransfer();
       } else {
         // 幕卡 2：转移 → 环月/着陆
         clearSeparators();
         earthRocket.show = false;
         updateFlame(earthViewer, null, null, 0, Cesium.Ellipsoid.WGS84);
-        showCard('第二幕 · 抵达月球（远地点会合）\n「准备环月制动与着陆」');
+        showCard('第二幕 · 三次近月制动完成\n「进入 127 分钟极月轨道，准备着陆」');
         setPhase('幕间');
         lookAtTransfer();
       }
@@ -2287,7 +2415,13 @@ export function createMoonMission(opts) {
      *  注意：Model.boundingSphere/computedScale 在 sceneGraph 未就绪（首次 update 前）时
      *  访问会抛异常，必须逐项 safe 包装（2026-10-17 实测）。 */
     debugState: () => ({
-      cam: { override: camOverride, blend: +blendT.toFixed(3) },
+      p: +p.toFixed(4),
+      cam: {
+        override: camOverride,
+        blend: +blendT.toFixed(3),
+        act2RangeKm: Math.round(_act2Cam.rangeKm),
+        act2TargetKm: Math.round(_act2Cam.targetMagKm),
+      },
       dbg: _dbg,
       slots: slots.map((s) => {
         const m = s.model;
@@ -2314,6 +2448,27 @@ export function createMoonMission(opts) {
     seek: (f) => seekTo(f),
     /** 右上角导航控件是否应锁定：仅第二幕（地月顶视构图）锁，第一/三/四幕保留给用户操作 */
     navLocked: () => p >= T.card1End && p < T.card2End,
+    /** 冒烟诊断：第二幕轨道面内坐标（km）——直接定位「取景是否框住了目标」，
+     *  比看画布像素更能定位问题（轨道面内 x 沿 e1、y 沿 e2）。 */
+    debugAct2: () => {
+      const s = clamp01((p - T.card1End) / (T.transferEnd - T.card1End));
+      const mc = moonCartAt(s);
+      const sc = s < P2.phasingEnd ? phasingCartAt(s / P2.phasingEnd)
+        : s < P2.transferEnd ? transferCartAt((s - P2.phasingEnd) / (P2.transferEnd - P2.phasingEnd))
+          : captureCartAt((s - P2.transferEnd) / (1 - P2.transferEnd));
+      const [mx, my] = toPlaneKM(mc);
+      const [sx, sy] = toPlaneKM(sc);
+      return {
+        s: +s.toFixed(4),
+        moon: [Math.round(mx), Math.round(my)],
+        craft: [Math.round(sx), Math.round(sy)],
+        moonMagKm: Math.round(Cesium.Cartesian3.magnitude(mc) / 1000),
+        basis: [+Cesium.Cartesian3.magnitude(TR.e1).toFixed(4),
+          +Cesium.Cartesian3.magnitude(TR.e2).toFixed(4),
+          +Cesium.Cartesian3.magnitude(TR.nrm).toFixed(4)],
+        e1e2: +Cesium.Cartesian3.dot(TR.e1, TR.e2).toFixed(6),
+      };
+    },
     /** 冒烟用时间轴常量（避免脚本里硬编码进度值，改幕长即失效） */
     timeline: () => ({ ...T, boosterSep: BOOSTER_SEP, fairingSep: FAIRING_SEP, rate: { ...ACT_RATE } }),
     /** 冒烟探针专用：原始槽位引用（页内计算用，勿序列化返回） */
