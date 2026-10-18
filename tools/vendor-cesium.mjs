@@ -54,9 +54,72 @@ for (const file of walkJs(NAV_DST)) {
     /(\bfrom\s*|\bimport\s*)(["'])(\.\.?\/[^"']+?)\2/g,
     (m, kw, q, spec) => (/\.(js|css|json)$/.test(spec) ? m : `${kw}${q}${spec}.js${q}`)
   );
+  // c) 巡游 MANUAL 跟随补丁（2026-10-18 用户反馈：右上角控件须绕「巡游物」而非球体）：
+  //    相机 lookAt(巡游物) 时 transform≠单位阵，cesium-navigation 原版用 globe.pick 取焦点会绕球体。
+  //    以下三处让 getCameraFocus / zoom / reset 在 lookAt 帧改取参考系原点(巡游物)。
+  s = patchNavLookAt(file, s);
   if (s !== before) {
     writeFileSync(file, s);
     patched++;
   }
 }
 console.log(`[vendor] cesium-navigation -> public/vendor/cesium-navigation/（修复 ${patched} 个文件）`);
+
+/**
+ * 巡游 MANUAL 跟随补丁：仅对 cesium-navigation 的三个文件做精准字符串替换。
+ * 全部针对 node_modules 原始文本（cpSync 已还原），每次 npm run vendor 都重新生成+重打，幂等。
+ * @param {string} file 目标文件路径
+ * @param {string} s 当前文件内容
+ * @returns {string} 打过补丁的内容
+ */
+function patchNavLookAt(file, s) {
+  const base = file.split(/[\\/]/).pop();
+  if (base === 'Utils.js') {
+    // 导入 Matrix4（锚点：SceneMode } 结尾的 cesium 导入）
+    s = s.replace(/SceneMode } from 'cesium'/, "SceneMode, Matrix4 } from 'cesium'");
+    // getCameraFocus：在 lookAt 参考系下返回参考系原点(巡游物)而非球面子拾取。
+    // 锚点：getCameraFocus 内唯一的 `if (defined(terria.trackedEntity)) {`。
+    const LOOKAT_BRANCH =
+      "  // === 巡游 MANUAL 跟随：相机处于 lookAt 参考系（transform≠单位阵，由 rocket.js 每帧\n" +
+      "  //     camera.lookAt(巡游物) 维持）时，焦点必须是参考系原点（巡游物本体），而非球体表面\n" +
+      "  //     拾取点。否则指南针/缩放会绕球体转、巡游物跑偏；常态/AUTO(transform=单位阵)仍走原逻辑。\n" +
+      "  if (!Matrix4.equalsEpsilon(camera.transform, Matrix4.IDENTITY, 1e-8)) {\n" +
+      "    Matrix4.getTranslation(camera.transform, result)\n" +
+      "    if (scene.mode === SceneMode.SCENE2D || scene.mode === SceneMode.COLUMBUS_VIEW) {\n" +
+      "      result = camera.worldToCameraCoordinatesPoint(result, result)\n" +
+      "      if (inWorldCoordinates) {\n" +
+      "        result = scene.globe.ellipsoid.cartographicToCartesian(scene.mapProjection.unproject(result, unprojectedScratch), result)\n" +
+      "      }\n" +
+      "    } else if (!inWorldCoordinates) {\n" +
+      "      result = camera.worldToCameraCoordinatesPoint(result, result)\n" +
+      "    }\n" +
+      "    return result\n" +
+      "  }\n\n";
+    s = s.replace("  if (defined(terria.trackedEntity)) {", LOOKAT_BRANCH + "  if (defined(terria.trackedEntity)) {");
+  } else if (base === 'ZoomNavigationControl.js') {
+    // 导入 Matrix4（锚点：SceneMode } 结尾的 cesium 导入）
+    s = s.replace(/SceneMode } from 'cesium'/, "SceneMode, Matrix4 } from 'cesium'");
+    // zoom：lookAt 帧与 trackedEntity 同理——相机位置是「相对巡游物的局部偏移」，直接改 camera.position
+    // （局部帧），不要 flyTo（世界坐标会错）；下一帧 applyManualFollow 从新 range 复算并保留反穿球钳制。
+    s = s.replace(
+      /if \(defined\(this\.terria\.trackedEntity\) \|\| scene\.mode === SceneMode\.COLUMBUS_VIEW\) \{/,
+      "var inLookAtFrame = !Matrix4.equalsEpsilon(camera.transform, Matrix4.IDENTITY, 1e-8)\n" +
+      "        if (defined(this.terria.trackedEntity) || scene.mode === SceneMode.COLUMBUS_VIEW || inLookAtFrame) {"
+    );
+  } else if (base === 'ResetViewNavigationControl.js') {
+    // 导入 Matrix4（锚点：import 块末尾的 Math as CesiumMath, }）
+    s = s.replace(/Math as CesiumMath,\n\}/, "Math as CesiumMath,\n  Matrix4,\n}");
+    // reset：lookAt 帧下 flyTo 世界坐标默认视角会与 rocket.js 每帧 applyManualFollow 抢相机抖动，
+    // 直接释放参考系回到自由机位（下一帧 applyManualFollow 仍把关注点钉回巡游物，故为安全 no-op）。
+    s = s.replace(
+      "  var camera = scene.camera;",
+      "  var camera = scene.camera;\n\n" +
+      "  if (!Matrix4.equalsEpsilon(camera.transform, Matrix4.IDENTITY, 1e-8)) {\n" +
+      "    camera.lookAtTransform(Matrix4.IDENTITY);\n" +
+      "    this.isActive = false;\n" +
+      "    return;\n" +
+      "  }"
+    );
+  }
+  return s;
+}

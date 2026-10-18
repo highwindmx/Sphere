@@ -508,9 +508,12 @@ function applyCameraPose(v, camPos, dir, up) {
 /** MANUAL 模式：关注点跟随 + 用户视角保持（2026-10-18 双模式核心）。
  *  相机处于 lookAt 参考系时读 camera.heading/pitch/range（= 用户拖拽/缩放的结果），
  *  再 lookAt 到移动后的目标——参考系原点跟着飞行器走，用户视角原样保留；
- *  无参考系/读数异常时静默跳过 = 完全自由视角（第二幕即走这条路）。 */
+ *  无参考系/读数异常时静默跳过 = 完全自由视角（第二幕即走这条路）。
+ *  右上角 cesium-navigation 控件（指南针/缩放）的「绕谁转」由 vendored 的
+ *  Utils.getCameraFocus / ZoomNavigationControl.zoom 补丁决定——二者在相机处于
+ *  lookAt 参考系(transform≠单位阵)时改取参考系原点(巡游物)，故控件也绕巡游物而非球体。 */
 function applyManualFollow(v, target) {
-  if (!v || !camOverride) return;
+  if (!v || !camOverride || !target) return;
   try {
     const h = v.camera.heading;
     const pi = v.camera.pitch;

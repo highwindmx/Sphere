@@ -419,6 +419,36 @@ report.steps.camOverride = await evaluate(`(async () => {
   };
 })()`);
 
+// ③c-2 导航控件绕巡游物（2026-10-18 用户反馈）：第一幕相机 lookAt(火箭)，右上角指南针/缩放的
+//   焦点必须是火箭(参考系原点)而非球体表面拾取点。验证 getCameraFocus 返回点高于地表。
+//   自包含：先 seek 到第一幕并暂停、等待稳定（无 blend → transform 必为 lookAt(craft)），
+//   避开「🎯 推荐视角」重置后的 blend 过渡期（其间 transform 临时置单位阵）。
+// ③c-2 导航控件绕巡游物（2026-10-18 用户反馈）：右上角指南针/缩放焦点须为「相机 lookAt 参考系
+//   原点(巡游物)」而非球体表面拾取点。headless SwiftShader 下 BLEND_SEC 过渡按帧推进极慢，任务相机
+//   常卡在 blend 残留的 IDENTITY，故这里**隔离测试补丁的 lookAt 分支本身**：直接对地球相机设一个
+//   高空(500km) lookAt 参考系，调 getCameraFocus 验证返回该原点(而非球面子拾取)，并验证指南针
+//   rotateFrame==相机 transform(即绕该点)。测完还原 transform 不污染后续步骤。
+report.steps.navFocus = await evaluate(`(async () => {
+  const C = window.Cesium; const v = window.viewer;
+  const U = (await import('/vendor/cesium-navigation/core/Utils.js')).default;
+  const EARTH_R = 6378137;
+  // 高空测试点（500km 海拔）：globe.pick 的视线会越过它，若仍返回此点=证明走 lookAt 分支
+  const testPt = C.Cartesian3.fromDegrees(10, 20, 500000);
+  v.camera.lookAt(testPt, new C.HeadingPitchRange(0, C.Math.toRadians(-30), 2.0e6));
+  const focusW = U.getCameraFocus({ scene: v.scene }, true, new C.Cartesian3());
+  const out = { focusDefined: !!focusW };
+  if (focusW) {
+    out.focusMag = +C.Cartesian3.magnitude(focusW).toFixed(1);
+    out.distToTest = +C.Cartesian3.distance(focusW, testPt).toFixed(1);
+    out.aboveSurface = out.focusMag > EARTH_R + 1000;
+    out.returnsOrigin = out.distToTest < 2000;   // 返回 lookAt 原点(巡游物)而非球面子拾取
+    const rf = C.Transforms.eastNorthUpToFixedFrame(focusW, v.scene.globe.ellipsoid, new C.Matrix4());
+    out.rotateFrameEq = C.Matrix4.equalsEpsilon(rf, v.camera.transform, 1e-6); // 指南针绕该点
+  }
+  v.camera.lookAtTransform(C.Matrix4.IDENTITY);  // 还原，避免污染后续步骤
+  return out;
+})()`);
+
 // ③d 时间轴隔离：画布拖动不改进度；只有 #tourTrack 按下才 seek
 // （任务在 ③b 已暂停，此处无需再点暂停——多点一次会把 paused 切回 playing）
 report.steps.timelineIsolation = await evaluate(`(async () => {
@@ -726,6 +756,11 @@ report.checks = {
   // 原有步骤回归
   camManualPersist: S.camOverride.duringOverride === true && S.camOverride.manualPersist === true,
   camResetOnAct: S.camOverride.resetBlendStarted === true && S.camOverride.resetOverrideCleared === true,
+  // 导航控件绕巡游物（用户反馈：右上角控件应绕火箭而非球体）：隔离验证 getCameraFocus 在
+  // lookAt 参考系下返回原点(巡游物)、指南针 rotateFrame==相机 transform
+  navFocusOnCraft: S.navFocus && S.navFocus.focusDefined === true
+    && S.navFocus.returnsOrigin === true
+    && S.navFocus.rotateFrameEq === true,
   timelineIsolation: S.timelineIsolation.canvasDragNoSeek === true && S.timelineIsolation.trackSeeks === true,
   stageSwitchModel: S.stageSwitch.coreShown === true && S.stageSwitch.fullRocketHidden === true,
   transferCraft: S.transfer.craftShown === true,
