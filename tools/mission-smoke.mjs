@@ -133,6 +133,34 @@ await evaluate(`(() => {
       for (let i=0;i<px.length;i+=4){ r+=px[i]; g+=px[i+1]; b+=px[i+2]; }
       return [Math.round(r/n), Math.round(g/n), Math.round(b/n)];
     },
+    // 轨道线可见性扫描（2026-10-18 加）：画布降采样到 W×H，数「浅蓝轨道像素」(#9ec1ff)
+    // 直接守护用户反馈「看不到一圈圈椭圆轨道」。navigation 库 DistanceLegend 在手动 render 时
+    // 偶发 pickWorldCoordinates 抛错（探针伪影，画布已绘完），逐帧 try/catch 忽略；
+    // 脆点：地球 viewer 隐藏时 canvas 会 0 尺寸，先 resize 兜底。
+    scanOrbit(viewer) {
+      const v = viewer || window.viewer;
+      const cv = v.scene.canvas;
+      const W = 400, H = 250;
+      if (cv.width === 0 || cv.height === 0) { try { v.cesiumWidget.resize(); } catch (e) {} }
+      if (cv.width === 0 || cv.height === 0) return { zero: true, cvW: cv.width, cvH: cv.height };
+      const c2 = document.createElement('canvas'); c2.width = W; c2.height = H;
+      const x2 = c2.getContext('2d');
+      for (let k = 0; k < 4; k++) {
+        try { v.scene.requestRender(); v.scene.render(Cesium.JulianDate.now()); } catch (e) { /* 伪影 */ }
+      }
+      x2.drawImage(cv, 0, 0, W, H);
+      const d = x2.getImageData(0, 0, W, H).data;
+      let blue = 0, orange = 0, earth = 0, nonblack = 0;
+      const total = W * H;
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        if (r + g + b > 30) nonblack++;
+        if (b > 180 && r > 110 && r < 215 && g > 150 && g < 230 && b > r + 25) blue++;
+        if (r > 165 && g > 85 && g < 185 && b < 150 && (r - b) > 40) orange++;
+        if (b > 120 && r < 130 && g < 160 && b > r + 25) earth++;
+      }
+      return { zero: false, W, H, total, nonblack, blue, orange, earth };
+    },
   };
   return true;
 })()`);
@@ -342,6 +370,19 @@ report.steps.transfer = await evaluate(`(() => {
 })()`);
 const shotTransfer = await evaluate(`window.__t.snap(window.viewer)`);
 writeFileSync('tools/.mission-act2.png', Buffer.from(shotTransfer.split(',')[1], 'base64'));
+
+// ③e2 轨道椭圆可见性（用户反馈「看不到一圈圈」）：暂停态 seek 到调相(0.28)/转移(0.45)
+// → 扫描画布浅蓝轨道像素；守护 depthFail + 相机距离 + 近地点抬升三项修复不退化。
+// ⚠ 必须在 ③c 相机双模式测试之前（那时会进 MANUAL 改机位，取景不再框轨道）。
+report.steps.orbitVisible = await evaluate(`(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const m = window.__moonMission;
+  m.seek(0.28); await sleep(700);
+  const phasing = window.__t.scanOrbit(window.viewer);
+  m.seek(0.45); await sleep(700);
+  const transfer = window.__t.scanOrbit(window.viewer);
+  return { phasing, transfer };
+})()`);
 
 // ③c 相机双模式（2026-10-18 重做）：canvas 按下 → override=true 进 MANUAL；
 //     MANUAL 持久（blend 恒 0，不再自动回归）；点 #tourCamMode → blend>0 平滑回 AUTO。
@@ -658,6 +699,10 @@ report.checks = {
     && /地月转移段/.test(S.transfer.phaseLabels[1] || '')
     && /月球捕获段/.test(S.transfer.phaseLabels[2] || ''),
   ooWidgetGone: S.transfer.ooWidgetGone === true,
+  // J. 第二幕轨道椭圆可见性（用户反馈「看不到一圈圈」）：调相/转移段画布应出现浅蓝轨道像素
+  orbitRingsVisible: !!(S.orbitVisible && S.orbitVisible.phasing && S.orbitVisible.transfer)
+    && S.orbitVisible.phasing.zero !== true && S.orbitVisible.transfer.zero !== true
+    && S.orbitVisible.phasing.blue > 30 && S.orbitVisible.transfer.blue > 30,
   transferEntities: S.transfer.entityPoints.moonEmLine.n >= 2
     && S.transfer.entityPoints.moonTransferMirror.n >= 2
     && S.transfer.entityPoints.moonTransferPath.n >= 2,

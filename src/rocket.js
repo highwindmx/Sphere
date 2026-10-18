@@ -43,7 +43,10 @@ const BASE_DURATION = 120; // 1× 全程秒数
 const EM = {
   mu: 398600.4418,        // 地球引力常数 km³/s²
   rE: 6378.137,           // 地球赤道半径 km
-  leoAlt: 200,            // 转移轨道近地点高度 km（入轨点）
+  leoAlt: 8000,           // 转移轨道近地点高度 km。⚠ 示意抬升：真实入轨 200 km，但真实比例的
+                          // 调相/转移椭圆 e≈0.99，99% 弧长插在地球内部被球体吃掉，「一圈一圈」
+                          // 永远不可见（2026-10-18 用户反馈）。与「月球体积 ×8」同类视觉处理，
+                          // 抬到 8000 km 让整圈浮出地球圆盘；调相起点仍从 200 km 渐变衔接第一幕。
   moonDist: 384400,       // 地月平均距离 km（月心距）
   moonR: 1737.4,          // 月球真实半径 km
   moonExag: 8,            // 月球视觉放大倍数（轨道尺度真实，仅月球体积放大以便观察，UI 有标注）
@@ -63,8 +66,10 @@ EM.moonSweep = (2 * Math.PI / (EM.moonPeriod * 86400)) * EM.tHalf;  // 转移期
 // 保证视觉自洽（真实 100km 轨道会钻进放大月球内部）。
 const CH_RV_KM = EM.moonR * EM.moonExag;              // 显示月半径 km = 13,899
 const CH_APO1 = 2.6 * CH_RV_KM;                       // 捕获圈 1 远月点（= 转移远地点与月心的间距）
+const CH_RP0 = EM.rE + 200;                           // 调相起点近地点（衔接第一幕 200km 入轨）
+const CH_RP1 = EM.rE + EM.leoAlt;                     // 示意近地点（= 转移近地点，圈内渐变衔接）
 const CH = {
-  phasing: [14000, 60000],   // 调相椭圆远地点高度 km（近地点 = 转移近地点 200km，同 e1 方向）
+  phasing: [14000, 60000],   // 调相椭圆远地点高度 km（起点/终点各圈渐扩；近地点 200→8000 渐抬）
   capture: [                 // 捕获椭圆 [远月点, 近月点]（月心距 km，相对显示月球）
     [CH_APO1, 1.07 * CH_RV_KM],   // 圈 1（12h 量级示意）
     [1.45 * CH_RV_KM, 1.03 * CH_RV_KM],  // 圈 2（3.5h 量级示意）
@@ -511,6 +516,13 @@ function applyManualFollow(v, target) {
     const pi = v.camera.pitch;
     const r = v.camera.range;
     if (!isFinite(h) || !isFinite(pi) || !isFinite(r) || !(r > 0)) return;
+    // 防手动镜头钻入球体内部（用户反馈）：target 在球面时，pitch 越过地平线到目标下方
+    // （pitch>0，仰视）即穿球；range 过小则近裁剪面切入地表。两处各加一道下限。
+    const ell = (v.scene.globe && v.scene.globe.ellipsoid) ? v.scene.globe.ellipsoid : Cesium.Ellipsoid.WGS84;
+    const minR = ell.maximumRadius * 0.0008;            // 到 target 的最小距离（地球 ~5.1km / 月球 ~1.4km）
+    if (r < minR) r = minR;
+    const maxPitch = Cesium.Math.toRadians(-3);          // 不允许仰视越过地平线（防穿球；俯视/侧视全保留）
+    if (pi > maxPitch) pi = maxPitch;
     v.camera.lookAt(target, new Cesium.HeadingPitchRange(h, pi, r));
   } catch { /* 无参考系：自由视角 */ }
 }
@@ -707,14 +719,18 @@ export function createMoonMission(opts) {
     return [r * Math.cos(nu), r * Math.sin(nu)];   // [沿 d1, 沿 d2]
   }
 
-  /** 调相段位置（世界坐标，米）：u∈[0,1] 两圈整体进度，圈内自近地点起跑（keplerE 天然近地快）。 */
+  /** 调相段位置（世界坐标，米）：u∈[0,1] 两圈整体进度，圈内自近地点起跑（keplerE 天然近地快）。
+   *  近地点 200→8000km、远地点 14000→60000km 随进度**连续渐变**（渐扩螺旋，参考嫦娥轨道图）——
+   *  近地点渐抬让椭圆浮出地球圆盘（真实 200km 近地点的极扁椭圆 99% 在球内，圈永远不可见）。 */
   function phasingCartAt(u) {
     const per = clamp01(u) * CH.phasing.length;
     const i = Math.min(CH.phasing.length - 1, Math.floor(per));
     const cu = per - i;
-    const ra = EM.rE + CH.phasing[i];
-    const aKm = (EM.rp + ra) / 2;
-    const eK = (ra - EM.rp) / (EM.rp + ra);
+    const k = per / CH.phasing.length;
+    const rpi = lerp(CH_RP0, CH_RP1, k);                              // 近地点（地心距 km）渐抬
+    const rai = EM.rE + lerp(CH.phasing[0], CH.phasing[1], k);        // 远地点（地心距 km）渐扩
+    const aKm = (rpi + rai) / 2;
+    const eK = (rai - rpi) / (rpi + rai);
     const [px, py] = ellipseKM(aKm, eK, Math.PI * 2 * cu, TR.e1, TR.e2);
     const cart = Cesium.Cartesian3.multiplyByScalar(TR.e1, px * 1000, new Cesium.Cartesian3());
     Cesium.Cartesian3.multiplyByScalar(TR.e2, py * 1000, _tTmp);
@@ -922,6 +938,7 @@ export function createMoonMission(opts) {
           positions: new Cesium.CallbackProperty(() => transferCarts, false),
           width: 2.4,
           material: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.75),
+          depthFailMaterial: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.3),
           arcType: Cesium.ArcType.NONE,
         },
       });
@@ -937,18 +954,24 @@ export function createMoonMission(opts) {
             color: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.28),
             dashLength: 14,
           }),
+          depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.14),
+            dashLength: 14,
+          }),
           arcType: Cesium.ArcType.NONE,
         },
       });
     }
     if (!phasingEnt) {
       // 调相段：2 圈渐扩椭圆（近地点 200km，远地点 1.4 万→6 万 km）——逐圈加速
+      // depthFail：椭圆近地点半圈插在地球内部，无它则被地球实体吃掉只剩「两条触角」（用户看不到圈）
       phasingEnt = earthViewer.entities.add({
         id: 'moonPhasingOrbits',
         polyline: {
           positions: new Cesium.CallbackProperty(() => phasingCarts, false),
-          width: 1.6,
-          material: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.5),
+          width: 2.2,
+          material: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.75),
+          depthFailMaterial: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.3),
           arcType: Cesium.ArcType.NONE,
         },
       });
@@ -959,8 +982,9 @@ export function createMoonMission(opts) {
         id: 'moonCaptureOrbits',
         polyline: {
           positions: new Cesium.CallbackProperty(() => captureCarts, false),
-          width: 1.6,
-          material: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.5),
+          width: 2.2,
+          material: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.75),
+          depthFailMaterial: Cesium.Color.fromCssColorString('#9ec1ff').withAlpha(0.3),
           arcType: Cesium.ArcType.NONE,
         },
       });
@@ -998,6 +1022,10 @@ export function createMoonMission(opts) {
           width: 1.6,
           material: new Cesium.PolylineDashMaterialProperty({
             color: Cesium.Color.fromCssColorString('#ffd24a').withAlpha(0.5),
+            dashLength: 22,
+          }),
+          depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.fromCssColorString('#ffd24a').withAlpha(0.22),
             dashLength: 22,
           }),
           arcType: Cesium.ArcType.NONE,
@@ -1507,11 +1535,34 @@ export function createMoonMission(opts) {
   // 必须用轨道面法向 TR.nrm 直接摆世界位姿。
   function lookAtTransfer() {
     const s = clamp01((p - T.card1End) / (T.transferEnd - T.card1End));
-    const target = Cesium.Cartesian3.multiplyByScalar(moonCartAt(s), 0.5, new Cesium.Cartesian3());
+    // 三段自适应取景（顶视轨道面，沿法向 TR.nrm 摆放）：
+    //   调相段 → 框地球 + 调相 2 圈（远地点 ≤60,000 km）
+    //   转移段 → 框整个地月转移椭圆（远地点 384,400 km）
+    //   捕获段 → 框月球 + 捕获 2 圈（绕放大月球半径 ≤36,000 km）
+    // ⚠ 旧值 7.5e8 km 远达 5 AU，地月系统缩成针尖、轨道圈全部重叠不可见（用户反馈）。
+    const earthT = new Cesium.Cartesian3(0, 0, 0);
+    const moonMid = Cesium.Cartesian3.multiplyByScalar(moonCartAt(s), 0.5, new Cesium.Cartesian3());
+    const moonT = moonCartAt(s);
+    const A = { t: earthT, r: 1.3e5 };   // km：调相段框地球 + 调相圈
+    const B = { t: moonMid, r: 8.0e5 };  // km：转移段框全地月系统
+    const C = { t: moonT, r: 1.8e5 };    // km：捕获段框月球 + 捕获圈
+    const band = 0.07;                   // 段间过渡带（smoothstep 平滑，避免镜头突变）
+    let tgt, rangeKm;
+    if (s < P2.phasingEnd - band) { tgt = A.t; rangeKm = A.r; }
+    else if (s < P2.transferEnd - band) {
+      const w = easeInOut(clamp01((s - (P2.phasingEnd - band)) / (2 * band)));
+      tgt = Cesium.Cartesian3.lerp(A.t, B.t, w, new Cesium.Cartesian3());
+      rangeKm = lerp(A.r, B.r, w);
+    } else if (s < P2.transferEnd + band) { tgt = B.t; rangeKm = B.r; }
+    else if (s < 1 - band) {
+      const w = easeInOut(clamp01((s - (P2.transferEnd - band)) / (2 * band)));
+      tgt = Cesium.Cartesian3.lerp(B.t, C.t, w, new Cesium.Cartesian3());
+      rangeKm = lerp(B.r, C.r, w);
+    } else { tgt = C.t; rangeKm = C.r; }
     const camPos = Cesium.Cartesian3.add(
-      target, Cesium.Cartesian3.multiplyByScalar(TR.nrm, 7.5e8, _tTmp), new Cesium.Cartesian3());
+      tgt, Cesium.Cartesian3.multiplyByScalar(TR.nrm, rangeKm * 1000, _tTmp), new Cesium.Cartesian3());
     const dir = Cesium.Cartesian3.normalize(
-      Cesium.Cartesian3.subtract(target, camPos, _tTmp), new Cesium.Cartesian3());
+      Cesium.Cartesian3.subtract(tgt, camPos, _tTmp), new Cesium.Cartesian3());
     applyCameraPose(earthViewer, camPos, dir, TR.e2);   // up 取面内 e2，画面北向稳定
   }
 
