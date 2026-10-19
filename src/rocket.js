@@ -2013,10 +2013,14 @@ export function createMoonMission(opts) {
         updateMoonAndLine(s);
         // 演示时间加速（用户拍板）：进度条标出真实任务时间，让「7 天调相 / 114 小时转移」可读
         const uP = s / P2.phasingEnd;
-        const seg = s < P2.phasingEnd ? '调相段 · ' + PH[phasingState(uP).oi].name : '地月转移段';
+        const st = phasingState(uP);
+        const nearPeri = st.cu < 0.1 || st.cu > 0.9;        // 近地点经过
+        const coast = burn === 0 && nearPeri;                 // 非点火的近地点 = 无动力滑行圈
+        const seg = s < P2.phasingEnd ? '调相段 · ' + PH[st.oi].name : '地月转移段';
         earthRocket.label.text = burn > 0
           ? '探月飞船 · ' + seg + ' 近地点点火'
-          : '探月飞船 · ' + seg;
+          : coast ? '探月飞船 · ' + seg + ' ◯ 滑行（无动力）'
+            : '探月飞船 · ' + seg;
         updateTransferTrail(s);
         setPhase('第二幕 · ' + seg + ' · ' + fmtElapsed(CH_TOTAL_H * s) + '（演示加速 ×' + CH_SPEEDUP.transfer + '）');
         lookAtTransfer();
@@ -2057,9 +2061,14 @@ export function createMoonMission(opts) {
           updateFlame(earthViewer, null, null, 0, Cesium.Ellipsoid.WGS84);
         }
         updateMoonAndLine(s);
-        const seg = '捕获段 · ' + CA[captureState(u).oi].name;
+        const cs = captureState(u);
+        const nearPeri = cs.cu < 0.1 || cs.cu > 0.9;         // 近月点经过
+        const coast = burn === 0 && nearPeri;                  // 非制动的近月点 = 无动力滑行圈
+        const seg = '捕获段 · ' + CA[cs.oi].name;
         earthRocket.label.text = burn > 0
-          ? '探月飞船 · ' + seg + ' 近月制动' : '探月飞船 · ' + seg;
+          ? '探月飞船 · ' + seg + ' 近月制动'
+          : coast ? '探月飞船 · ' + seg + ' ◯ 滑行（无动力）'
+            : '探月飞船 · ' + seg;
         updateTransferTrail(s);
         setPhase('第三幕 · ' + seg + ' · ' + fmtElapsed(CH_TOTAL_H * s)
           + '（演示加速 ×' + CH_SPEEDUP.capture + '）');

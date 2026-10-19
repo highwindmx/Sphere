@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地月转移 · 瞄准月球未来位置（演示）</title>
+<style>
+  :root { --ink:#1f2933; --muted:#5f6b7a; --line:#d9dee6; --earth:#185fa5;
+         --moon:#6b7280; --aim:#0f6e56; --now:#a32d2d; --craft:#ba7517; --bg:#f6f8fb; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:18px; }
+  h1 { font-size:18px; font-weight:600; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 14px; }
+  .wrap { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;
+          box-shadow:0 1px 3px rgba(20,40,80,.06); }
+  canvas { display:block; border-radius:10px; background:#0e1726; }
+  .ctrl { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  button { font:inherit; padding:7px 14px; border:1px solid var(--line); border-radius:9px;
+           background:#fff; color:var(--ink); cursor:pointer; }
+  button:hover { background:#eef3fa; }
+  button.primary { background:var(--earth); color:#fff; border-color:var(--earth); }
+  input[type=range] { width:150px; }
+  .read { display:flex; gap:18px; flex-wrap:wrap; margin-top:12px; font-size:13px; }
+  .read b { color:var(--earth); font-variant-numeric:tabular-nums; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:12.5px; color:var(--muted); }
+  .legend i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+  .note { max-width:760px; font-size:13px; line-height:1.7; color:var(--muted); margin-top:14px; }
+  .note b { color:var(--ink); }
+  label.chk { font-size:13px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+</style>
+</head>
+<body>
+  <h1>地月转移轨道：瞄准月球的「未来位置」</h1>
+  <p class="sub">惯性系顶视 · 地球固定，月球沿轨道公转 · 飞船终点 = 月球 114 小时后到达的会合点</p>
+
+  <div class="wrap">
+    <canvas id="cv" width="760" height="560"></canvas>
+    <div class="ctrl">
+      <button id="play" class="primary">▶ 播放</button>
+      <button id="restart">↺ 重置</button>
+      <label class="chk">速度
+        <input id="speed" type="range" min="0.5" max="4" step="0.5" value="1.5">
+        <span id="speedv">1.5×</span>
+      </label>
+      <label class="chk"><input id="ghost" type="checkbox" checked> 显示「未来位置」幽灵</label>
+    </div>
+    <div class="read">
+      <span>任务时间 <b id="rT">0.0 h</b></span>
+      <span>月球已公转 <b id="rMoon">0.0°</b></span>
+      <span>飞船真近点角 <b id="rNu">0.0°</b></span>
+      <span>状态 <b id="rState">调相/转移中</b></span>
+    </div>
+    <div class="legend">
+      <span><i style="background:#6b7280"></i>月球（实际，运动中）</span>
+      <span><i style="background:#9aa4b8;border:1px solid #cfd6df"></i>月球未来位置（幽灵/会合点）</span>
+      <span><i style="background:#ba7517"></i>飞船 + 转移椭圆</span>
+      <span><i style="background:#a32d2d"></i>✗ 地球→当前月球（不瞄这里）</span>
+      <span><i style="background:#0f6e56"></i>✓ 地球→未来位置（瞄准）</span>
+    </div>
+  </div>
+
+  <p class="note">
+    <b>核心原理：</b>地月转移椭圆的半周期固定 ≈ <b>114 小时</b>。飞船从近地点（贴近地球）滑完半个椭圆到远地点（月球距离处），
+    期间扫过约 <b>178°</b> 真近点角；而月球 114 小时内沿轨道只公转约 <b>62.6°</b>。
+    二者要在同一时刻到达同一点，唯一的办法是：<b>发射时让月球恰好领先会合点 62.6°</b>（这就是发射窗口的来源）。
+    所以飞船的终点不是「现在看到的月球」，而是「114 小时后月球将到达的位置」——图中灰色幽灵标记即为该未来位置。
+    到达时落点在月球<b>背面</b>，正是真实近月制动（LOI）的位置。
+  </p>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const cx = W/2, cy = H/2 + 10;     // 地球中心（画布坐标，y 向下）
+  const Rpx = 200;                    // 月球轨道半径（px）
+
+  // —— 真实参数（与项目 rocket.js 一致）——
+  const rp = 6971/384400;             // 近地点（地球半径+593km）/ 地月距
+  const ra = 405000/384400;           // 远地点 / 地月距
+  const a  = (rp+ra)/2;
+  const e  = (ra-rp)/(ra+rp);
+  const Tt = 114;                     // 转移时长（小时）
+  const moonSweep = 62.6 * Math.PI/180; // 月球 114h 公转角
+  const thetaArr = Math.PI/2;          // 会合点方向（画布上方）
+  const theta0   = thetaArr - moonSweep; // 发射时月球方向
+
+  // 开普勒方程：M = E - e sinE
+  function solveE(M){ let E=M; for(let i=0;i<60;i++){ const d=(E-e*Math.sin(E)-M)/(1-e*Math.cos(E)); E-=d; if(Math.abs(d)<1e-9) break; } return E; }
+
+  // 飞船在惯性系的位置（数学系 y 向上），返回 [x,y]（单位：地月距）
+  function craftUnit(t){
+    const M = Math.PI * (t/Tt);        // 半椭圆 = π
+    const E = solveE(M);
+    const nu = 2*Math.atan2(Math.sqrt(1+e)*Math.sin(E/2), Math.sqrt(1-e)*Math.cos(E/2));
+    const r = a*(1 - e*Math.cos(E));
+    // 近地点在下方(-90°)，沿 -90°-ν 方向（逆时针从下→左→上），保持与月球同向
+    const ang = -Math.PI/2 - nu;
+    return [r*Math.cos(ang), r*Math.sin(ang)];
+  }
+  // 月球方向（数学系 y 向上）：逆时针增加
+  function moonAngle(t){ return theta0 + moonSweep*(t/Tt); }
+
+  // 数学系→画布：x 不变，y 取反（画布 y 向下）
+  const toCv = (ux, uy) => [cx + ux*Rpx, cy - uy*Rpx];
+
+  function draw(t){
+    ctx.clearRect(0,0,W,H);
+
+    // 月球轨道
+    ctx.strokeStyle = 'rgba(154,164,184,.45)';
+    ctx.setLineDash([5,5]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx,cy,Rpx,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 转移椭圆（整条，淡）
+    ctx.strokeStyle = 'rgba(186,117,23,.28)'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for(let i=0;i<=180;i++){ const tt=Tt*i/180; const [ux,uy]=craftUnit(tt); const [px,py]=toCv(ux,uy); i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+    ctx.stroke();
+
+    // 地球
+    const [ex,ey] = toCv(0,0);
+    ctx.fillStyle = '#185fa5'; ctx.beginPath(); ctx.arc(ex,ey,11,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#cfe0f5'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('地球', ex, ey+26);
+
+    // 会合点（未来位置）幽灵
+    const [ax,ay] = toCv(0,1); // 方向 thetaArr=90° → (0,1)
+    if(document.getElementById('ghost').checked){
+      ctx.strokeStyle = '#9aa4b8'; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.arc(ax,ay,9,0,Math.PI*2); ctx.stroke();
+      ctx.fillStyle='rgba(154,164,184,.25)'; ctx.fill();
+      ctx.fillStyle='#aeb8c6'; ctx.font='12px sans-serif'; ctx.textAlign='left';
+      ctx.fillText('月球未来位置 T+114h（会合点）', ax+14, ay-6);
+    }
+
+    // 当前月球
+    const ma = moonAngle(t);
+    const [mx,my] = toCv(Math.cos(ma), Math.sin(ma));
+    ctx.fillStyle = '#6b7280'; ctx.beginPath(); ctx.arc(mx,my,7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#aeb8c6'; ctx.font='12px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('月球（实际）', mx+11, my+4);
+
+    // 瞄准辅助线
+    // ✗ 地球→当前月球
+    ctx.strokeStyle='#a32d2d'; ctx.setLineDash([4,4]); ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(mx,my); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#d96b6b'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('✗ 不瞄当前月球', (ex+mx)/2-20, (ey+my)/2+14);
+    // ✓ 地球→会合点
+    ctx.strokeStyle='#0f6e56'; ctx.setLineDash([4,4]); ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ax,ay); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#1d9e75'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('✓ 瞄准未来位置', (ex+ax)/2+8, (ey+ay)/2-6);
+
+    // 相位角弧（地球处：当前月球方向与会合点方向夹角）
+    const aNow = Math.atan2(-(my-ey), mx-ex); // 画布角度
+    const aArr = Math.atan2(-(ay-ey), ax-ex);
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.arc(ex,ey,46, Math.min(aNow,aArr), Math.max(aNow,aArr)); ctx.stroke();
+    ctx.fillStyle='#cdd6e2'; ctx.font='11px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('月球还需公转 62.6°', ex, ey-54);
+
+    // 飞船 + 已飞轨迹
+    ctx.strokeStyle='#ba7517'; ctx.lineWidth=2.4;
+    ctx.beginPath();
+    const steps = Math.max(1, Math.round(180*t/Tt));
+    for(let i=0;i<=steps;i++){ const tt=Tt*i/180; const [ux,uy]=craftUnit(tt); const [px,py]=toCv(ux,uy); i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+    ctx.stroke();
+    const [cux,cuy]=craftUnit(Math.min(t,Tt));
+    const [cpx,cpy]=toCv(cux,cuy);
+    // 飞船图标
+    ctx.save(); ctx.translate(cpx,cpy); ctx.rotate(0);
+    ctx.fillStyle='#e0922f'; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle='#e8b56b'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('飞船', cpx+8, cpy-6);
+
+    // 相遇提示
+    if(t>=Tt-0.001){
+      ctx.fillStyle='#1d9e75'; ctx.font='bold 16px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('✓ 地月会合成功（飞船抵达月球未来位置）', cx, 40);
+    }
+  }
+
+  // —— 动画控制 ——
+  let t = 0, playing = false, last = 0, speed = 1.5, holdUntil = 0;
+  const TOTAL = Tt + 8; // 多放 8h 看相遇后停留
+  function frame(ts){
+    if(!last) last = ts;
+    const dt = (ts-last)/1000; last = ts;
+    if(playing && performance.now() > holdUntil){
+      t += dt * speed * 8;   // 8 h/秒（基准），乘速度
+      if(t >= TOTAL){ t = Tt; playing=false; holdUntil = performance.now()+1600;
+        document.getElementById('play').textContent='▶ 播放'; }
+    }
+    draw(Math.min(t,Tt));
+    // 读数
+    const M = Math.PI*(Math.min(t,Tt)/Tt);
+    const E = solveE(M);
+    const nu = 2*Math.atan2(Math.sqrt(1+e)*Math.sin(E/2), Math.sqrt(1-e)*Math.cos(E/2));
+    document.getElementById('rT').textContent = Math.min(t,Tt).toFixed(1)+' h';
+    document.getElementById('rMoon').textContent = (moonSweep*(Math.min(t,Tt)/Tt)*180/Math.PI).toFixed(1)+'°';
+    document.getElementById('rNu').textContent = (nu*180/Math.PI).toFixed(1)+'°';
+    document.getElementById('rState').textContent = t>=Tt-0.001 ? '会合成功' : '飞船滑向会合点';
+    requestAnimationFrame(frame);
+  }
+  document.getElementById('play').onclick = () => {
+    playing = !playing;
+    if(playing && t>=Tt){ t=0; }
+    document.getElementById('play').textContent = playing ? '⏸ 暂停' : '▶ 播放';
+  };
+  document.getElementById('restart').onclick = () => { t=0; playing=true;
+    document.getElementById('play').textContent='⏸ 暂停'; };
+  document.getElementById('speed').oninput = (e) => { speed=+e.target.value;
+    document.getElementById('speedv').textContent = speed+'×'; };
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

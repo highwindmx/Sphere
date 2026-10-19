@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地月转移全过程 · 双坐标系同步演示（含加速/减速）</title>
+<style>
+  :root { --ink:#1f2933; --muted:#5f6b7a; --line:#d9dee6; --earth:#185fa5;
+         --moon:#6b7280; --craft:#ba7517; --pro:#e8740c; --retro:#2f7fd8; --bg:#f6f8fb; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px; }
+  h1 { font-size:18px; font-weight:600; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 12px; text-align:center; }
+  .panels { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px;
+           box-shadow:0 1px 3px rgba(20,40,80,.06); }
+  .panel h2 { font-size:13px; margin:2px 0 8px; text-align:center; color:var(--ink); }
+  canvas { display:block; border-radius:10px; background:#0e1726; }
+  .ctrl { display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; margin-top:12px; }
+  button { font:inherit; padding:7px 14px; border:1px solid var(--line); border-radius:9px;
+           background:#fff; color:var(--ink); cursor:pointer; }
+  button:hover { background:#eef3fa; }
+  button.primary { background:var(--earth); color:#fff; border-color:var(--earth); }
+  input[type=range] { width:150px; }
+  .read { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:12px; font-size:13px; }
+  .read b { color:var(--earth); font-variant-numeric:tabular-nums; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-size:12.5px; color:var(--muted); }
+  .legend i { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
+  .timeline { display:flex; width:760px; max-width:100%; height:26px; margin:14px auto 0; border-radius:7px; overflow:hidden; border:1px solid var(--line); }
+  .timeline div { display:flex; align-items:center; justify-content:center; font-size:12px; color:#fff; }
+  .seg-p { background:#3b82c4; } .seg-t { background:#d98a2b; } .seg-c { background:#7b5fb0; }
+  .tl-cursor { position:relative; width:760px; max-width:100%; height:3px; margin:0 auto; }
+  .note { max-width:820px; font-size:13px; line-height:1.7; color:var(--muted); margin-top:14px; }
+  .note b { color:var(--ink); }
+  code { background:#eef3fa; padding:1px 5px; border-radius:4px; color:#185fa5; }
+</style>
+</head>
+<body>
+  <h1>地月转移全过程：双坐标系同步演示</h1>
+  <p class="sub">左 = 地球原点（惯性系）· 右 = 月球原点 · 同一时钟 · 含调相加速、TLI、三次近月制动减速</p>
+
+  <div class="panels">
+    <div class="panel"><h2>🌍 地球原点（惯性系）</h2><canvas id="cvE" width="460" height="540"></canvas></div>
+    <div class="panel"><h2>🌕 月球原点（绕月系）</h2><canvas id="cvM" width="460" height="540"></canvas></div>
+  </div>
+
+  <div class="ctrl">
+    <button id="play" class="primary">▶ 播放</button>
+    <button id="restart">↺ 重置</button>
+    <label style="font-size:13px;color:var(--muted)">速度
+      <input id="speed" type="range" min="0.5" max="4" step="0.5" value="1.5">
+      <span id="speedv">1.5×</span>
+    </label>
+    <label style="font-size:13px;color:var(--muted)"><input id="ghost" type="checkbox" checked> 显示完整轨迹</label>
+  </div>
+
+  <div class="timeline">
+    <div class="seg-p" style="flex:168"  id="segP">调相 168h</div>
+    <div class="seg-t" style="flex:114"  id="segT">转移 114h</div>
+    <div class="seg-c" style="flex:52"   id="segC">捕获 52h</div>
+  </div>
+  <div class="tl-cursor"><div id="tlMark" style="position:absolute;top:0;width:2px;height:3px;background:#e8740c;"></div></div>
+
+  <div class="read">
+    <span>任务时间 <b id="rT">0.0 h</b></span>
+    <span>阶段 <b id="rPhase">调相段</b></span>
+    <span>飞船距地 <b id="rRg">—</b></span>
+    <span>飞船距月 <b id="rRm">—</b></span>
+    <span>机动 <b id="rBurn">巡航</b></span>
+  </div>
+  <div class="legend">
+    <span><i style="background:#185fa5"></i>地球</span>
+    <span><i style="background:#6b7280"></i>月球</span>
+    <span><i style="background:#ba7517"></i>飞船</span>
+    <span><i style="background:#e8740c"></i>加速（近地点点火）</span>
+    <span><i style="background:#2f7fd8"></i>减速（近月制动）</span>
+  </div>
+
+  <p class="note">
+    <b>同一事件，两套语言。</b>左图（地球原点）看到的是经典叙事：飞船在近地点一次次<b>加速</b>抬升远地点（调相 3 圈），
+    TLI 后滑完半椭圆，抵达时月球已在那里；右图（月球原点）里月球静止，反而是<b>地球绕月转</b>，飞船从地球方向飞入，
+    在近月点一次次<b>减速</b>收紧轨道（三次近月制动）。两图的「飞船距月」读数始终一致，证明这只是参考系的切换。<br>
+    <b>颜色约定：</b>橙色火焰 = 顺行加速（近地点点火抬轨）；蓝色火焰 = 逆行减速（近月制动收轨）；
+    <span style="color:#9aa4b8">◯ 滑行（无动力）</span> = 同一椭圆上重复绕行的圈，<b>不点火</b>——只在换轨那一次的近地点才点火。<br>
+    <b>为何有重复圈：</b>调相段 16h×3 + 24h×3 + 48h×1 共 7 圈、捕获段三次制动之间也各绕数圈，都是无动力滑行：在等「地月相位窗口」/「轨道稳定」，
+    窗口没开就先在轨道上漂着，并非重复加速减速。天体尺寸与捕获段已为可视性放大/拉近，距离读数以真实 km 为准。
+  </p>
+
+<script>
+(() => {
+  const rE = 6378.137, D = 384400, moonR = 1737.4;
+  const wm = 2*Math.PI/(27.321661*24);          // 月球角速度 rad/h
+  const thM0 = Math.PI/2 - wm*282;              // 令 T=282h（抵达）时月球在画布上方(π/2)
+  const moonPos = (T) => { const a = thM0 + wm*T; return [D*Math.cos(a), D*Math.sin(a)]; };
+
+  // 开普勒方程
+  function solveE(M, e){ let E=M; for(let i=0;i<80;i++){ const d=(E-e*Math.sin(E)-M)/(1-e*Math.cos(E)); E-=d; if(Math.abs(d)<1e-12) break; } return E; }
+  const nuOf = (E,e) => 2*Math.atan2(Math.sqrt(1+e)*Math.sin(E/2), Math.sqrt(1-e)*Math.cos(E/2));
+
+  // —— 轨道段（与 rocket.js 真实数据一致，km）——
+  const mk = (rp,ra,per,laps,t0) => { const a=(rp+ra)/2; return {rp,ra,a,e:(ra-rp)/(ra+rp),per,laps,t0}; };
+  const PHA = [ mk(rE+205, rE+50900, 16, 3, 0),
+                mk(rE+593, rE+71600, 24, 3, 48),
+                mk(rE+593, rE+119800, 48, 1, 120) ];
+  const PH_END = 168;
+  const TR = mk(rE+593, 405000, 114, 1, 168);   // 转移（半椭圆，laps=1 但只走半程由 f 控制）
+  const T1 = 282;
+  const CAP_END = 334.117;
+  const T_TOTAL = CAP_END;
+
+  // 捕获段位置（月球系 km）：
+  // ⚠ 真实 LOI 制动发生在「近月点」(距月最近)，相邻轨道在近月点共享、只逐圈收缩「远月点」= 逐级减速。
+  //   旧版把制动放在远月点 → 每次制动瞬间外圈 apolune 直接跳到内圈 apolune(≈1万km 跳变) → 画成直线。
+  //   本版：抵达点(T=282)在远月点(ra=20599)与转移衔接 → 先摆到近月点(T=288)首次制动 → 之后每圈在近月点逐级制动。
+  //   各段在「近月点」严格连续（rp 仅差 ~10km），故无任何直线跳变。
+  function capturePos(T){
+    const mp = moonPos(T);
+    let o; // {t0, per, rp, ra, m0}  m0=起始平近点角；近月点在 ν=0(-y,向地)，远月点 ν=π(+y,背地)
+    if(T < 288) o = {t0:282, per:12, rp:moonR+200, ra:20599,  m0:Math.PI}; // 半圈：远月点(抵达)→近月点(首次制动点)
+    else if(T < 300) o = {t0:288, per:12, rp:moonR+211, ra:10237,  m0:0};  // LOI-1 后 12h 椭圆
+    else if(T < 312) o = {t0:300, per:12, rp:moonR+200, ra:3466,   m0:0};  // LOI-2 后
+    else o            = {t0:312, per:2.12, rp:moonR+195, ra:moonR+195, m0:0}; // LOI-3 圆化(127min 级)
+    const a=(o.rp+o.ra)/2, e=(o.ra-o.rp)/(o.ra+o.rp);
+    const M = o.m0 + 2*Math.PI*(T-o.t0)/o.per;
+    const E = solveE(M,e), nu = nuOf(E,e), r = a*(1-e*Math.cos(E));
+    const dir = 3*Math.PI/2 + nu;
+    return [mp[0] + r*Math.cos(dir), mp[1] + r*Math.sin(dir)];
+  }
+
+  // 机动事件（加速=pro 近地点点火；减速=retro 近月制动）。制动点 = 真实近月点
+  const BURNS = [
+    {T:48,     type:'pro',   label:'加速·近地点点火'},
+    {T:120,    type:'pro',   label:'加速·近地点点火'},
+    {T:168,    type:'pro',   label:'TLI·进入转移'},
+    {T:288,    type:'retro', label:'减速·近月制动(LOI-1)'},
+    {T:300,    type:'retro', label:'减速·近月制动(LOI-2)'},
+    {T:312,    type:'retro', label:'减速·圆化轨道(LOI-3)'},
+  ];
+
+  // 近地点(近月点)经过时刻：区分「换轨点火」与「无动力滑行圈」。
+  // ⚠ 调相/捕获段里中间重复的圈都是滑行——只在换轨那一次的近地点才点火。
+  const PERIS = [];
+  PHA.forEach(o => { for(let k=0;k<o.laps;k++){ const Tp=o.t0+k*o.per;
+    PERIS.push({T:Tp, burn: BURNS.some(b => Math.abs(b.T-Tp) < 1.4)}); } });
+
+  // 任务位置：返回地球系坐标 ex,ey(km) 与月球系坐标 mx,my(km)
+  function missionPos(T){
+    let ex,ey,phase;
+    if(T < PH_END){
+      const o = PHA.find(o => T < o.t0 + o.per*o.laps) || PHA[PHA.length-1];
+      const M = 2*Math.PI*(T-o.t0)/o.per;
+      const E = solveE(M,o.e), nu = nuOf(E,o.e), r = o.a*(1-o.e*Math.cos(E));
+      const dir = 3*Math.PI/2 + nu;            // 近地点在下方，逆时针
+      ex = r*Math.cos(dir); ey = r*Math.sin(dir); phase='调相段';
+    } else if(T < T1){
+      const f = (T-168)/114, M = Math.PI*f;
+      const E = solveE(M,TR.e), nu = nuOf(E,TR.e), r = TR.a*(1-TR.e*Math.cos(E));
+      const dir = 3*Math.PI/2 + nu;
+      ex = r*Math.cos(dir); ey = r*Math.sin(dir); phase='转移段';
+    } else {
+      const c = capturePos(T);
+      ex = c[0]; ey = c[1]; phase='捕获段';
+    }
+    const mp = moonPos(T);
+    return { ex, ey, mx: ex-mp[0], my: ey-mp[1], phase };
+  }
+
+  // 预采样整条轨迹
+  const M = 1200, Earr=[], Marr=[], Tarr=[], Parr=[];
+  for(let i=0;i<=M;i++){ const T = T_TOTAL*i/M; const p = missionPos(T);
+    Earr.push([p.ex,p.ey]); Marr.push([p.mx,p.my]); Tarr.push(T); Parr.push(p.phase); }
+
+  // —— 画布 + 平滑缩放状态 ——
+  function setup(id){ const c=document.getElementById(id); return {c, x:c.getContext('2d'), W:c.width, H:c.height,
+    cx:c.width/2, cy:c.height/2+6, scale:1, ccx:0, ccy:0 }; }
+  const E = setup('cvE'), MM = setup('cvM');
+  // 每面板的目标 fitR（km）与中心（km，地球系坐标；月球面板中心固定 0,0）
+  function targetFor(panel, T){
+    if(panel==='earth'){
+      if(T < PH_END) return { fitR: 130000, cx:0, cy:0 };   // 调相段：放大看清近地点环与地球大小关系
+      if(T < T1) return { fitR: 410000, cx:0, cy:0 };       // 转移段：完整半椭圆
+      const mp = moonPos(T); return { fitR: 24000, cx:mp[0], cy:mp[1] };
+    } else {
+      if(T < T1) return { fitR: 420000, cx:0, cy:0 };
+      return { fitR: 24000, cx:0, cy:0 };
+    }
+  }
+  function smooth(s, tg, k){ s.scale += (tg.fitR - s.scale)*k; s.ccx += (tg.cx - s.ccx)*k; s.ccy += (tg.cy - s.ccy)*k; }
+
+  function drawPanel(s, panel, T){
+    const ctx=s.x; ctx.clearRect(0,0,s.W,s.H);
+    const tg = targetFor(panel,T); smooth(s, tg, 0.10);
+    const px = (s.H*0.46)/s.scale;              // km→px
+    const map = (x,y) => [ s.cx + (x - s.ccx)*px, s.cy - (y - s.ccy)*px ];
+    const arr = panel==='earth' ? Earr : Marr;
+
+    // 轨道参考圆（中心天体的公转轨道）
+    ctx.strokeStyle='rgba(154,164,184,.30)'; ctx.setLineDash([5,5]); ctx.lineWidth=1;
+    if(panel==='earth' && T < T1){ const [ox,oy]=map(0,0); ctx.beginPath(); ctx.arc(ox,oy,(D)*px,0,Math.PI*2); ctx.stroke(); }
+    ctx.setLineDash([]);
+
+    // 天体
+    const mp = moonPos(T);
+    if(panel==='earth'){
+      if(T < T1){
+        const [ex,ey]=map(0,0);
+        const er = Math.max(2.5, rE*px);                 // 地球按比例绘制（不再固定 10px 虚大）
+        ctx.fillStyle='#185fa5'; ctx.beginPath(); ctx.arc(ex,ey,er,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#cfe0f5'; ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.fillText('地球', ex, ey+er+15);
+        const [mx,my]=map(mp[0],mp[1]); const onScr = Math.hypot(mx-ex,my-ey) < s.W; // 调相放大时月球在画外，仅当它入画才画
+        if(onScr){ ctx.fillStyle='#6b7280'; ctx.beginPath(); ctx.arc(mx,my,6,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#aeb8c6'; ctx.font='12px sans-serif'; ctx.textAlign='left'; ctx.fillText('月球', mx+9, my+3); }
+      } else {
+        const [mx,my]=map(mp[0],mp[1]); const mr=Math.max(8,moonR*px);
+        ctx.fillStyle='#6b7280'; ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#aeb8c6'; ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.fillText('月球', mx, my+mr+16);
+      }
+    } else {
+      const mr = Math.max(5, moonR*px);
+      const [ox,oy]=map(0,0); ctx.fillStyle='#6b7280'; ctx.beginPath(); ctx.arc(ox,oy,mr,0,Math.PI*2); ctx.fill();
+    }
+
+    // 完整轨迹（淡）+ 已飞轨迹（亮）
+    if(document.getElementById('ghost').checked){
+      ctx.strokeStyle='rgba(186,117,23,.22)'; ctx.lineWidth=1.1; ctx.beginPath();
+      for(let i=0;i<=M;i++){ const [px2,py2]=map(arr[i][0],arr[i][1]); i?ctx.lineTo(px2,py2):ctx.moveTo(px2,py2); }
+      ctx.stroke();
+    }
+    const idx = Math.round(T/T_TOTAL*M);
+    ctx.strokeStyle='#ba7517'; ctx.lineWidth=2.4; ctx.beginPath();
+    for(let i=0;i<=idx;i++){ const [px2,py2]=map(arr[i][0],arr[i][1]); i?ctx.lineTo(px2,py2):ctx.moveTo(px2,py2); }
+    ctx.stroke();
+
+    // 飞船 + 速度方向
+    const p = missionPos(T);
+    const sp = panel==='earth' ? [p.ex,p.ey] : [p.mx,p.my];
+    const [sx,sy]=map(sp[0],sp[1]);
+    const p2 = missionPos(Math.min(T+0.5,T_TOTAL));
+    const sp2 = panel==='earth' ? [p2.ex,p2.ey] : [p2.mx,p2.my];
+    let vx=sp2[0]-sp[0], vy=sp2[1]-sp[1]; const vl=Math.hypot(vx,vy)||1; vx/=vl; vy/=vl;
+    ctx.strokeStyle='rgba(232,180,90,.8)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx+vx*16, sy-vy*16); ctx.stroke();
+    ctx.fillStyle='#e0922f'; ctx.beginPath(); ctx.arc(sx,sy,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='#e8b56b'; ctx.font='11px sans-serif'; ctx.textAlign='left'; ctx.fillText('飞船', sx+8, sy-6);
+
+    // 机动火焰
+    const burn = BURNS.find(b => Math.abs(T-b.T) < 1.4);
+    if(burn){
+      const col = burn.type==='pro' ? '#e8740c' : '#2f7fd8';
+      const sgn = burn.type==='pro' ? 1 : -1;     // 加速沿速度；减速反速度
+      ctx.save(); ctx.translate(sx,sy);
+      ctx.fillStyle=col; ctx.globalAlpha=0.9;
+      for(let k=0;k<5;k++){ const a=Math.random()*Math.PI*2, rr=4+Math.random()*7;
+        ctx.beginPath(); ctx.arc(Math.cos(a)*rr, -Math.sin(a)*rr, 1.6, 0, Math.PI*2); ctx.fill(); }
+      ctx.globalAlpha=1;
+      ctx.fillStyle=col; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
+      ctx.fillText((burn.type==='pro'?'▲ 加速':'▼ 减速'), sx, sy-14);
+      ctx.restore();
+    } else {
+      // 非点火的近地点经过 = 无动力滑行圈（这正是「重复圈」的本质）
+      const peri = PERIS.find(p => Math.abs(T-p.T) < 1.4 && !p.burn);
+      if(peri){
+        ctx.fillStyle='rgba(150,160,175,.85)'; ctx.font='11px sans-serif'; ctx.textAlign='center';
+        ctx.fillText('◯ 滑行（无动力）', sx, sy+18);
+      }
+    }
+  }
+
+  // —— 动画 ——
+  let t=0, playing=false, last=0, speed=1.5, holdUntil=0;
+  const RATE = T_TOTAL/70;        // 1× 约 70 秒放完
+  function loop(ts){
+    if(!last) last=ts; const dt=(ts-last)/1000; last=ts;
+    if(playing && performance.now()>holdUntil){
+      t += dt*speed*RATE;
+      if(t>=T_TOTAL){ t=T_TOTAL; playing=false; holdUntil=performance.now()+1800;
+        document.getElementById('play').textContent='▶ 播放'; }
+    }
+    const T=Math.min(t,T_TOTAL);
+    drawPanel(E,'earth',T); drawPanel(MM,'moon',T);
+
+    // 读数
+    const p = missionPos(T);
+    const rg = Math.hypot(p.ex,p.ey), rm = Math.hypot(p.mx,p.my);
+    const burn = BURNS.find(b => Math.abs(T-b.T) < 1.4);
+    document.getElementById('rT').textContent = T.toFixed(1)+' h';
+    document.getElementById('rPhase').textContent = p.phase;
+    document.getElementById('rRg').textContent = Math.round(rg).toLocaleString()+' km';
+    document.getElementById('rRm').textContent = Math.round(rm).toLocaleString()+' km';
+    document.getElementById('rBurn').textContent = burn ? burn.label : '巡航';
+    document.getElementById('tlMark').style.left = (T/T_TOTAL*100)+'%';
+    requestAnimationFrame(loop);
+  }
+
+  document.getElementById('play').onclick = () => { playing=!playing; if(playing && t>=T_TOTAL) t=0;
+    document.getElementById('play').textContent = playing ? '⏸ 暂停' : '▶ 播放'; };
+  document.getElementById('restart').onclick = () => { t=0; playing=true;
+    document.getElementById('play').textContent='⏸ 暂停'; };
+  document.getElementById('speed').oninput = (e)=>{ speed=+e.target.value; document.getElementById('speedv').textContent=speed+'×'; };
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
