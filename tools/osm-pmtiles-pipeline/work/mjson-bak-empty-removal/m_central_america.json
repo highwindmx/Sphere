@@ -1,0 +1,55 @@
+{
+ "玛雅文明（蒂卡尔）": {
+  "ok": true,
+  "file": "pmtiles/北美洲_危地马拉_玛雅文明_蒂卡尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -89.72,
+   17.08,
+   -89.47999999999999,
+   17.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 72315,
+  "pbf": "central-america"
+ },
+ "圣何塞（哥斯达黎加）": {
+  "ok": true,
+  "file": "pmtiles/北美洲_哥斯达黎加_圣何塞_哥斯达黎加.pmtiles",
+  "tiles": 2562,
+  "bytes": 7283484,
+  "bbox": [
+   -84.32,
+   9.69,
+   -83.84,
+   10.17
+  ],
+  "center": [
+   -84.08,
+   9.93
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "central-america"
+ },
+ "巴拿马城": {
+  "ok": true,
+  "file": "pmtiles/北美洲_巴拿马_巴拿马城.pmtiles",
+  "tiles": 1980,
+  "bytes": 4607967,
+  "bbox": [
+   -79.75999999999999,
+   8.74,
+   -79.28,
+   9.22
+  ],
+  "center": [
+   -79.52,
+   8.98
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "central-america"
+ }
+}

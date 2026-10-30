@@ -7,11 +7,11 @@
  *   GIBS Blue Marble NG → EPSG:4326 地理投影，原生覆盖 ±90° 真数据 → 不需要补丁
  * 南极三源均为白冰（Esri 243,246,254 / EOX 250,250,251），无源差异。
  *
- * 资产由 tools/build_polar_patches.py 从 bluemarble.jpg 生成（HSV 色系搬移，
+ * 资产由 tools/lunar/build_polar_patches.py 从 bluemarble.jpg 生成（HSV 色系搬移，
  * 只动 |lat|>84.96° 极带）；运行时 recalibratePolarCaps() 逐列接缝精调。
  * 图级做粗调、运行时做精调，两者分工不重复。
  *
- * 新增源流程：① tools/build_polar_patches.py 加目标色生成补丁图；
+ * 新增源流程：① tools/lunar/build_polar_patches.py 加目标色生成补丁图；
  *            ② 本表加 profile；③ imagery-sources.js IMAGERY_SOURCES 加源。
  */
 

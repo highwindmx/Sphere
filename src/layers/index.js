@@ -13,18 +13,20 @@ import { LAYER as worldocean } from './worldocean.js';
 import { LAYER as shanhai } from './shanhai.js';
 
 import { LAYER as wall } from './wall.js';
+import { LAYER as revolution } from './revolution.js';
 import { LAYER as longmarch } from './longmarch.js';
 import { LAYER as g318 } from './g318.js';
 import { LAYER as waterworks } from './waterworks.js';
 import { LAYER as silkroad } from './silkroad.js';
 import { LAYER as zhenghe } from './zhenghe.js';
 import { LAYER as xuanzang } from './xuanzang.js';
-import { LAYER as dynasties } from './dynasties.js';
 import { LAYER as cities } from './cities.js';
 
 import { LAYER as civilizations } from './civilizations.js';
 import { LAYER as wonders } from './wonders.js';
 import { LAYER as heritage } from './heritage.js';
+import { LAYER as museums } from './museums.js';
+import { LAYER as spacetour } from './spacetour.js';
 import { LAYER as ageofsail } from './ageofsail.js';
 import { LAYER as rome } from './rome.js';
 import { LAYER as crusades } from './crusades.js';
@@ -39,13 +41,15 @@ import { LAYER as worldrivers } from './worldrivers.js';
 // LAYERS 数组（按 categories 中 layerIds 出现顺序）
 export const LAYERS = [
   // 航天探索
-  tiangong, moonmission,
+  tiangong, moonmission, spacetour,
   // 自然地理
   geolines, plates, worldocean, currents,
   // 中国史（历史路线放在长征之后）
-  shanhai, wall, longmarch, silkroad, zhenghe, xuanzang, g318, cities, dynasties, waterworks,
+  // ⚠ 「历代疆域」（dynasties）已于 2026-10-29 移除：与「历史时空 · 中国历代疆域」（17 朝代 / 181 阶段
+  //   真实政区快照）完全重复，且后者精度高得多。用户明确要求删去这一层。
+  shanhai, wall, revolution, longmarch, silkroad, zhenghe, xuanzang, g318, cities, waterworks,
   // 世界史
-  civilizations, wonders, heritage, ageofsail, rome, crusades, mongol, alexander, wwars,
+  civilizations, wonders, heritage, museums, ageofsail, rome, crusades, mongol, alexander, wwars,
   worldcapitals, worldcities, peaks, worldrivers,
 ];
 
@@ -61,7 +65,7 @@ export const LAYER_CATEGORIES = [
   {
     id: 'space',
     name: '航天探索',
-    layerIds: ['tiangong', 'moonmission'],
+    layerIds: ['tiangong', 'moonmission', 'spacetour'],
   },
   {
     id: 'nature',
@@ -72,9 +76,9 @@ export const LAYER_CATEGORIES = [
     id: 'china',
     name: '中国史',
     layerIds: [
-      'shanhai', 'wall', 'longmarch',
+      'shanhai', 'wall', 'revolution', 'longmarch',
       'silkroad', 'zhenghe', 'xuanzang', 'g318',
-      'cities', 'dynasties', 'waterworks',
+      'cities', 'waterworks',
     ],
   },
   {
@@ -82,7 +86,7 @@ export const LAYER_CATEGORIES = [
     name: '世界史',
     layerIds: [
       'ageofsail', 'rome', 'crusades', 'mongol', 'alexander',
-      'wwars', 'civilizations', 'heritage', 'wonders',
+      'wwars', 'civilizations', 'heritage', 'wonders', 'museums',
       'worldcapitals', 'worldcities', 'peaks', 'worldrivers',
     ],
   },

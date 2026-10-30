@@ -1,0 +1,91 @@
+{
+ "德黑兰": {
+  "ok": true,
+  "file": "pmtiles/亚洲_伊朗_德黑兰.pmtiles",
+  "resumed": true,
+  "bbox": [
+   50.89,
+   35.19,
+   51.89,
+   36.19
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 19969222,
+  "pbf": "iran"
+ },
+ "伊斯法罕": {
+  "ok": true,
+  "file": "pmtiles/亚洲_伊朗_伊斯法罕.pmtiles",
+  "resumed": true,
+  "bbox": [
+   51.44,
+   32.41,
+   51.92,
+   32.89
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 6633498,
+  "pbf": "iran"
+ },
+ "波斯（伊朗高原）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_伊朗_波斯_伊朗高原.pmtiles",
+  "resumed": true,
+  "bbox": [
+   53.88,
+   31.88,
+   54.12,
+   32.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 172814,
+  "pbf": "iran"
+ },
+ "波斯湾（巴林）": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   50.38,
+   26.08,
+   50.62,
+   26.32
+  ],
+  "pbf": "iran"
+ },
+ "忽鲁谟斯": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   56.18,
+   26.48,
+   56.419999999999995,
+   26.720000000000002
+  ],
+  "pbf": "iran"
+ },
+ "阿曼湾": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   57.68,
+   24.68,
+   57.919999999999995,
+   24.92
+  ],
+  "pbf": "iran"
+ },
+ "木鹿（马雷）": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   61.88,
+   36.38,
+   62.12,
+   36.62
+  ],
+  "pbf": "iran"
+ }
+}

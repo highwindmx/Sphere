@@ -1,0 +1,452 @@
+{
+ "吉隆坡": {
+  "ok": true,
+  "file": "pmtiles/亚洲_马来西亚_吉隆坡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   101.19,
+   2.64,
+   102.19,
+   3.64
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 38545885,
+  "pbf": "sea"
+ },
+ "新加坡": {
+  "ok": true,
+  "file": "pmtiles/亚洲_新加坡_新加坡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   103.32,
+   0.8500000000000001,
+   104.32,
+   1.85
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 29466209,
+  "pbf": "sea"
+ },
+ "曼谷": {
+  "ok": true,
+  "file": "pmtiles/亚洲_泰国_曼谷.pmtiles",
+  "resumed": true,
+  "bbox": [
+   100.0,
+   13.25,
+   101.0,
+   14.25
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 40030302,
+  "pbf": "sea"
+ },
+ "河内": {
+  "ok": true,
+  "file": "pmtiles/亚洲_老挝_河内.pmtiles",
+  "resumed": true,
+  "bbox": [
+   105.33,
+   20.53,
+   106.33,
+   21.53
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 32527438,
+  "pbf": "sea"
+ },
+ "雅加达": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度尼西亚_雅加达.pmtiles",
+  "resumed": true,
+  "bbox": [
+   105.17999999999999,
+   -6.32,
+   105.42,
+   -6.08
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 108007689,
+  "pbf": "sea"
+ },
+ "马尼拉": {
+  "ok": true,
+  "file": "pmtiles/亚洲_菲律宾_马尼拉.pmtiles",
+  "resumed": true,
+  "bbox": [
+   120.48,
+   14.1,
+   121.48,
+   15.1
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 77610239,
+  "pbf": "sea"
+ },
+ "仰光": {
+  "ok": true,
+  "file": "pmtiles/亚洲_缅甸_仰光.pmtiles",
+  "resumed": true,
+  "bbox": [
+   95.66,
+   16.37,
+   96.66,
+   17.37
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 13512102,
+  "pbf": "sea"
+ },
+ "胡志明市": {
+  "ok": true,
+  "file": "pmtiles/亚洲_柬埔寨_胡志明市.pmtiles",
+  "resumed": true,
+  "bbox": [
+   106.16,
+   10.26,
+   107.16,
+   11.26
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 24217014,
+  "pbf": "sea"
+ },
+ "万象": {
+  "ok": true,
+  "file": "pmtiles/亚洲_老挝_万象.pmtiles",
+  "resumed": true,
+  "bbox": [
+   102.39,
+   17.73,
+   102.86999999999999,
+   18.209999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3662028,
+  "pbf": "sea"
+ },
+ "万隆": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度尼西亚_万隆.pmtiles",
+  "resumed": true,
+  "bbox": [
+   107.38000000000001,
+   -7.16,
+   107.86,
+   -6.68
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 39043178,
+  "pbf": "sea"
+ },
+ "吴哥": {
+  "ok": true,
+  "file": "pmtiles/亚洲_柬埔寨_吴哥.pmtiles",
+  "resumed": true,
+  "bbox": [
+   103.63000000000001,
+   13.17,
+   104.11,
+   13.65
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3294712,
+  "pbf": "sea"
+ },
+ "宿务": {
+  "ok": true,
+  "file": "pmtiles/亚洲_菲律宾_宿务.pmtiles",
+  "resumed": true,
+  "bbox": [
+   123.88,
+   10.180000000000001,
+   124.12,
+   10.42
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2799170,
+  "pbf": "sea"
+ },
+ "岘港": {
+  "ok": true,
+  "file": "pmtiles/亚洲_越南_岘港.pmtiles",
+  "resumed": true,
+  "bbox": [
+   107.98,
+   15.83,
+   108.46,
+   16.31
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 5112993,
+  "pbf": "sea"
+ },
+ "斯里巴加湾": {
+  "ok": true,
+  "file": "pmtiles/亚洲_文莱_斯里巴加湾.pmtiles",
+  "resumed": true,
+  "bbox": [
+   114.7,
+   4.66,
+   115.17999999999999,
+   5.140000000000001
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2984649,
+  "pbf": "sea"
+ },
+ "新山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_马来西亚_新山.pmtiles",
+  "resumed": true,
+  "bbox": [
+   103.5,
+   1.25,
+   103.97999999999999,
+   1.73
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 22261101,
+  "pbf": "sea"
+ },
+ "棉兰": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度尼西亚_棉兰.pmtiles",
+  "resumed": true,
+  "bbox": [
+   98.43,
+   3.3499999999999996,
+   98.91,
+   3.83
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 23289311,
+  "pbf": "sea"
+ },
+ "槟城": {
+  "ok": true,
+  "file": "pmtiles/亚洲_马来西亚_槟城.pmtiles",
+  "resumed": true,
+  "bbox": [
+   100.09,
+   5.17,
+   100.57,
+   5.65
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 8015164,
+  "pbf": "sea"
+ },
+ "泗水": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度尼西亚_泗水.pmtiles",
+  "resumed": true,
+  "bbox": [
+   112.51,
+   -7.49,
+   112.99,
+   -7.01
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 27838019,
+  "pbf": "sea"
+ },
+ "清迈": {
+  "ok": true,
+  "file": "pmtiles/亚洲_泰国_清迈.pmtiles",
+  "resumed": true,
+  "bbox": [
+   98.74000000000001,
+   18.55,
+   99.22,
+   19.029999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 7593449,
+  "pbf": "sea"
+ },
+ "登巴萨": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度尼西亚_登巴萨.pmtiles",
+  "resumed": true,
+  "bbox": [
+   114.98,
+   -8.89,
+   115.46,
+   -8.41
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 21034432,
+  "pbf": "sea"
+ },
+ "金边": {
+  "ok": true,
+  "file": "pmtiles/亚洲_柬埔寨_金边.pmtiles",
+  "resumed": true,
+  "bbox": [
+   104.68,
+   11.32,
+   105.16,
+   11.8
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 5353315,
+  "pbf": "sea"
+ },
+ "帝汶岛": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度尼西亚_帝汶岛.pmtiles",
+  "resumed": true,
+  "bbox": [
+   123.47999999999999,
+   -10.319999999999999,
+   123.72,
+   -10.08
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3097493,
+  "pbf": "sea"
+ },
+ "占婆（越南中部）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_老挝_占婆_越南中部.pmtiles",
+  "resumed": true,
+  "bbox": [
+   106.58,
+   15.88,
+   106.82000000000001,
+   16.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 238678,
+  "pbf": "sea"
+ },
+ "扶南（湄公河口）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_越南_扶南_湄公河口.pmtiles",
+  "resumed": true,
+  "bbox": [
+   108.17999999999999,
+   11.780000000000001,
+   108.42,
+   12.02
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 576311,
+  "pbf": "sea"
+ },
+ "爪哇": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度尼西亚_爪哇.pmtiles",
+  "resumed": true,
+  "bbox": [
+   110.28,
+   -7.62,
+   110.52000000000001,
+   -7.38
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3807364,
+  "pbf": "sea"
+ },
+ "马六甲海峡东口": {
+  "ok": true,
+  "file": "pmtiles/亚洲_马来西亚_马六甲海峡东口.pmtiles",
+  "resumed": true,
+  "bbox": [
+   101.17999999999999,
+   1.1800000000000002,
+   101.42,
+   1.42
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 456340,
+  "pbf": "sea"
+ },
+ "占城（新州）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_越南_占城_新州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   108.88,
+   13.680000000000001,
+   109.12,
+   13.92
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 664143,
+  "pbf": "sea"
+ },
+ "新加坡海峡": {
+  "ok": true,
+  "file": "pmtiles/亚洲_马来西亚_新加坡海峡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   104.08,
+   1.38,
+   104.32000000000001,
+   1.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 507338,
+  "pbf": "sea"
+ },
+ "满剌加（马六甲）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_马来西亚_满剌加_马六甲.pmtiles",
+  "resumed": true,
+  "bbox": [
+   102.17999999999999,
+   2.08,
+   102.42,
+   2.3200000000000003
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1877540,
+  "pbf": "sea"
+ },
+ "苏门答腊（亚齐）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度尼西亚_苏门答腊_亚齐.pmtiles",
+  "resumed": true,
+  "bbox": [
+   95.17999999999999,
+   5.38,
+   95.42,
+   5.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 4290522,
+  "pbf": "sea"
+ }
+}

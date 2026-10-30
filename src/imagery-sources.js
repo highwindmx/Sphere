@@ -95,6 +95,22 @@ export const IMAGERY_SOURCES = [
       });
     },
   },
+  {
+    id: 'osm',
+    name: 'OSM 街道图',
+    hint: 'OpenStreetMap 标准瓦片（参考用，z0–19）；中国区请改用天地图，勿作权威底图',
+    maxLevel: 19,
+    manualOnly: true,            // 不入回退链 / 不在图源面板列出；仅由工具栏「🗺 OSM街道图」按钮手动开关
+    proxyUrl: 'tiles/osm/{z}/{x}/{y}.png',
+    upstreamUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    create(opts = {}) {
+      return new Cesium.UrlTemplateImageryProvider({
+        url: this.proxyUrl,       // 始终走本地代理（统一 UA + 限频友好 + 本地缓存）
+        maximumLevel: 19,
+        credit: new Cesium.Credit('© OpenStreetMap contributors', false),
+      });
+    },
+  },
 ];
 
 export function getSourceDef(id) {

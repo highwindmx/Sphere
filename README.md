@@ -23,6 +23,7 @@
 | 🛰️ 天宫空间站 | TLE 实时解算轨道，depthFailMaterial 补全被地球遮挡半圈 |
 | 🚀 探月三幕剧 | 地球发射 → 地月转移（压缩示意）→ 月面着陆，酒泉/文昌 × 雨海/静海 四个组合 |
 | 🌙 月球模式 | LOLA DEM 高程 + WAC 底图，一键切换地月 Viewer |
+| 📜 历史时空 | 一根年份轴驱动两套开源历史地图：**世界国界**（前 123000 — 2010，54 个年份快照）+ **中国历代疆域**（前 403 — 1948，17 朝代 / 181 阶段，含政权·道州·府州三层、历代城邑、长城运河丝路） |
 
 * * *
 
@@ -171,7 +172,7 @@ node tools/download-satellite-tiles.mjs --bbox -180,-85,180,85 --min-z 0 --max-z
 | --- | --- |
 | 经度 / 纬度输入框 | **placeholder 即实时光标坐标**（鼠标在地球上滑动时实时写入「经度 105.00°」）；鼠标移出球体回落为视点坐标 |
 | 海拔（只读） | 光标/视点处地形高程，`⛰ 1,292 m`；**负值保留符号**并换图标 `🌊 -4,118 m`（terrarium 地形源含海底地形，负值即水下深度） |
-| 📍 定位 | 填入经纬度飞行；**留空 = 定位到光标处**；成功后自动清空输入框（让 placeholder 继续显示实时光标位置） |
+| 🎯 定位 | 填入经纬度飞行；**留空 = 定位到光标处**；成功后自动清空输入框（让 placeholder 继续显示实时光标位置）。图标用靶点，与下方「地名查询 📍」区分 |
 | 🏠 回国 | 飞回中国全图（105°E, 33°N，1,600km 俯视）；月球模式下先自动切回地球（2026-10-17 从侧栏工具行迁入坐标栏） |
 | 🕘 记录 | 可折叠浏览历史：**默认折叠**，每次定位自动记入（localStorage，最多 20 条，按 0.01° 去重），**倒序**展示，点击条目回飞，可一键清空 |
 
@@ -206,7 +207,7 @@ node tools/download-satellite-tiles.mjs --bbox -180,-85,180,85 --min-z 0 --max-z
 
 **月面高清瓦片**：本地只有 `lunar_wac.jpg`（8192×4096 ≈ 660 m/像素）与 `lunar_dem.png`（≈8.5 km/像素），近距离看不出月面细节。已接入 NASA Moon Trek 官方 WMTS（LRO WAC 全局镶嵌 303 ppd ≈ 100 m/像素）：前端请求本地端点 `/tiles/lunar/{z}/{x}/{y}.jpg`，`app.py` 未命中时代理上游并回写 `public/tiles/lunar/`（与 esri/eox/gibs 同一套「本地优先 + 在线缓存」）；探测失败（离线/不可达）自动回退本地贴图。侧栏「月面高清瓦片」可开关（存 localStorage）。
 
-验证：`node tools/models-smoke.mjs`（10 模型资产冒烟：ready + 渲染像素 diff + 动画双帧 diff 噪声标定）与 `node tools/mission-smoke.mjs`（任务级端到端：场景预设进入 → 分离换模型/火焰/相机接管/时间轴隔离/转移/LOI/下降/巡视断言 + 三幕截图 + 收尾清场，均需先启动 app.py）。
+验证：`node tools/models-smoke.mjs`（10 模型资产冒烟：ready + 渲染像素 diff + 动画双帧 diff 噪声标定）与 `node tools/mission-smoke.mjs`（任务级端到端：探月任务进入（航天探索面板「🚀 探月任务」）→ 分离换模型/火焰/相机接管/时间轴隔离/转移/LOI/下降/巡视断言 + 三幕截图 + 收尾清场，均需先启动 app.py）。
 
 **已验证结论（2026-10-17）**：Cesium 1.146 原生 `Model` 完整支持 glTF 节点动画与 skinning 骨骼动画（CesiumMan 行走 animDiff=3.79，背景隔离后噪声=0）——火箭/探月器的 3D 动画角色无需引入 Three.js。
 
@@ -224,12 +225,53 @@ node tools/download-satellite-tiles.mjs --bbox -180,-85,180,85 --min-z 0 --max-z
 
 * * *
 
+## 历史时空（两套开源历史地图）
+
+侧栏「📜 历史时空」勾选启用后，一根年份轴同时驱动两套数据：
+
+| 数据集 | 上游 | 覆盖范围 | 资产 | 图层 |
+| --- | --- | --- | --- | --- |
+| 世界历史国界 | [aourednik/historical-basemaps](https://github.com/aourednik/historical-basemaps) | **54 个年份快照**，前 123000（直立人分布）→ 2010 | 11.1 MB / 54 个按年分片 | 半透明国界面 + 大国标签 + 2220 个历史城市点（按存续年代过滤） |
+| 中国历代疆域 | [DeanChensj/jiangshan-map](https://github.com/DeanChensj/jiangshan-map) | **17 朝代 / 181 个阶段**，前 403（三家分晋）→ 1948 | 2.7 MB（VLQ 惰性解码包） | 政权 / 高层政区 / 府州 / 历代城邑 / 长城·运河·丝路 / 历史事件点 |
+
+交互：
+
+-   **年份轴**：世界快照档位 + 中国阶段起点合并去重，共 **230 档**；`‹ ›` 逐档、滑块拖动、`▶ 播放` 自动推进（900 ms/档）。
+-   **重叠年份两套同屏**：如 1900 年同时显示世界列强版图与清帝国政区，1492 年显示 600 个世界政区 + 明代政区。
+-   **世界国界按 `SUBJECTO`（宗主国）着色**——同一殖民帝国的所有属地同色，`BORDERPRECISION` 越低填充越淡（示意边界）。
+-   **悬停**看归属（如「British Raj · 属 United Kingdom」），**点击面**飞到该政权；城邑点显示「古名（今名）· 都城 · 备注」。
+-   **分层开关**：政权 / 高层政区 / 府州 / 历代城邑 / 长城运河丝路 / 历史事件点 / 世界历史城市（府州与历史城市默认关，要素已多）。
+-   **标签分级**：政权名全球可见；城邑名拉近到 4000 km 视距内才出现；世界历史城市名需 2500 km 内——避免同屏数百个标签糊成一片。
+-   **面数上限**：精简 300 / 标准 600 / 全部。按面积降序保留主要政权，丢掉细碎碎片。
+
+### 数据资产与重建
+
+产物在 `public/data/history/`（**已入库**，共约 14 MB），由 `tools/history/` 下两个脚本从上游仓库构建：
+
+```powershell
+# 世界历史国界：71.2 MB 源 GeoJSON → 11.1 MB（RDP 简化 + 坐标 3 位小数 + 属性裁剪）
+./.venv/Scripts/python.exe tools/history/build-world-basemaps.py --src <historical-basemaps 根目录>
+# 无 --src 时自动 git clone 到 .cache/historical-basemaps
+
+# 中国历代疆域：只搬 2.7 MB 的 VLQ 惰性解码包，再生成年份→快照索引
+node tools/history/build-china-atlas.mjs --src <jiangshan-map 根目录>
+```
+
+⚠ **为什么不用 jiangshan-map 官方的 `export_geojson.js`**：那份脚本会把 181 个阶段展开成 **63 MB** GeoJSON；而上游 `atlas_snapshots.js` 是拓扑去重 + VLQ 编码的**惰性解码包**（访问 `shape.coordinates` 才展开单个面），只有 **1.67 MB**。本项目直接搬这个包，前端在切阶段时按需解码，资产体积差 37 倍。
+
+⚠ **`polygon.hierarchy` 不接受数组**：MultiPolygon 必须拆成多个 entity，否则 Cesium 读 `positions` 得到 `undefined` → `normalized result is not a number` → 整个场景 `Rendering has stopped`。`src/history-atlas.js` 的 `addPolygon()` 已按此拆，并对环做合法性清洗（< 4 顶点、非有限值、连续重复点全部剔除）。
+
+⚠ **政区默认不贴地形**：`polygon.clampToGround` 按 terrainProvider 的**真实**高程生成几何，而球体现在开着垂直夸张（默认 1.2×）——两者不一致，政区面会整体沉到夸张后的地形之下、肉眼完全看不到。想看贴地起伏，先把夸张调回 1× 再勾选「政区贴合地形」。
+
+* * *
+
 ## 项目结构
 
 ```
 Sphere/
 ├── src/
 │   ├── main.js                 ← 应用入口（Viewer / 极地补丁 / 底图 / 交互）
+│   ├── history-atlas.js        ← 历史时空：年份轴 + 两套历史地图的加载/渲染/拾取 + 侧栏面板
 │   ├── layer-renderer.js       ← 点/折线/多边形/标注四种 entity 渲染器
 │   ├── layers/
 │   │   ├── index.js            ← 图层注册表（30 个 import + LAYER_CATEGORIES 分类树）
@@ -256,10 +298,18 @@ Sphere/
 │   ├── emit_places.mjs               ← 山脉折线中点导出（被 download_terrain_tiles.py 调用）
 │   ├── validate_layers.mjs           ← 图层注册表完整性校验
 │   ├── add_provenance_headers.mjs    ← 图层源数据出处头注入
+│   ├── history/                      ← 历史时空数据管线
+│   │   ├── build-world-basemaps.py   ← 世界历史国界：源 GeoJSON → 简化分片（71 MB → 11 MB）
+│   │   └── build-china-atlas.mjs     ← 中国历代疆域：搬 VLQ 包 + 生成朝代/阶段/年份索引
 │   ├── make_mission_models.py        ← 生成探月任务 glTF 模型（长征五号 / 玉兔号，纯标准库）
 │   ├── models-smoke.mjs              ← glTF 模型加载+动画端到端冒烟（headless Edge + CDP）
 │   └── convert_lunar.py              ← 原始 TIF → lunar_dem.png / lunar_wac.jpg
 ├── public/
+│   ├── data/
+│   │   ├── osm/                 ← 离线 OSM 矢量（PMTiles 单文件，gitignore）
+│   │   └── history/             ← 历史时空资产（约 14 MB，已入库）
+│   │       ├── world/           ← 世界历史国界：index.json + w_<year>.json × 54 + places.json
+│   │       └── china/           ← 中国历代疆域：index.json + 4 个上游 js（VLQ 包 / 朝代 / 水文 / 词典）
 │   ├── vendor/
 │   │   ├── cesium/             ← npm run vendor 生成（Cesium 构建产物，不入库）
 │   │   └── cesium-navigation/  ← npm run vendor 生成（导航控件，不入库）
@@ -300,12 +350,25 @@ Sphere/
 
 ## License & Attribution
 
+**本项目自 2026-10-26 起以 [GPL-3.0](LICENSE) 发布**（因随仓库分发的 `public/data/history/` 历史地图数据来自 GPL-3.0 上游）。
+
+第三方组件：
+
 -   **CesiumJS**: Apache 2.0
 -   **Bing Maps Aerial**: © Microsoft（在线使用通过 Cesium ion）
 -   **Esri World Imagery**: © Esri（离线缓存仅限个人科普用途）
 -   **NASA Blue Marble**: Public Domain
 -   **Lunar DEM/WAC**: Planetary Data System（public domain 教育用途）
 -   **Terrarium elevation tiles**: Amazon Web Services Public Dataset（CC BY 4.0）
+
+历史时空数据（均经 `tools/history/` 脚本转换，保留原许可）：
+
+| 数据 | 上游 | 许可 | 备注 |
+| --- | --- | --- | --- |
+| 世界历史国界 | [aourednik/historical-basemaps](https://github.com/aourednik/historical-basemaps) | GPL-3.0 | 54 个年份快照；属性 `NAME / SUBJECTO / PARTOF / BORDERPRECISION` |
+| 中国历代疆域 | [DeanChensj/jiangshan-map](https://github.com/DeanChensj/jiangshan-map) | GPL-3.0 | 17 朝代 / 181 阶段；上游另有派生条款：府州级边界与战国疆域派生自 **CHGIS V6**（哈佛燕京学社 & 复旦大学）与 **Robert M. Hartwell** 数据集，**保留原始「学术、非商业使用」限制** |
+
+⚠ 两套历史边界均为**示意级近似**（schematic approximations），用于说明历史管辖范围，**不是现代测绘国界**；上游亦建议学术用途前与其他来源交叉核对。涉及 CHGIS 派生部分不得用于商业用途。
 
   
 

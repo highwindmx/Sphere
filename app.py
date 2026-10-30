@@ -10,6 +10,8 @@
 环境变量：
   SPHERE_CESIUM_ION_TOKEN  Cesium Ion Token（注入 index.html，勿写进仓库）
 """
+from collections import deque
+
 import base64
 import json
 import os
@@ -26,10 +28,26 @@ import urllib.request
 from collections import deque
 from datetime import datetime
 
-from flask import Flask, Response, abort, request, send_from_directory
+from flask import Flask, Response, abort, jsonify, request, send_file, send_from_directory
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ROOT, 'public')
+
+# ====== public/ 目录重组重映射（2026-10-30）======
+# 磁盘结构收敛为 data / models / vendor：tiles、lunar、patch 归入 data；osm-vt 归入 vendor/osm-vt。
+# 浏览器 URL（/tiles/、/lunar/、/patch/、/osm-vt/）保持不变（见 serve() 与 osm-vt 路由的磁盘解析），
+# 故前端 JS 无需改动。osm-vt 走独立路由，不在此映射内。
+_URL_DISK_MAP = (
+    ('tiles/', 'data/tiles/'),
+    ('lunar/', 'data/lunar/'),
+    ('patch/', 'data/patch/'),
+    ('osm-vt/', 'vendor/osm-vt/'),
+)
+def _disk_path(url_path):
+    for prefix, disk in _URL_DISK_MAP:
+        if url_path.startswith(prefix):
+            return disk + url_path[len(prefix):]
+    return url_path
 
 # 极简 .env 加载（KEY=VALUE 行；已存在的环境变量优先，不依赖 python-dotenv）
 _env_file = os.path.join(ROOT, '.env')
@@ -90,15 +108,18 @@ def serve(path):
         resp = send_from_directory(ROOT, path)
         resp.headers['Cache-Control'] = 'no-store'
         return resp
-    # public 静态资源（vendor/cesium/ tiles/ 影像…）
-    pub = os.path.join(PUBLIC, path)
+    # public 静态资源（vendor/cesium/ tiles/ 影像…）— URL 前缀重映射到新磁盘位置
+    pub = os.path.join(PUBLIC, _disk_path(path))
     if os.path.isfile(pub):
-        return send_from_directory(PUBLIC, path)
+        if path.startswith('tiles/'):
+            _tile_tick('local')
+        return send_from_directory(PUBLIC, _disk_path(path))
     # 本地瓦片缺失 → 统一代理缓存（本地优先、在线兜底、成功后回写本地）：
     # 任意在线源（esri/eox/gibs/tianditu）都走「本地有则直出、无则代理上游、
     # 成功后落盘逐步本地化」；上游不可达返回 1×1 透明 PNG（200），杜绝
     # Cesium 控制台 "Failed to obtain image tile" 报错。esri 沿用双主机兜底逻辑。
     if path.startswith('tiles/'):
+        _tile_tick('remote')
         return proxy_tile_cache(path)
     # 其余静态资源目录下的缺失文件直接 404（vendor/ = cesium 构建产物 + cesium-navigation）
     if path.startswith('vendor/'):
@@ -108,6 +129,116 @@ def serve(path):
         abort(404)
     # SPA fallback
     return render_index()
+
+
+@app.after_request
+def _cache_tiles(resp):
+    # 瓦片缓存到浏览器（2026-10-22 瓦片加速）：真实瓦片(>512B)长缓存，避免把 1×1 透明
+    # 失败 PNG 也缓存成「永久透明」。磁贴本就本地落盘，浏览器再缓存一层可省重复回源。
+    try:
+        if request.path.startswith('/tiles/') and resp.status_code == 200:
+            if len(resp.get_data()) > 512:
+                resp.headers['Cache-Control'] = 'public, max-age=86400, immutable'
+                resp.headers.pop('Pragma', None)
+                resp.headers.pop('Expires', None)
+    except Exception:
+        pass
+    return resp
+
+
+# ====== 瓦片来源统计（左上 #tileDot 用：本地 / 在线 / 回退）======
+# 滑动窗 5s，三类互斥：
+#   local    = public/tiles/ 已落盘，serve() 直接 send_from_directory 直出
+#   remote   = 本地缺失 → proxy_tile_cache 回源（拉到后落盘，下次即变 local）
+#   fallback = 上游不可达 → 1×1 透明 PNG。Cesium 收到 200 视为成功、队列照样
+#              清空，所以只盯 globe.tilesLoaded 会把「画面是空的」报成「已加载」
+_TILE_EVENTS = deque(maxlen=50000)
+_TILE_WINDOW = 5.0
+
+
+def _tile_tick(kind):
+    _TILE_EVENTS.append((time.time(), kind))
+
+
+# ---------- PMTiles 单文件（离线 OSM 矢量，MapLibre 经自定义协议 pmt:// 读取） ----------
+# 目录：public/data/osm/pmtiles/<城市>.pmtiles（tools/pbf-to-pmtiles.py 生成，含 height 真楼高）
+# 前端 PMTilesReader.open() 全量 fetch（本地服务，单文件 ≤30MB 可接受）；
+# 如需按需 Range 读取，在此路由解析 Range header 返回 206 + Content-Range。
+PMTILES_ROOT = os.path.join(PUBLIC, 'data', 'osm', 'pmtiles')
+
+
+# ---------- 在线 OSM 矢量瓦片代理缓存（与 tiles/ 体系一致，落盘 public/osm-vt/） ----------
+# 前端 MapLibre 通过自定义协议 osmvt:// 把 OpenFreeMap 的瓦片/glyphs/sprite 请求
+# 重定向到本路由，缺失则回源并落盘，下次即本地直出（与其他图层瓦片同样的本地化策略）。
+_OSMVT_HOSTS = ('tiles.openfreemap.org/', 'fonts.openfreemap.org/',
+                'openfreemap.org/', 'planet.openfreemap.org/')
+
+
+@app.route('/osm-vt/<path:rest>')
+def osm_vt_proxy(rest):
+    if not any(rest.startswith(h) for h in _OSMVT_HOSTS):
+        abort(403)                                          # SSRF：仅放行 openfreemap.org 子域
+    local_dir = os.path.join(PUBLIC, 'vendor', 'osm-vt')
+    local = os.path.join(local_dir, rest)
+    if os.path.isfile(local):
+        return send_file(local, mimetype=_vt_mime(rest))    # 已落盘 → 直出
+    data = _proxy_fetch_and_cache(os.path.join('osm-vt', rest),
+                                 'https://' + rest, _vt_mime(rest))
+    if data is None:
+        abort(502)
+    return Response(data, mimetype=_vt_mime(rest))
+
+
+def _vt_mime(rest):
+    if rest.endswith('.pbf'):
+        return 'application/x-protobuf'
+    if rest.endswith('.json'):
+        return 'application/json'
+    if rest.endswith('.png'):
+        return 'image/png'
+    if rest.endswith('.jpg') or rest.endswith('.jpeg'):
+        return 'image/jpeg'
+    return 'application/octet-stream'
+
+
+@app.route('/pmtiles/<path:name>')
+def pmtiles_file(name):
+    if not name.endswith('.pmtiles') or '..' in name or name.startswith('/'):
+        abort(404)
+    raw = os.path.join(PMTILES_ROOT, name)
+    if not os.path.isfile(raw):
+        abort(404)
+    resp = send_from_directory(PMTILES_ROOT, name)
+    resp.headers['Cache-Control'] = 'public, max-age=86400, immutable'
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+
+@app.route('/api/tile-health')
+def api_tile_health():
+    """最近 5s 瓦片来源计数。前端据此把「绿点」细分为完成 / 部分为空 / 上游不可达。"""
+    now = time.time()
+    cut = now - _TILE_WINDOW
+    while _TILE_EVENTS and _TILE_EVENTS[0][0] < cut:
+        _TILE_EVENTS.popleft()
+    local = remote = fallback = 0
+    for _ts, kind in _TILE_EVENTS:
+        if kind == 'local':
+            local += 1
+        elif kind == 'remote':
+            remote += 1
+        else:
+            fallback += 1
+    total = local + remote + fallback
+    return jsonify({
+        'window': _TILE_WINDOW,
+        'local': local,
+        'remote': remote,
+        'fallback': fallback,
+        'total': total,
+        'unreachable': bool(total and fallback == total),  # 全回退 = 源挂了，不是慢
+        'degraded': bool(fallback and fallback < total),    # 零星回退 = 画面有空洞
+    })
 
 
 # 1×1 透明 PNG（上游不可达时返回，避免瓦片请求报错）
@@ -140,7 +271,7 @@ def proxy_esri_tile(path):
                 data = resp.read()
             # 回写本地：把看过的区域逐步本地化（后续直接走本地、无需联网）
             try:
-                local = os.path.join(PUBLIC, path)
+                local = os.path.join(PUBLIC, _disk_path(path))
                 os.makedirs(os.path.dirname(local), exist_ok=True)
                 with open(local, 'wb') as fh:
                     fh.write(data)
@@ -205,6 +336,7 @@ def _fetch_bytes(url, timeout=20, extra_headers=None):
 
 
 def _transparent_response():
+    _tile_tick('fallback')
     return Response(_TRANSPARENT_PNG, mimetype='image/png')
 
 
@@ -216,7 +348,7 @@ def _proxy_fetch_and_cache(path, url, mimetype):
         _log_proxy_fail(path, e)
         return None
     try:
-        local = os.path.join(PUBLIC, path)
+        local = os.path.join(PUBLIC, _disk_path(path))
         os.makedirs(os.path.dirname(local), exist_ok=True)
         with open(local, 'wb') as fh:
             fh.write(data)
@@ -250,6 +382,8 @@ def proxy_tile_cache(path):
         return proxy_marshill_tile(path)
     if source == 'ocean':
         return proxy_ocean_tile(path)
+    if source == 'osm':
+        return proxy_osm_tile(path)
     abort(404)
 
 
@@ -313,7 +447,7 @@ def proxy_tianditu_tile(path):
         _log_proxy_fail(path, e)
         abort(404)
     try:
-        local = os.path.join(PUBLIC, path)
+        local = os.path.join(PUBLIC, _disk_path(path))
         os.makedirs(os.path.dirname(local), exist_ok=True)
         with open(local, 'wb') as fh:
             fh.write(data)
@@ -321,6 +455,48 @@ def proxy_tianditu_tile(path):
     except OSError:
         pass  # 磁盘写入失败不致命：本次仍返回上游数据，仅不本地化
     return Response(data, mimetype='image/jpeg')
+
+
+# OpenStreetMap 标准瓦片（z/x/y 顺序，PNG；参考用途，不用于中国区权威底图）
+# ⚠ OSM 瓦片使用政策：需带可识别的 User-Agent + 限频（≤1 req/s）。本代理统一加 UA；
+#   前端地名查询走 Nominatim 同样限频。仅作境外/参考底图，中国区请改用天地图（见 imagery-sources.js）。
+_OSM_TILE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+
+
+def proxy_osm_tile(path):
+    # tiles/osm/{z}/{x}/{y}.png
+    parts = path.split('/')
+    if len(parts) != 5 or not parts[4].endswith('.png'):
+        abort(404)
+    z, x, y = parts[2], parts[3], parts[4][:-4]
+    # OSM 上游对裸服务端 UA 限流/拒绝：必须用「应用名 + 联系方式」的 UA，并带 Referer。
+    # ⚠ 超时 10s（而非通用 20s）：上游被阻断时连接会挂满超时，缩短它让失败更快浮现
+    #   （前端探测 8s 即判不可达 + 黄点闪烁窗口同步缩短；OSM 瓦片仅数 KB~数十 KB，
+    #   正常网络 10s 足够，不存在误杀）。
+    try:
+        req = urllib.request.Request(_OSM_TILE.format(z=z, x=x, y=y), headers={
+            'User-Agent': 'Sphere/1.0 (https://github.com/highwindmx/sphere; demo)',
+            'Referer': 'http://127.0.0.1:5008/',
+            'Accept': 'image/png',
+        })
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status != 200:
+                _log_proxy_fail(path, Exception(f'OSM upstream HTTP {resp.status}'))
+                return _transparent_response()
+            data = resp.read()
+    except Exception as e:
+        _log_proxy_fail(path, e)
+        return _transparent_response()
+    # 回写本地（逐步本地化，后续直出）；OSM 瓦片按 mimetype 落盘
+    local = os.path.join(PUBLIC, _disk_path(path))
+    try:
+        os.makedirs(os.path.dirname(local), exist_ok=True)
+        with open(local, 'wb') as fh:
+            fh.write(data)
+        _scan_invalidate()
+    except OSError:
+        pass
+    return Response(data, mimetype='image/png')
 
 
 # AWS Terrain Tiles（Terrarium 编码高程；全球公共数据集，单一源，z/x/y 顺序）
@@ -393,7 +569,7 @@ def proxy_lunar_tile(path):
         _log_proxy_fail(path, ValueError('non-jpeg response'))
         return _transparent_response()
     try:
-        local = os.path.join(PUBLIC, path)
+        local = os.path.join(PUBLIC, _disk_path(path))
         os.makedirs(os.path.dirname(local), exist_ok=True)
         with open(local, 'wb') as fh:
             fh.write(data)
@@ -447,7 +623,7 @@ def _proxy_astro_tile(path, upstream):
         _log_proxy_fail(path, ValueError('non-jpeg response'))
         return _transparent_response()
     try:
-        local = os.path.join(PUBLIC, path)
+        local = os.path.join(PUBLIC, _disk_path(path))
         os.makedirs(os.path.dirname(local), exist_ok=True)
         with open(local, 'wb') as fh:
             fh.write(data)
@@ -507,7 +683,7 @@ def proxy_ocean_tile(path):
         _log_proxy_fail(path, ValueError('non-jpeg response'))
         return _transparent_response()
     try:
-        local = os.path.join(PUBLIC, path)
+        local = os.path.join(PUBLIC, _disk_path(path))
         os.makedirs(os.path.dirname(local), exist_ok=True)
         with open(local, 'wb') as fh:
             fh.write(data)
@@ -545,9 +721,9 @@ def _py_exe():
 # 月球源数据（public/lunar/ 下的 NASA/USGS 原始文件，转换脚本的输入）
 _LUNAR_SOURCES = {
     'lunar-image': os.path.join(
-        PUBLIC, 'lunar', 'Lunar_LRO_LROC-WAC_Mosaic_global_100m_June2013.tif'),
+        PUBLIC, 'data', 'lunar', 'Lunar_LRO_LROC-WAC_Mosaic_global_100m_June2013.tif'),
     'lunar-dem': os.path.join(
-        PUBLIC, 'lunar', 'Lunar_LRO_LOLA_Global_LDEM_118m_Mar2014.tif'),
+        PUBLIC, 'data', 'lunar', 'Lunar_LRO_LOLA_Global_LDEM_118m_Mar2014.tif'),
 }
 
 # 并发下载进程池（用户定版：影像与高程可各跑各的，互不干扰）
@@ -933,15 +1109,15 @@ def downloader_scan():
         if os.path.isfile(fp):
             lunar[name] = os.path.getsize(fp)
     result = {
-        'esri': scan_dir(os.path.join(PUBLIC, 'tiles', 'esri'), '.jpg'),
-        'eox': scan_dir(os.path.join(PUBLIC, 'tiles', 'eox'), '.jpg'),
-        'gibs': scan_dir(os.path.join(PUBLIC, 'tiles', 'gibs'), '.jpeg'),
-        'tianditu': scan_dir(os.path.join(PUBLIC, 'tiles', 'tianditu'), '.jpg'),
-        'terrain': scan_dir(os.path.join(PUBLIC, 'tiles', 'terrain'), '.png'),
+        'esri': scan_dir(os.path.join(PUBLIC, 'data', 'tiles', 'esri'), '.jpg'),
+        'eox': scan_dir(os.path.join(PUBLIC, 'data', 'tiles', 'eox'), '.jpg'),
+        'gibs': scan_dir(os.path.join(PUBLIC, 'data', 'tiles', 'gibs'), '.jpeg'),
+        'tianditu': scan_dir(os.path.join(PUBLIC, 'data', 'tiles', 'tianditu'), '.jpg'),
+        'terrain': scan_dir(os.path.join(PUBLIC, 'data', 'tiles', 'terrain'), '.png'),
         'lunar': lunar,
-        'lunarTiles': scan_dir(os.path.join(PUBLIC, 'tiles', 'lunar'), '.jpg'),
-        'mars': scan_dir(os.path.join(PUBLIC, 'tiles', 'mars'), '.jpg'),
-        'marshill': scan_dir(os.path.join(PUBLIC, 'tiles', 'marshill'), '.jpg'),
+        'lunarTiles': scan_dir(os.path.join(PUBLIC, 'data', 'tiles', 'lunar'), '.jpg'),
+        'mars': scan_dir(os.path.join(PUBLIC, 'data', 'tiles', 'mars'), '.jpg'),
+        'marshill': scan_dir(os.path.join(PUBLIC, 'data', 'tiles', 'marshill'), '.jpg'),
         'lunarAssets': lunar,
         'lunarSources': {k: os.path.isfile(v) for k, v in _LUNAR_SOURCES.items()},
     }

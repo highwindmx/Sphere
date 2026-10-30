@@ -53,6 +53,33 @@ export const MOON_ICON = svg(
   '<circle cx="10.6" cy="15.6" r="1.1" fill="#9ba1ad"/>'
 );
 
+// 鹊桥中继星（2026-10-24）：星体 + 伞状高增益天线 + 金色太阳能翼
+export const RELAY_ICON = svg(
+  '<ellipse cx="12" cy="9.2" rx="7.0" ry="4.4" fill="#e6e9f2" stroke="#8b98b8" stroke-width="0.7"/>' +
+  '<circle cx="12" cy="9.2" r="1.5" fill="#9aa4bd"/>' +
+  '<rect x="10.6" y="11.2" width="2.8" height="5.2" rx="0.7" fill="#dfe4f0" stroke="#8b98b8" stroke-width="0.6"/>' +
+  '<path d="M3.0 17.6h5.4v2.2H3.0zM15.6 17.6h5.4v2.2h-5.4z" fill="#c9a34e"/>'
+);
+
+// 玉兔号月球车（2026-10-24 修「焦点按钮图标不显示」）：六轮车体 + 金色太阳能阵 + 桅杆相机
+export const ROVER_ICON = svg(
+  '<rect x="7.4" y="10" width="9.2" height="4.4" rx="1" fill="#e7ecf7" stroke="#8b98b8" stroke-width="0.6"/>' +
+  '<rect x="8.4" y="7.0" width="7.2" height="2.7" rx="0.5" fill="#c9a34e"/>' +
+  '<rect x="11.5" y="4.4" width="1.5" height="3" rx="0.4" fill="#9aa4bd"/>' +
+  '<rect x="10.6" y="3.0" width="3.0" height="1.9" rx="0.4" fill="#6b7a9e"/>' +
+  '<circle cx="9" cy="15.4" r="2.1" fill="#3a4256"/>' +
+  '<circle cx="12" cy="15.4" r="2.1" fill="#3a4256"/>' +
+  '<circle cx="15" cy="15.4" r="2.1" fill="#3a4256"/>'
+);
+
+// 地球（焦点按钮用，与月背中继取景同源）
+export const EARTH_ICON = svg(
+  '<circle cx="12" cy="12" r="8.6" fill="#4a90d9"/>' +
+  '<path d="M6 9.4c2.5-1 4.6 0.5 7 0.2s4 1.7 4.6 3.4c-2 .4-4-0.6-6 .2s-3.7 1.8-5.6 1.2z" fill="#5cb85c"/>' +
+  '<circle cx="9" cy="8.8" r="1.4" fill="#5cb85c"/>' +
+  '<circle cx="14.6" cy="15" r="1.9" fill="#5cb85c"/>'
+);
+
 export default {
   FULL_ROCKET_ICON,
   STAGE1_ICON,
@@ -60,4 +87,7 @@ export default {
   FAIRING_LEFT_ICON,
   FAIRING_RIGHT_ICON,
   MOON_ICON,
+  RELAY_ICON,
+  ROVER_ICON,
+  EARTH_ICON,
 };

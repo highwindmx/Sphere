@@ -1,0 +1,199 @@
+{
+ "大堡礁": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_澳大利亚_大堡礁.pmtiles",
+  "resumed": true,
+  "bbox": [
+   146.88,
+   -18.42,
+   147.12,
+   -18.18
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 8634,
+  "pbf": "australia-oceania"
+ },
+ "博特尼湾": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_澳大利亚_博特尼湾.pmtiles",
+  "resumed": true,
+  "bbox": [
+   151.07999999999998,
+   -34.12,
+   151.32,
+   -33.88
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 5582036,
+  "pbf": "australia-oceania"
+ },
+ "新西兰": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_新西兰_新西兰.pmtiles",
+  "resumed": true,
+  "bbox": [
+   174.88,
+   -41.12,
+   175.12,
+   -40.88
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2078485,
+  "pbf": "australia-oceania"
+ },
+ "珀斯": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_澳大利亚_珀斯.pmtiles",
+  "tiles": 2585,
+  "bytes": 18929540,
+  "bbox": [
+   115.62,
+   -32.19,
+   116.1,
+   -31.71
+  ],
+  "center": [
+   115.86,
+   -31.95
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "australia-oceania"
+ },
+ "阿德莱德": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_澳大利亚_阿德莱德.pmtiles",
+  "tiles": 2510,
+  "bytes": 15154915,
+  "bbox": [
+   138.35999999999999,
+   -35.17,
+   138.84,
+   -34.69
+  ],
+  "center": [
+   138.6,
+   -34.93
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "australia-oceania"
+ },
+ "堪培拉": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_澳大利亚_堪培拉.pmtiles",
+  "tiles": 10243,
+  "bytes": 14052397,
+  "bbox": [
+   148.63,
+   -35.78,
+   149.63,
+   -34.78
+  ],
+  "center": [
+   149.13,
+   -35.28
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "australia-oceania"
+ },
+ "墨尔本": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_澳大利亚_墨尔本.pmtiles",
+  "tiles": 11623,
+  "bytes": 57410907,
+  "bbox": [
+   144.46,
+   -38.31,
+   145.46,
+   -37.31
+  ],
+  "center": [
+   144.96,
+   -37.81
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "australia-oceania"
+ },
+ "悉尼": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_澳大利亚_悉尼.pmtiles",
+  "tiles": 7381,
+  "bytes": 36471422,
+  "bbox": [
+   150.71,
+   -34.37,
+   151.71,
+   -33.37
+  ],
+  "center": [
+   151.21,
+   -33.87
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "australia-oceania"
+ },
+ "布里斯班": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_澳大利亚_布里斯班.pmtiles",
+  "tiles": 2729,
+  "bytes": 19486492,
+  "bbox": [
+   152.79,
+   -27.709999999999997,
+   153.27,
+   -27.23
+  ],
+  "center": [
+   153.03,
+   -27.47
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "australia-oceania"
+ },
+ "奥克兰": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_新西兰_奥克兰.pmtiles",
+  "tiles": 2675,
+  "bytes": 29729302,
+  "bbox": [
+   174.51999999999998,
+   -37.09,
+   175.0,
+   -36.61
+  ],
+  "center": [
+   174.76,
+   -36.85
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "australia-oceania"
+ },
+ "惠灵顿": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_新西兰_惠灵顿.pmtiles",
+  "tiles": 4247,
+  "bytes": 13019479,
+  "bbox": [
+   174.28,
+   -41.79,
+   175.28,
+   -40.79
+  ],
+  "center": [
+   174.78,
+   -41.29
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "australia-oceania"
+ }
+}

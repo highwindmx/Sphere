@@ -1,0 +1,99 @@
+{
+ "雅典": {
+  "ok": true,
+  "file": "pmtiles/欧洲_希腊_雅典.pmtiles",
+  "resumed": true,
+  "bbox": [
+   23.23,
+   37.48,
+   24.23,
+   38.48
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 29238726,
+  "pbf": "greece"
+ },
+ "塞萨洛尼基": {
+  "ok": true,
+  "file": "pmtiles/欧洲_希腊_塞萨洛尼基.pmtiles",
+  "resumed": true,
+  "bbox": [
+   22.700000000000003,
+   40.4,
+   23.18,
+   40.88
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 9411313,
+  "pbf": "greece"
+ },
+ "宙斯巨像": {
+  "ok": true,
+  "file": "pmtiles/欧洲_希腊_宙斯巨像.pmtiles",
+  "resumed": true,
+  "bbox": [
+   21.48,
+   37.480000000000004,
+   21.720000000000002,
+   37.72
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2150988,
+  "pbf": "greece"
+ },
+ "罗德岛太阳神巨像": {
+  "ok": true,
+  "file": "pmtiles/欧洲_希腊_罗德岛太阳神巨像.pmtiles",
+  "resumed": true,
+  "bbox": [
+   28.08,
+   36.28,
+   28.32,
+   36.519999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1191483,
+  "pbf": "greece"
+ },
+ "爱琴文明（克诺索斯）": {
+  "ok": true,
+  "file": "pmtiles/欧洲_希腊_爱琴文明_克诺索斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   24.98,
+   35.18,
+   25.220000000000002,
+   35.419999999999995
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2090860,
+  "pbf": "greece"
+ },
+ "都拉基乌姆（都拉斯）": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   19.68,
+   41.18,
+   19.92,
+   41.419999999999995
+  ],
+  "pbf": "greece"
+ },
+ "拜占庭（君士坦丁堡）": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   28.88,
+   40.88,
+   29.12,
+   41.12
+  ],
+  "pbf": "greece"
+ }
+}

@@ -26,7 +26,7 @@
 //   3. 解码 Mapbox Terrarium 编码：height(m) = R*256 + G + B/256 - 32768
 //
 // 瓦片位于 tiles/terrain/{z}/{x}/{y}.png，数据源 AWS elevation-tiles-prod（Terrarium）。
-// 下载范围（与 tools/download_terrain_tiles.py 完全对齐）：
+// 下载范围（与 tools/build/download_terrain_tiles.py 完全对齐）：
 //   z0-z5 全球 + z6-z9 中国 bbox[60,0,150,60] + z10-z12 山脉折线中点 ±3° 矩形。
 
 import * as Cesium from 'cesium';
@@ -244,13 +244,31 @@ async function loadHeightsGeographic(x, y, level) {
 }
 
 export function createLocalTerrainProvider() {
-  return new Cesium.CustomHeightmapTerrainProvider({
+  const tp = new Cesium.CustomHeightmapTerrainProvider({
     width: SIZE,
     height: SIZE,
     tilingScheme: geoScheme, // 对外地理方案：globe 全极区几何（见文件头根因）
     callback: (x, y, level) =>
       tileAvailable(x, y, level) ? loadHeightsGeographic(x, y, level) : undefined,
   });
+
+  // ⭐⭐ 必须补这两个契约方法（2026-10-25 用户实测「放大到 100m 灯永远是黄的」根因）：
+  //   CustomHeightmapTerrainProvider 的这两个方法在 Cesium 里是**空函数**，返回 undefined。
+  //   而 Cesium 的判定是：
+  //     r = terrainProvider.getTileDataAvailable(x, y, level)
+  //     r === false  → tile.terrainState = FAILED  → 用父级地形上采样，不阻塞
+  //     r === undefined → 「不知道有没有」→ 照常发请求 → 我们的 callback 也返回 undefined
+  //                      → tile 卡在 LOADING → globe.tilesLoaded 永远 false → 灯永远转黄圈
+  //   实测（archive/quarantine-tools/probes/tile-stuck-probe.mjs）：120.67,27.68 @100m 时 pending 恒定 1、HTTP 已无新请求；
+  //   换 EllipsoidTerrainProvider 立刻 tilesLoaded=true / state=max。
+  //   ⚠ 只补 getTileDataAvailable，**不要设 maximumLevel**：Cesium 的 quadtree 细分上限一旦被
+  //   地形拉到 z12，影像（Esri maxLevel=14）也跟着停在 z12 变糊；而 getTileDataAvailable=false
+  //   只是「地形用父级上采样」，quadtree 仍可继续细分（源码判据 !== void 0）。
+  Object.defineProperties(tp, {
+    getTileDataAvailable: { value: (x, y, level) => tileAvailable(x, y, level), configurable: true },
+    loadTileDataAvailability: { value: (x, y, level) => Promise.resolve(tileAvailable(x, y, level)), configurable: true },
+  });
+  return tp;
 }
 
 /**

@@ -7,6 +7,119 @@
   <link rel="stylesheet" href="/vendor/cesium/Widgets/widgets.css" />
   <link rel="stylesheet" href="/vendor/cesium-navigation/styles/cesium-navigation.css" />
   <link rel="stylesheet" href="/src/style.css?v=__BUILD__" />
+  <!-- MapLibre GL JS：OSM 矢量场景的成熟渲染器（绕开 Cesium MVTDataProvider 着色器崩溃）。
+       经典脚本在 head 同步加载，保证 maplibregl 全局在 main.js 模块执行前就绪。 -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <!-- PMTiles v3 零依赖读取器（自写，与 tools/pbf-to-pmtiles.py 格式对齐；经典脚本挂全局 PMTilesReader） -->
+  <script src="/vendor/pmtiles-reader.js"></script>
+  <!-- 历史朝代元数据（DYNASTY_DATA）：提前加载供统一检索栏索引朝代/里程碑；
+       历史面板启用时会跳过重复加载（ensureChina 已判断 window.DYNASTY_DATA）。几何包仍懒加载。 -->
+  <script defer src="/data/history/china/map_data.js"></script>
+  <style>
+    /* 独立 OSM 矢量场景容器：全屏覆盖在球体之上、但在侧栏/状态条之下 */
+    #osmMap { position: absolute; inset: 0; z-index: 5; background: #eef3f5; }
+    /* OSM 场景全屏时侧栏必须浮在地图之上（#osmMap 是定位元素，静态 #panel 会被盖住） */
+    /* 2026-10-29：侧栏改为浮在球面上的自适应高度面板——内容少时只有 ~380px 高，
+       左下方直接露出地球（#cesiumContainer 因此铺满全宽）。 */
+    #panel { position: absolute; left: 0; top: 0; z-index: 20; }
+    #osmMap.hidden { display: none !important; }
+    #osmMap .maplibregl-ctrl-attrib { font-size: 10px; }
+    /* OSM 场景内「数据来源」切换控件（在线 / 离线） */
+    .osm-mode-ctl {
+      position: absolute; top: 12px; left: 322px; right: auto; z-index: 6;
+      background: rgba(255,255,255,0.92); border: 1px solid #cfd8dc;
+      border-radius: 8px; padding: 6px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      font: 12px/1.3 system-ui, sans-serif; color: #213;
+    }
+    .osm-mode-title { font-weight: 600; margin-bottom: 4px; }
+    .osm-mode-row { display: flex; gap: 6px; }
+    .osm-mode-btn {
+      border: 1px solid #b0bec5; background: #fff; color: #37474f;
+      border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit;
+    }
+    .osm-mode-btn.active { background: #1976d2; border-color: #1976d2; color: #fff; }
+    .osm-mode-btn:hover { border-color: #1976d2; }
+    /* 「立体视角」独占一行（来源按钮只有两个，同一行放不下第三个） */
+    .osm-mode-ctl > .osm-mode-btn { margin-top: 5px; width: 100%; }
+    /* 接缝诊断（叠加瓦片边界 + 屏上统计），排查「地图被水平切开」用 */
+    .osm-mode-btn.osm-diag-btn { font-size: 11px; color: #546e7a; }
+    .osm-mode-btn.osm-diag-btn.active { background: #ef6c00; border-color: #ef6c00; color: #fff; }
+    .osm-diag-badge {
+      margin-top: 5px; max-width: 268px; word-break: break-all;
+      font: 10px/1.35 ui-monospace, Consolas, monospace;
+      color: #37474f; background: #fff8e1; border: 1px solid #ffcc80;
+      border-radius: 5px; padding: 3px 5px;
+    }
+    .osm-diag-badge.hidden { display: none; }
+    /* 球体右上角浮动区：位于 cesium-navigation 控件（指南针/缩放）下方，避免遮挡。
+       仅地球容器挂载；OSM 场景激活时整体隐藏（让位 MapLibre 控件）。
+       2026-10-25：删「⬇ 回顶视」钮（cesium-navigation 双击指南针即原地回顶视，
+       handleDoubleClick → flyToBoundingSphere 保距 pitch 归 -90°，功能重复）；
+       仅保留离线矢量提示卡。 */
+    .globe-overlay {
+      position: absolute; top: 112px; right: 12px; z-index: 8;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+      pointer-events: none;              /* 容器穿透，子元素单独命中 */
+    }
+    .globe-overlay.hidden { display: none; }
+    .globe-overlay > * { pointer-events: auto; }
+    /* 地表OSM 贴邻钮：与 cesium-navigation 缩放列同列正对（2026-10-25 实测校正）
+       导航容器 right:16 top:64；缩放列容器内 right:32 top:104 → 屏幕 right:48 top:168、30×88（底 256）；
+       比例尺激活时占 top 270-300 → 钮 top:304 right:48 与缩放列 x 1332-1362 完全同列。 */
+    .osm-nav-btn {
+      position: absolute; top: 304px; right: 48px; z-index: 7;
+      width: 28px; height: 28px; box-sizing: content-box;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(47,53,60,.8); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 4px; cursor: pointer; user-select: none;
+      box-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+    .osm-nav-btn:hover { border-color: rgba(255,255,255,.3); }
+    .osm-nav-btn:hover .osm-nav-icon { color: #68ADFE; }
+    .osm-nav-icon { font-size: 15px; line-height: 1; color: rgba(255,255,255,.85); }
+    .osm-nav-btn.hidden { display: none; }
+    /* 2026-10-29 第五轮：侧栏 🗺 OSM 钮判定冗余已删除，右侧这一颗成为**唯一**进出 OSM 场景的入口。
+       故它不再随球体容器一起隐藏（现已挂 #app），而是在 OSM 场景内切成「🌐 返回球体」激活态。 */
+    .osm-nav-btn.active { background: rgba(47,83,143,.92); border-color: #79a5ff; }
+    .osm-nav-btn.active:hover .osm-nav-icon { color: #fff; }
+    /* 右侧导航列「场景三钮」：2026-10-30 改为 position:fixed 锚定视口右缘，
+       与 cesium-navigation 原生导航（同为视口 fixed）永远同列，不再受页面变宽时
+       容器宽度未跟随的影响。top:342 接在缩放/比例尺之下。 */
+    .scene-nav-col {
+      position: fixed; top: 342px; right: 12px; z-index: 12;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .scene-nav-col.hidden { display: none; }
+    .scene-nav-col .tool-btn {
+      position: relative; flex: 0 0 auto; width: 30px; height: 28px; box-sizing: border-box;
+      margin: 0; padding: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; line-height: 1;
+      background: rgba(47,53,60,.8); border: 1px solid rgba(255,255,255,.1); border-radius: 4px;
+      color: rgba(255,255,255,.85); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.35);
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .scene-nav-col .tool-btn:hover { border-color: rgba(255,255,255,.35); color: #68ADFE; }
+    .scene-nav-col .tool-btn.active { background: rgba(47,83,143,.92); border-color: #ffc857; color: #fff; }
+    /* 地形夸张倍率：30px 见方塞不下正文，压成右下角标 */
+    .nav-mini-val { position: absolute; right: 2px; bottom: 1px; font-size: 8px; line-height: 1; color: #ffd98a; font-variant-numeric: tabular-nums; }
+    /* 距离指示条（「10 km」比例尺）：2026-10-29 第五轮用户要求放到右侧控件列**最顶端**（罗盘之上）。
+       插件把它绝对定位在 top:206px（相对罗盘容器 → 屏幕 y≈270，夹在缩放钮与 🗺 之间）；
+       用负 top 提到罗盘上方。插件只改内部 .distance-legend-scale-bar 的 width/left，不碰 legend 的 top。 */
+    .distance-legend { top: -50px !important; }
+    /* OSM 按钮：当前视角有本地离线覆盖时高亮 + 脉冲（由 osm-map-scene.js 切换 .osm-available） */
+    .osm-nav-btn.osm-available {
+      background: rgba(38,170,124,.92); border-color: #5fe0a8;
+      animation: osmPulse 1.4s ease-in-out infinite;
+    }
+    .osm-nav-btn.osm-available .osm-nav-icon { color: #fff; }
+    /* 侧栏 #btnOsmScene 已于 2026-10-29 第五轮删除（与右侧导航列贴邻钮重复），
+       「本地离线覆盖可用」高亮仍作用于右侧那颗 .osm-nav-btn。 */
+    @keyframes osmPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(95,224,168,.55); }
+      50%      { box-shadow: 0 0 0 7px rgba(95,224,168,0); }
+    }
+  </style>
   <script>
     // Cesium 静态资源根（public/vendor/cesium/，构建产物直拷，无打包；
     // cesium 与 cesium-navigation 同放 vendor/ 下统一管理）
@@ -24,6 +137,56 @@
       }
     }
   </script>
+
+  <!-- 统一检索栏 + 历史巡礼节点卡 样式（深色主题：与 #panel 的 #111a33→#0c1226 渐变一致） -->
+  <style>
+    /* 检索栏（2026-10-29 第二轮）：从 sticky 头下移到「📌 显示图层」正上方，负 margin 通栏； */
+    .search-bar { position: relative; margin: 0 -18px 10px; padding: 0 18px 10px; border-bottom: 1px solid #233055; }
+    .search-input-wrap { position: relative; display: flex; align-items: center; }
+    .search-icon { position: absolute; left: 9px; font-size: 12px; color: #7b88a8; pointer-events: none; }
+    .unified-search { width: 100%; box-sizing: border-box; padding: 7px 9px 7px 27px; border: 1px solid #2c3b63; border-radius: 7px; font-size: 13px; background: #0b1226; color: #e7ecf7; outline: none; transition: border-color .15s, box-shadow .15s; }
+    .unified-search::placeholder { color: #6b7899; }
+    .unified-search:focus { border-color: #4a90d9; background: #0e1a35; box-shadow: 0 0 0 3px rgba(74,144,217,.18); }
+    /* 位置由 JS 算（fixed）：侧栏是自适应高度的浮层卡片，absolute 会被 #panel 的 overflow 裁掉 */
+    .search-results { position: fixed; z-index: 60; background: #131e3a; border: 1px solid #2c3b63; border-radius: 9px; box-shadow: 0 10px 28px rgba(0,0,0,.55); overflow-y: auto; padding: 4px 0; box-sizing: border-box; }
+    .search-results.hidden { display: none; }
+    .sr-group { padding: 2px 0; }
+    .sr-group-title { font-size: 11px; color: #8494b4; padding: 6px 12px 3px; letter-spacing: .04em; }
+    .sr-item { display: flex !important; align-items: center; justify-content: space-between; gap: 8px; width: 100% !important; margin: 0 !important; padding: 8px 12px; border: none; border-bottom: 1px solid rgba(255,255,255,.055); background: none; cursor: pointer; text-align: left; box-sizing: border-box; }
+    .sr-item:last-child { border-bottom: none; }
+    .sr-item:hover, .sr-item:focus-visible { background: #1b2848; outline: none; }
+    .sr-label { font-size: 13px; color: #e7ecf7; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sr-hint { font-size: 11px; color: #8494b4; flex: 0 0 auto; }
+    .sr-hint.on { color: #7fd6a8; }
+    /* 2026-10-29：地点落在球背面时的提示（点了会自动把球转过去） */
+    .sr-hint.back { color: #9fb4ff; }
+    /* 右侧动作区：定位 + 外链胶囊横向排列，胶囊紧贴定位右侧 */
+    .sr-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+    /* ⭐ 2026-10-30：线上漫游外链改成胶囊形（pill），与「定位」明确分开 */
+    .sr-link { display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px; border: 1px solid #3a6fb0; border-radius: 999px; background: rgba(74,144,217,.14); color: #8fc2ff; font-size: 11px; line-height: 1.5; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
+    .sr-link:hover { background: rgba(74,144,217,.30); border-color: #5b8fd0; color: #cfe6ff; }
+    .sr-empty, .sr-foot { padding: 10px 12px; font-size: 11px; color: #6b7899; text-align: center; }
+    .sr-foot { border-top: 1px solid rgba(255,255,255,.06); }
+    .search-clear { position: absolute; right: 6px; width: auto !important; margin: 0 !important; padding: 2px 6px !important; font-size: 12px !important; line-height: 1.4 !important; border: none !important; background: none !important; color: #7b88a8 !important; cursor: pointer; }
+    .search-clear:hover { color: #e7ecf7 !important; }
+    .search-clear.hidden { display: none; }
+    /* 📌 显示图层列表：检索结果的落地处（行可点切显隐、✕ 移除、灰=已关闭但仍在列表里可点回） */
+    .shown-layers { display: flex; flex-direction: column; gap: 4px; }
+    .sl-empty { font-size: 11px; color: #6b7899; line-height: 1.5; padding: 4px 2px; }
+    .sl-row { display: flex; align-items: center; gap: 7px; padding: 5px 7px; border: 1px solid #2c3b63; border-radius: 7px; background: #16223f; cursor: pointer; transition: background .15s, opacity .15s; }
+    .sl-row:hover { background: #1e2d51; }
+    .sl-row:not(.on) { opacity: .45; border-style: dashed; }
+    .sl-ico { flex: 0 0 auto; font-size: 12px; }
+    .sl-name { flex: 1 1 auto; min-width: 0; font-size: 12px; color: #e7ecf7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sl-x { flex: 0 0 auto; width: auto !important; margin: 0 !important; padding: 0 2px !important; font-size: 11px !important; line-height: 1 !important; border: none !important; background: none !important; color: #7b88a8 !important; cursor: pointer; }
+    .sl-x:hover { color: #ff8f8f !important; }
+    /* 历史巡礼节点卡（复用 route-tour 幕卡视觉语言，但驱动年份而非相机） */
+    .hist-card { margin: 8px 0 2px; padding: 8px 10px; background: rgba(30,42,72,.95); color: #e7ecf7; border: 1px solid #2c3b63; border-radius: 8px; font-size: 12px; line-height: 1.5; }
+    .hist-card.hidden { display: none; }
+    .hist-card .hc-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; color: #fff; }
+    .hist-card .hc-phase { color: #b9c9e6; }
+    .hist-card .hc-ms { margin-top: 4px; color: #ffd98a; border-top: 1px solid rgba(255,255,255,.13); padding-top: 4px; }
+  </style>
 </head>
 <body>
   <div id="app">
@@ -32,110 +195,130 @@
     <button id="panelToggle" class="panel-toggle" title="折叠 / 展开侧栏">◀</button>
     <!-- 左侧控制面板 -->
     <aside id="panel">
-      <h1>山川与天宫</h1>
-      <p class="subtitle">看地形怎样塑造中国 · 看天宫此刻飞过哪里</p>
-
-      <!-- 星球一键切换 -->
+      <!-- ⭐ sticky 头（2026-10-25 侧栏优化）：原标题/副标题删除，球体选择上移补位；
+           球体切换（右端挂图源设置齿轮）+ 坐标栏 + 场景横排三者包在一起吸顶，
+           永远不随栏内滚动消失（coord-widget 自身的 sticky/margin/边框已移交给 .panel-head）。 -->
+      <div class="panel-head">
+      <!-- 星球一键切换 + 图源设置齿轮。齿轮保留 id=btnSourceSettings（source-settings.js 按 id 绑定，JS 零改动） -->
       <div class="planet-switch">
         <button id="btnEarthMode" class="planet-btn active">🌍 地球</button>
         <button id="btnMoonMode" class="planet-btn">🌙 月球</button>
         <button id="btnMarsMode" class="planet-btn">🔴 火星</button>
+        <button id="btnSourceSettings" class="gear-btn" title="图源设置：优先级排序、本地优先、缓存统计、分段下载（地球保持可见）">⚙</button>
       </div>
 
-      <!-- 场景工具：地形夸张 / 晨夜光影 / 回到中国 -->
-      <div class="tool-block">
-        <div class="tool-row">
-          <label for="exag" title="真实山脉相对地球其实很薄；适度夸张能看清走向，别超过 3×">地形夸张</label>
-          <input type="range" id="exag" min="1" max="4" step="0.1" value="1.2" />
-          <span id="exagVal" class="tool-val">1.2×</span>
-        </div>
-        <div class="tool-row">
-          <button id="lighting" class="tool-btn" title="配合巡游面板的 ⏩ 加速键看日出与晨昏线移动">🌗 晨夜光影</button>
-        </div>
-        <div class="tool-row">
-          <button id="btnOceanBase" class="tool-btn" title="切换到 Esri 海底测深底图（GEBCO / NOAA NGDC 编译）：洋中脊、海沟、大陆架一目了然；再点一次回到卫星底图">🌊 海底地形</button>
-        </div>
-        <!-- 图源选择/排序/下载统一进「图源设置」抽屉（右侧面板，地球仍可见）。
-             旧的 底图模式/在线源/天地图key 控件已删除：优先级链 + 本地优先 + 启用开关完全覆盖其功能，
-             main.js 侧的绑定代码一并移除（引用处均有 null 守卫，getBaseMode 等仍走 localStorage）。 -->
-        <div class="tool-row">
-          <button id="btnSourceSettings" class="tool-btn" title="打开图源设置：优先级排序、本地优先、缓存统计、分段下载（地球保持可见）">🗺 图源设置</button>
+      <!-- 统一坐标控件（2026-10-24 用户：从「页面左上浮层」整体移入左侧栏顶部；
+           2026-10-25 起随 .panel-head 整体吸顶，自身不再单独 sticky；栏宽 274px 放不下就分两行）：
+         第一行 = [经度][纬度] + 右侧固定「🎯 定位」（2026-10-28 用户要求：换成靶点图标、不显示汉字，
+                  与下方「地名查询」的地图钉 📍 区分开）；
+         第二行 = [瓦片状态灯][⛰ 海拔] + 右侧「📍 地名查询 / 🏠 回国 / 🕘 记录」
+         （2026-10-24 用户订正：定位按钮固定经纬度右侧、海拔下移第二行；
+           2026-10-25 用户订正：状态灯从第一行挪到第二行、海拔前面；
+           2026-10-29 第五轮用户订正：地名查询从侧栏工具块移回第二行、紧贴 🏠 回国 左侧并整体靠右）。
+         ⭐ 场景三钮（晨夜/海底/地形夸张）2026-10-29 第五轮已移出侧栏，挂到球体右侧导航列 #sceneNavCol，
+            不再属于 .panel-head；见 #app 下的 #sceneNavCol 注释。
+         placeholder 即光标/视点实时经纬度（省掉独立读数行）-->
+    <div id="coordWidget" class="coord-widget" title="实时坐标跟随鼠标写入输入框 placeholder；输入经纬度后点「🎯」，留空 = 定位到光标处；🏠 = 飞回中国全图；🕘 记录 = 浏览历史（倒序，点击回飞，可清空）">
+      <div class="coord-inputs">
+        <input type="number" id="gotoLon" class="goto-input" placeholder="经度" step="any" min="-180" max="180" />
+        <input type="number" id="gotoLat" class="goto-input" placeholder="纬度" step="any" min="-90" max="90" />
+        <!-- 2026-10-28：图标由 📍 改为 🎯（靶点），避免与下方「地名查询 📍」混淆；不再显示汉字 -->
+        <button id="btnGoto" class="tool-btn goto-btn" title="定位到输入经纬度（留空 = 定位到光标处）">🎯</button>
+      </div>
+      <div class="coord-inputs">
+        <span id="tileDot" class="tile-dot is-loading src-none" role="status" aria-live="polite" tabindex="0" title="瓦片加载状态（点击强制重载）">
+          <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true" focusable="false">
+            <circle class="td-core" cx="9" cy="9" r="4" />
+            <circle class="td-prog" cx="9" cy="9" r="6.2" transform="rotate(-90 9 9)" />
+            <circle class="td-prog2" cx="9" cy="9" r="4.9" transform="rotate(-90 9 9)" />
+            <circle class="td-src" cx="9" cy="9" r="8.4" />
+          </svg>
+        </span>
+        <span id="coordAlt" class="coord-alt" title="地形高程（瓦片未就绪时显示 —；负值为水下深度）">⛰ <span class="na">—</span></span>
+        <!-- 2026-10-29 第五轮（用户）：📍 点图查地名 回到坐标栏第二行，紧贴 🏠 回国 左侧、整体靠右
+             （此前它跟 OSM 钮一起待在侧栏工具块，OSM 钮删除后工具块整体取消）。
+             2026-10-30：把「📍 🏠 🕘」包进 .coord-actions，由容器统一 margin-left:auto 推到右端；
+             否则月球/火星模式下 📍 被隐藏，原靠 📍 的 auto 失效、历史记录钮 🕘 会掉到左边。 -->
+        <div class="coord-actions">
+          <button id="btnGeocode" class="tool-btn geo-mini" title="开关「点击地球查地名」：开启后点地球任意位置，用 Nominatim 反查该点地名（境外/参考，限频 1 次/秒）">📍</button>
+          <button id="btnHome" class="tool-btn coord-home" title="飞回中国全图（月球模式下先切回地球）">🏠</button>
+          <button id="navHistToggle" class="tool-btn nav-hist-toggle" aria-expanded="false" title="浏览历史（倒序，点击条目回飞）">🕘</button>
         </div>
       </div>
+      <div id="navHistBody" class="nav-hist-body" hidden>
+        <div id="navHistList" class="nav-hist-list"></div>
+        <div class="nav-hist-foot"><button id="navHistClear" class="nav-hist-clear" hidden>清空</button></div>
+      </div>
+    </div>
 
-      <!-- 航天探索（工具，不进勾选树） -->
-      <section id="toolsSection">
-        <h2>航天探索</h2>
-        <div id="toolButtons" class="tool-buttons"></div>
+      </div><!-- /panel-head（sticky 头结束） -->
+
+      <!-- 原「工具块」（🗺 OSM + 📍 点图查地名）2026-10-29 第五轮已整体取消：
+           🗺 OSM 与球体右上角导航列的贴邻钮重复（用户判定冗余），保留右侧那一个；
+           📍 点图查地名 回到上面坐标栏第二行 🏠 左侧。 -->
+
+      <!-- 统一检索栏（2026-10-29）：取代旧 #layerSearch，合并 航天 / 标注图层 / 历史时空 三类入口。
+           2026-10-29 第二轮：从侧栏最顶端下移到这里——检索框与它的落地处「📌 显示图层」必须相邻，
+           上面留给球体切换 / 坐标 / 场景控制。下拉是 position:fixed 由 JS 定位，不再受 #panel 裁剪。 -->
+      <div id="searchBar" class="search-bar"></div>
+
+      <!-- 📌 显示图层（2026-10-29 用户设计）：取代原「标注图层」勾选树与「历史时空」面板。
+           检索结果点一下就落在这里；默认互斥（新项顶掉旧项），每行可手动点亮叠加、✕ 移除。 -->
+      <section id="shownSection" class="panel-section">
+        <h2>📌 显示图层</h2>
+        <div id="shownLayers" class="shown-layers"></div>
       </section>
 
+      <!-- 2026-10-30（用户）：「月面标注 / 火星标注」两块已从侧栏移除。
+           ① 分组勾选全部归入检索栏（搜「静海」「奥林匹斯山」直达）；
+           ② 月面高清瓦片、火星地形晕渲 两个开关改为右侧导航列按钮，按球体出现（星球归位 🏠 已删）；
+           ③ 分组 checkbox 容器 #moonGroups / #marsGroups 仍是显隐与检索跳转同步的真相源，
+              已搬进下方 #hiddenDock 隐藏托管区（不能删，setBodyGroupChecked 靠它反查）。 -->
+    </aside>
+
+    <!-- 隐藏托管区（2026-10-29）：图层勾选树 / 历史时空白板已从侧栏移除，但 DOM 仍是功能真相源——
+         `#layer-*` checkbox 决定图层显隐、`#layersTree` 是 buildLayerTree 的宿主、
+         `#historyPanel` 里的年份滑块是历史巡礼的索引载体。故整体搬到这里隐藏，而不是删除。 -->
+    <div id="hiddenDock" hidden>
       <!-- 标注图层 -->
-      <section>
+      <section id="layersSection" class="panel-section">
         <h2>标注图层</h2>
-        <input type="text" id="layerSearch" class="layer-search" placeholder="搜索图层（如 长城、运河、海峡、发射场）…" />
         <div class="layer-toolbar">
           <button id="layerSelectAll" class="secondary">全选</button>
           <button id="layerClearAll" class="secondary">全清</button>
         </div>
-        <!-- 悬停预览默认关闭：开启后鼠标停在图层行 0.35 秒会临时隐藏其它图层。
-             之所以做成开关，是因为它会临时改动勾选框状态，无提示地与手动勾选打架。 -->
-        <label class="hover-preview-cb" title="开启后：鼠标停在图层行 0.35 秒即临时只显示该图层，移开自动恢复（会临时改动勾选框）">
-          <input type="checkbox" id="layerHoverPreview" />
-          <span>悬停预览图层（停 0.35 秒即只显示该项，移开恢复）</span>
-        </label>
         <!-- 球背面标记：Cesium 的 disableDepthTestDistance=∞ 会让背面标记「透视」贴在球面上，
-             这里用官方 EllipsoidalOccluder 判定地平线遮挡后直接隐藏；隐藏掉的部分改在画布边缘
-             用「折线 + 箭头 + 名称」引出，兼顾干净与可知（2026-10-17）。 -->
+             这里用官方 EllipsoidalOccluder 判定地平线遮挡后直接隐藏；隐藏掉的部分改在离其投影
+             最近的屏幕边缘用「名称标签 + 折线 + 目标圆点」引出，折线落入球体圆盘内的「背后」段为虚线。 -->
         <label class="hover-preview-cb" title="球背面的标注不再以半透明虚影贴在球面上，而是彻底不显示">
           <input type="checkbox" id="cbOccludeBack" checked />
           <span>隐藏球背面标记（不再有背面虚影）</span>
         </label>
-        <label class="hover-preview-cb" title="被隐藏的背面/屏外标注，在画布边缘用折线与箭头引出名称">
+        <label class="hover-preview-cb" title="被隐藏的背面标注按屏幕方向聚成 16 个扇区，每扇区一条标签（显示该方向离地平线最近的一个 + 其余数量），只画 30px 短须箭头指向内侧、不再横穿球面；点击标签直接飞过去">
           <input type="checkbox" id="cbEdgeIndicator" checked />
-          <span>屏幕边缘指示（背面标记的折线引出）</span>
+          <span>屏幕边缘指示（背面标注按方向聚合，标签 + 短须箭头引出，点击飞过去）</span>
         </label>
         <div id="layersTree" class="layer-tree"></div>
-        <p class="hint">勾选图层或子组即显示；需要"临时只看某一层"时，先勾选上方「悬停预览图层」，再把鼠标停在图层行上 0.35 秒（状态栏会提示正在预览，移开即恢复）。线路类图层组名旁有「▶ 巡礼」可沿路线行进（播放/暂停/加减速/节点跳转），「航天探索」可加载天宫轨道、发起探月任务，「山川形胜」点标注可飞到推荐视角。</p>
-      </section>
-
-      <!-- 场景预设：一键讲清一个故事，避免面对几十个勾选框 -->
-      <section id="scenesSection">
-        <h2>场景预设</h2>
-        <div id="sceneButtons" class="scene-buttons"></div>
-        <p class="hint">点一个场景自动启用精选图层（其余收起）；再手动微调。选「清空」回到全空，自定义状态不被覆盖。</p>
-      </section>
-
-      <!-- 月面标注（仅月球模式显示） -->
-      <section id="moonSection" class="hidden">
-        <h2>月面标注</h2>
-        <div class="tool-row">
-          <button id="btnMoonHome" class="tool-btn" title="停止跟随，飞回月球正面默认俯瞰视角">🏠 月球归位</button>
+        <div class="hint-wrap">
+          <button type="button" class="hint-q" aria-expanded="false" aria-controls="hintLayers" title="使用说明">?</button>
+          <div id="hintLayers" class="hint-pop" hidden>勾选图层或子组即显示；线路类图层组名旁有「▶ 巡礼」可沿路线行进（播放/暂停/加减速/节点跳转）；顶部检索栏可搜「天宫 / 探月」加载轨道或发起任务、搜「长安」定位、搜「残阳如血」跳长征节点、搜「唐朝」起历史巡礼；「山川形胜」点标注可飞到推荐视角。</div>
         </div>
-        <!-- 月面高清瓦片：本地只有 8192×4096 全局贴图（≈660 m/像素），近距离看不出细节。
-             勾选后叠加 NASA Moon Trek 在线瓦片（LRO WAC 303 ppd ≈100 m/像素，经本地代理缓存）；
-             离线/上游不可达时自动回退本地贴图。 -->
-        <label class="hover-preview-cb" title="叠加 NASA Moon Trek 在线瓦片：LRO WAC 全局镶嵌 303 ppd（≈100 m/像素）。首次加载经本地代理缓存到 public/tiles/lunar/；离线或上游不可达时自动回退本地 8192×4096 贴图">
-          <input type="checkbox" id="moonHiRes" checked />
-          <span>月面高清瓦片（在线 LRO WAC ≈100 m/像素）</span>
-        </label>
-        <div id="moonGroups" class="moon-groups"></div>
       </section>
 
-      <!-- 火星标注（仅火星模式显示） -->
-      <section id="marsSection" class="hidden">
-        <h2>火星标注</h2>
-        <div class="tool-row">
-          <button id="btnMarsHome" class="tool-btn" title="飞回水手谷—塔尔西斯一带默认俯瞰视角">🏠 火星归位</button>
-        </div>
-        <!-- 火星地形晕渲：火星没有可用 3D 高程源（AGOL MOLA 瓦片缓存实测为空），
-             用 HRSC-MOLA 彩色晕渲图层做视觉地形补偿（奥林匹斯山、水手谷一目了然）。 -->
-        <label class="hover-preview-cb" title="叠加 NASA/USGS HRSC-MOLA 彩色晕渲（Esri Astrogeology，经本地代理缓存）：直观看出奥林匹斯山、水手谷等巨型地貌">
-          <input type="checkbox" id="marsHillshade" />
-          <span>火星地形晕渲（HRSC-MOLA 晕渲图）</span>
-        </label>
-        <div id="marsGroups" class="moon-groups"></div>
+      <!-- 行星分组勾选（2026-10-30 从侧栏移入）：DOM 保留 = 分组显隐与检索跳转同步的真相源，
+           main.js 的 setBodyGroupChecked() 按 data-group 反查这里的 checkbox。 -->
+      <div id="moonGroups" class="moon-groups"></div>
+      <div id="marsGroups" class="moon-groups"></div>
+
+      <!-- 历史时空：一根年份轴驱动两套开源历史地图（世界国界 + 中国历代疆域）；
+           面板 DOM 全部由 src/history-atlas.js 的 mountHistoryPanel() 构建 -->
+      <section id="historySection" class="panel-section">
+        <h2>📜 历史时空</h2>
+        <div id="historyPanel"></div>
       </section>
-    </aside>
+
+    </div>
+
 
     <!-- 三维地球 -->
     <main id="cesiumContainer"></main>
@@ -143,6 +326,25 @@
     <main id="moonContainer" class="hidden"></main>
     <!-- 火星视图（切换到火星时显示） -->
     <main id="marsContainer" class="hidden"></main>
+    <!-- 独立 OSM 矢量场景（MapLibre）：全屏覆盖，切换时显示，默认隐藏 -->
+    <main id="osmMap" class="osm-map hidden"></main>
+
+    <!-- ⭐ 右侧导航列「场景三钮」（2026-10-29 第五轮，用户指定）：晨夜 / 海底 / 地形夸张
+         挂在球体右侧控件列正下方 —— 列内自上而下 = 指南针 → 缩放 ± → 比例尺 → 🗺 OSM → 本列。
+         不再是 #panel 里的横排（前四轮位置都不对），也不是 #app 之外的浮层。
+         挂 #app 而非星球容器：切月球/火星时列不丢（晨夜/地形夸张对月火同样有效），
+         OSM 场景激活时由 osm-map-scene.js 统一隐藏让位 MapLibre。
+         真值仍是同列的隐藏 #exag range（main.js 的 input 监听零改动）。 -->
+    <div id="sceneNavCol" class="scene-nav-col">
+      <!-- 按球体出现的专属钮（2026-10-30 用户：从侧栏「月面标注 / 火星标注」移出；同轮 🏠 星球归位已删）。
+           地球模式两颗都隐藏（地球有坐标栏的 🏠，海底/查地名在下面）。 -->
+      <button id="btnMoonHiRes" class="tool-btn hidden" title="月面高清瓦片（在线 LRO WAC ≈100 m/像素，经本地代理缓存）：再点一次回到本地 8192×4096 全局贴图（≈660 m/像素）；离线或上游不可达时自动回退">🛰</button>
+      <button id="btnMarsHillshade" class="tool-btn hidden" title="火星地形晕渲（NASA/USGS HRSC-MOLA 彩色晕渲）：火星没有可用 3D 高程源，用它做视觉地形补偿，奥林匹斯山、水手谷一目了然">🌋</button>
+      <button id="lighting" class="tool-btn" title="晨夜光影：开启后按真实太阳位置照亮球面，可配合巡游面板的 ⏩ 加速键看日出与晨昏线移动">🌗</button>
+      <button id="btnOceanBase" class="tool-btn" title="切换到 Esri 海底测深底图（GEBCO / NOAA NGDC 编译）：洋中脊、海沟、大陆架一目了然；再点一次回到卫星底图">🌊</button>
+      <button id="exagBtn" class="tool-btn" title="地形夸张：点击在 1.0× / 1.2× / 1.5× / 2× / 3× 之间循环。真实山脉相对地球很薄，适度夸张能看清走向，别超过 3×">⛰<span id="exagVal" class="nav-mini-val">1.2×</span></button>
+      <input type="range" id="exag" min="1" max="4" step="0.1" value="1.2" hidden />
+    </div>
 
     <!-- 图源设置抽屉：右侧浮层（宽度 ≤40%，地球仍占 ≥60%，可边配置边观察）。
          内容由 src/source-settings.js 构建；侧栏原有的底图/在线源/天地图控件会被迁移进来。 -->
@@ -158,10 +360,43 @@
 
     <!-- 统一巡游控制面板（底部通栏；路线巡礼 / 探月任务 双模式共用） -->
     <div id="tourPanel" class="fly-panel hidden">
+      <!-- ⭐ 北京时间独占 head 行（2026-10-29 用户要求）：原来它在时间轴行里，
+           会挤占进度条长度；挪到标题行右侧后，时间轴可以完整占满整行。 -->
       <div class="tour-head">
         <div class="fly-panel-title" id="tourTitle">跟随飞行</div>
         <div id="rocketPhase" class="rocket-phase hidden"></div>
+        <!-- 当前所处年月/地面时间：路线巡礼按弧长 f 在相邻站点年月间插值；
+             天宫轨道显示北京时间 + 日照/地影 + 是否在中国上空 -->
+        <span id="tourClock" class="tour-clock" title="当前所处时间（路线巡礼为年份插值；天宫轨道为北京时间）"></span>
       </div>
+      <!-- 分阶段解说（2026-10-23 用户要求：时间轴区改成两行，上行说内容、下行放控件）
+           全程按幕/段实时更新；第二幕（嫦娥一号 16 段）会额外展开 7 项遥测。
+           ⭐ 2026-10-24 晚：焦点物体跟踪按钮 + 「👁 自动视角」挪到上行（.sn-hd）右侧，
+           与解说标题同一行、不再单独占一行。 -->
+      <div id="stageNarration" class="stage-narr hidden">
+        <div class="sn-hd">
+          <span id="snIdx" class="sn-idx">01</span>
+          <b id="snTitle">第一幕 · 点火起飞</b>
+          <i id="snTag" class="sn-tag"></i>
+          <i id="snA" class="sn-kv"></i>
+          <i id="snB" class="sn-kv"></i>
+          <div id="focusRow" class="focus-row"></div>
+          <button id="tourCamMode" class="fly-action hidden" title="脚本机位跟随中；拖拽画面或滚轮即可接管视角">👁 自动视角</button>
+        </div>
+        <p id="snText"></p>
+        <div id="snTele" class="sn-tele hidden">
+          <div><em>任务时间</em><b id="ceMet">0.00</b><u>d</u></div>
+          <div><em id="ceDistL">地心距</em><b id="ceDist">6,576</b><u>km</u></div>
+          <div><em>高度</em><b id="ceAlt">205</b><u>km</u></div>
+          <div><em>速度</em><b id="ceSpd">7.786</b><u>km/s</u></div>
+          <div><em>周期</em><b id="cePer">1.47</b><u>h</u></div>
+          <div><em>月球待转</em><b id="ceGap">—</b><u>°</u></div>
+          <div><em>时间压缩</em><b id="ceRate">×885</b><u></u></div>
+        </div>
+      </div>
+
+      <!-- 第 3 行：时间轴 + 进度 + 播放/点火/停止（保持原组件与交互）
+           ⭐ 2026-10-29：tourClock 已上移到标题行，进度条不再被挤短，故给它 flex:1 占满整行。 -->
       <div class="tour-main-row">
         <div id="tourTrack" class="fly-progress"><div id="tourBar" class="fly-bar"></div><div id="tourTicks" class="fly-ticks"></div></div>
         <span id="tourProgressText" class="fly-prog-text">0/0</span>
@@ -175,7 +410,6 @@
         </div>
 
         <div class="fly-btns">
-          <button id="tourCamMode" class="fly-action hidden" title="脚本机位跟随中；拖拽画面或滚轮即可接管视角">👁 自动视角</button>
           <button id="tourPause" class="fly-action hidden">暂停</button>
           <button id="btnLaunch" class="fly-action hidden" disabled>🚀 点火</button>
           <button id="tourStop" class="fly-action">停止</button>
@@ -215,38 +449,37 @@
       </div>
     </div>
 
-    <!-- 地月转移常驻标注：嫦娥一号真实轨道（2026-10-19：月球半径改为 LOD ×3→×8） -->
-    <div id="compressNote" class="compress-note hidden">轨道真实比例 · 月球<b>半径</b>随取景 ×3 → ×8 示意（远景时小于地球）<br>
-      调相 <b>16h → 24h → 48h</b>（7 圈 7 天）· 地月转移 <b>114 小时</b> · 三次近月制动 <b>12h → 3.5h → 127min</b><br>
-      演示时间加速：转移 ×2.5 万（282 h → 40 秒）· 捕获 ×1.0 万（40 h → 14 秒）</div>
+    <!-- 画中画：月球坐标系（2026-10-19 用户反馈「两个坐标系同步演示则最好」）。
+         主视图 = 地心系顶视（取景跟随地月/飞船），本画中画 = 月心系（原点固着月球），
+         同一任务时钟驱动 → 同时刻互证；转移段fitR 42 万 km（地球在画内），捕获段 2.4 万 km（环月轨道）。 -->
+    <div id="moonPip" class="moon-pip hidden">
+      <div class="pip-head">🛰 月球坐标系 · 画中画<span class="pip-sync" title="与主视图（地心系顶视）由同一任务时钟驱动，两图永远同时刻">⟋ 同时刻</span></div>
+      <canvas id="moonPipCanvas" width="324" height="186"></canvas>
+      <div class="pip-foot"><span id="pipTime">T+0 时</span><span id="pipRel">月心距 —</span><span id="pipState">—</span></div>
+    </div>
 
     <!-- 幕间文字幕卡 -->
     <div id="actCard" class="act-card hidden"><div id="actCardText"></div></div>
 
-    <!-- 底部状态条（左上 #coordWidget 为统一坐标控件，见下） -->
+    <!-- 长征巡礼诗词卡（经过节点自动暂停弹出，读完点「继续」恢复巡礼） -->
+    <div id="poemCard" class="poem-card pos-left">
+      <button id="poemDock" class="poem-dock" title="切换幕卡位置（左 / 中 / 右）">⇄</button>
+      <div class="poem-badge"></div>
+      <div class="poem-place"></div>
+      <div class="poem-title"></div>
+      <div class="poem-author"></div>
+      <div class="poem-body"></div>
+      <div class="poem-note"></div>
+      <button id="poemContinue" class="poem-continue">继续 ▶</button>
+    </div>
+
+    <!-- 底部状态条（#coordWidget 已移入左侧栏顶部，见下） -->
     <div id="status">正在初始化地球…</div>
 
     <!-- 代码版本条：向我反馈问题时，报这里编号即可判断是否旧缓存（见 initBuildTag） -->
     <div id="buildBar" class="build-bar" title="当前页面加载的代码版本号；反馈「改了没生效」类问题时请附上此编号">
       <span id="buildTag">build …</span>
       <button id="btnCopyDiag" class="build-btn" title="复制版本号与极冠/图层诊断信息，直接粘贴发我">⧉ 复制诊断</button>
-    </div>
-
-    <!-- 统一坐标控件：placeholder 即光标/视点实时经纬度（省掉独立读数行），海拔只读回显；
-         定位 / 回到中国 / 🕘 浏览历史（默认折叠，倒序，点击回飞，可清空）都收在这一行 -->
-    <div id="coordWidget" class="coord-widget" title="实时坐标跟随鼠标写入输入框 placeholder；输入经纬度后点「📍 定位」，留空 = 定位到光标处；🏠 = 飞回中国全图；🕘 记录 = 浏览历史（倒序，点击回飞，可清空）">
-      <div class="coord-inputs">
-        <input type="number" id="gotoLon" class="goto-input" placeholder="经度" step="any" min="-180" max="180" />
-        <input type="number" id="gotoLat" class="goto-input" placeholder="纬度" step="any" min="-90" max="90" />
-        <span id="coordAlt" class="coord-alt" title="地形高程（瓦片未就绪时显示 —；负值为水下深度）">⛰ <span class="na">—</span></span>
-        <button id="btnGoto" class="tool-btn goto-btn">📍 定位</button>
-        <button id="btnHome" class="tool-btn coord-home" title="飞回中国全图（月球模式下先切回地球）">🏠 回国</button>
-        <button id="navHistToggle" class="tool-btn nav-hist-toggle" aria-expanded="false" title="浏览历史（倒序，点击条目回飞）">🕘 记录 ▾</button>
-      </div>
-      <div id="navHistBody" class="nav-hist-body" hidden>
-        <div id="navHistList" class="nav-hist-list"></div>
-        <div class="nav-hist-foot"><button id="navHistClear" class="nav-hist-clear" hidden>清空</button></div>
-      </div>
     </div>
   </div>
 

@@ -1,0 +1,386 @@
+{
+  "errors": [],
+  "consoleErrors": [],
+  "waitedMs": 2500,
+  "steps": {
+    "structure": {
+      "searchBar": true,
+      "input": true,
+      "results": true,
+      "oldLayerSearch": false,
+      "oldToolsSection": false,
+      "quickBtnTiangong": true,
+      "quickBtnMoon": true
+    },
+    "q_beijing": {
+      "hidden": false,
+      "groups": [
+        {
+          "title": "📍 地点",
+          "items": [
+            {
+              "label": "北京",
+              "hint": "定位"
+            },
+            {
+              "label": "北京（蓟/幽州/大都）",
+              "hint": "定位"
+            }
+          ]
+        },
+        {
+          "title": "📜 历史",
+          "items": [
+            {
+              "label": "明",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "清",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "中华人民共和国",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "重熙增币；建大名府为北京陪都以备御辽（1042）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "明成祖朱棣正式迁都北京，以南京为留都（1421）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "庚戌之变，俺答汗兵临北京（1550）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "李自成破北京，清军入关（1644）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "清军入关，定都北京（1644）",
+              "hint": "历史节点"
+            }
+          ]
+        }
+      ],
+      "rect": {
+        "top": 88,
+        "bottom": 492,
+        "left": 18,
+        "right": 291
+      },
+      "panelRect": {
+        "top": 0,
+        "bottom": 705,
+        "left": 0,
+        "right": 310
+      },
+      "clipped": false
+    },
+    "q_canyang": {
+      "hidden": false,
+      "groups": [
+        {
+          "title": "🎬 巡礼",
+          "items": [
+            {
+              "label": "长征巡礼 · 娄山关",
+              "hint": "跳到节点"
+            }
+          ]
+        }
+      ],
+      "rect": {
+        "top": 88,
+        "bottom": 159,
+        "left": 18,
+        "right": 291
+      },
+      "panelRect": {
+        "top": 0,
+        "bottom": 705,
+        "left": 0,
+        "right": 310
+      },
+      "clipped": false
+    },
+    "q_tang": {
+      "hidden": false,
+      "groups": [
+        {
+          "title": "📜 历史",
+          "items": [
+            {
+              "label": "唐",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "李渊在长安称帝，建立唐朝（618）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "朱温逼唐哀帝禅位建后梁，唐朝灭亡（907）",
+              "hint": "历史节点"
+            }
+          ]
+        }
+      ],
+      "rect": {
+        "top": 88,
+        "bottom": 227,
+        "left": 18,
+        "right": 291
+      },
+      "panelRect": {
+        "top": 0,
+        "bottom": 705,
+        "left": 0,
+        "right": 310
+      },
+      "clipped": false
+    },
+    "q_changcheng": {
+      "hidden": false,
+      "groups": [
+        {
+          "title": "🎬 巡礼",
+          "items": [
+            {
+              "label": "长征巡礼 · 六盘山",
+              "hint": "跳到节点"
+            }
+          ]
+        },
+        {
+          "title": "📍 地点",
+          "items": [
+            {
+              "label": "长城（八达岭）",
+              "hint": "定位"
+            },
+            {
+              "label": "万里长城",
+              "hint": "定位"
+            }
+          ]
+        },
+        {
+          "title": "👁 图层",
+          "items": [
+            {
+              "label": "历代长城",
+              "hint": "显示图层"
+            }
+          ]
+        },
+        {
+          "title": "📜 历史",
+          "items": [
+            {
+              "label": "战国",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "秦",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "明",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "燕将秦开大破东胡却地千里，筑北长城置燕北五郡（前300）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "蒙恬北击匈奴，收复河套，连接长城（前215）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "余子俊奏筑延绥边墙，明代九边长城防线成型（1474）",
+              "hint": "历史节点"
+            }
+          ]
+        }
+      ],
+      "rect": {
+        "top": 88,
+        "bottom": 525,
+        "left": 18,
+        "right": 291
+      },
+      "panelRect": {
+        "top": 0,
+        "bottom": 705,
+        "left": 0,
+        "right": 310
+      },
+      "clipped": false
+    },
+    "q_tiangong": {
+      "hidden": false,
+      "groups": [
+        {
+          "title": "👁 图层",
+          "items": [
+            {
+              "label": "天宫空间站",
+              "hint": "显示图层"
+            }
+          ]
+        }
+      ],
+      "rect": {
+        "top": 88,
+        "bottom": 159,
+        "left": 18,
+        "right": 291
+      },
+      "panelRect": {
+        "top": 0,
+        "bottom": 705,
+        "left": 0,
+        "right": 310
+      },
+      "clipped": false
+    },
+    "click_place": {
+      "clicked": true,
+      "label": "北京",
+      "beforeHeight": 16000000,
+      "afterHeight": 2000000,
+      "status": "已飞到 北京（116.40°, 39.90°）",
+      "inputCleared": true
+    },
+    "click_history": {
+      "clicked": true,
+      "label": "唐",
+      "sectionVisible": true,
+      "sectionCollapsed": false,
+      "enableChecked": true,
+      "cardVisible": true,
+      "cardTitle": "唐",
+      "cardPhase": "621 年 — 629 年",
+      "cardMs": "621 虎牢之战李世民擒窦建德、降王世充；李靖平萧铣",
+      "yearLabel": "618 年",
+      "eraLabel": "唐 · 618 年 — 620 年",
+      "playLabel": "⏸ 暂停",
+      "stillPlaying": true
+    },
+    "tour_station": {
+      "hidden": false,
+      "groups": [
+        {
+          "title": "🎬 巡礼",
+          "items": [
+            {
+              "label": "长征巡礼 · 娄山关",
+              "hint": "跳到节点"
+            }
+          ]
+        }
+      ],
+      "rect": {
+        "top": 88,
+        "bottom": 159,
+        "left": 18,
+        "right": 276
+      },
+      "panelRect": {
+        "top": 0,
+        "bottom": 705,
+        "left": 0,
+        "right": 310
+      },
+      "clipped": false
+    },
+    "click_tour": {
+      "clicked": true,
+      "label": "长征巡礼 · 娄山关",
+      "tourPanelVisible": true,
+      "cardText": "⇄ 诗词 娄山关 忆秦娥 · 娄山关 毛泽东 · 1935 年 2 月 西风烈，长空雁叫霜晨月。 霜晨月，马蹄声碎，喇叭声咽。 雄关漫道真如铁，而今迈步从头越。 从头越，苍山如海，残阳如血。 1935",
+      "progress": "35% · 1276 km",
+      "clock": "1935年2月"
+    },
+    "tree_filter": {
+      "total": 28,
+      "hidden": 27,
+      "visible": 1,
+      "sample": [
+        "▌历代长城秦长城（临洮—辽东）▶汉长城（阳关—辽东，西延玉门阳关）▶明长城（山海关—嘉峪关，主线+辽东支线）▶"
+      ],
+      "restoredHiddenCount": 0
+    },
+    "clip_after": {
+      "hidden": false,
+      "groups": [
+        {
+          "title": "📍 地点",
+          "items": [
+            {
+              "label": "北京",
+              "hint": "定位"
+            },
+            {
+              "label": "北京（蓟/幽州/大都）",
+              "hint": "定位"
+            }
+          ]
+        },
+        {
+          "title": "📜 历史",
+          "items": [
+            {
+              "label": "明",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "清",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "中华人民共和国",
+              "hint": "历史巡礼"
+            },
+            {
+              "label": "重熙增币；建大名府为北京陪都以备御辽（1042）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "明成祖朱棣正式迁都北京，以南京为留都（1421）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "庚戌之变，俺答汗兵临北京（1550）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "李自成破北京，清军入关（1644）",
+              "hint": "历史节点"
+            },
+            {
+              "label": "清军入关，定都北京（1644）",
+              "hint": "历史节点"
+            }
+          ]
+        }
+      ],
+      "rect": {
+        "top": 88,
+        "bottom": 492,
+        "left": 18,
+        "right": 276
+      },
+      "panelRect": {
+        "top": 0,
+        "bottom": 705,
+        "left": 0,
+        "right": 310
+      },
+      "clipped": false
+    }
+  }
+}

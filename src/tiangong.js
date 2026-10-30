@@ -15,17 +15,26 @@ const RAAN = Cesium.Math.toRadians(30);
 const PERIOD_S = 92.5 * 60;      // s
 const MEAN_MOTION = (2 * Math.PI) / PERIOD_S; // rad/s
 const RING_SAMPLES = 200;
+// 轨道总览机位：相机置于 (105°E, 22°N) 上空 20,000 km，**视线正对地心**（球体居中）。
+// 选低纬是为了让 41.5° 倾角的轨道环呈斜椭圆，比正上方俯视更有立体感。
+const VIEW_LON = 105;
+const VIEW_LAT = 22;
+const VIEW_RANGE = 20000000;
 
 const SPEED_STEPS = [1, 10, 60, 300, 1200];
 const ORBIT_COLOR = Cesium.Color.fromCssColorString('#ffd24a');
 const ORBIT_FADE = Cesium.Color.fromCssColorString('#ffd24a').withAlpha(0.35);
-// 相位节点（升交点为 0）
+// 相位节点（升交点为 0）——时间轴上的刻度，点击即把空间站跳到该相位。
+//   · 前 4 个是**几何节点**（每圈固定不变）：升交点/最北点/降交点/最南点
+//   · 另 2 个是**光照节点**（进地影/出地影），随太阳方位缓慢漂移，运行时按当前时刻算（见 shadowNodes）
 const PHASE_TICKS = [
-  { u: 0, name: '升交点' },
-  { u: Math.PI / 2, name: '最北点' },
-  { u: Math.PI, name: '降交点' },
-  { u: (3 * Math.PI) / 2, name: '最南点' },
+  { u: 0, name: '升交点：由南向北穿越赤道（纬度 0°）' },
+  { u: Math.PI / 2, name: '最北点：纬度 +41.5°，一圈里的极北' },
+  { u: Math.PI, name: '降交点：由北向南穿越赤道（纬度 0°）' },
+  { u: (3 * Math.PI) / 2, name: '最南点：纬度 −41.5°，一圈里的极南' },
 ];
+// 星下点落在这个粗框内即算「中国上空」（中国大陆近似：73–135°E，18–54°N）
+const CN_BOX = { w: 73, e: 135, s: 18, n: 54 };
 
 let _viewer = null;
 let _orbitEntity = null;
@@ -39,6 +48,7 @@ let _followBtn = null;
 let _pausedByUs = false;      // 面板暂停（canAnimate 由本模块关闭）
 let _onSlower = null, _onFaster = null, _onStop = null, _onPause = null;
 let _onTrackDown = null, _onTrackMove = null, _onTrackUp = null;
+let _tickT = null;                // 上次重算地影节点的模拟时刻（太阳方位漂移后需刷新刻度）
 
 function $(id) { return document.getElementById(id); }
 
@@ -89,6 +99,135 @@ function stationPosition(time) {
   const gmst = gmstFromDate(Cesium.JulianDate.toDate(time));
   return eciToFixed(orbitEci(stationFraction(time)), gmst);
 }
+
+// ====== 地面时间 / 星下点 / 光照（2026-10-28 用户要求：行进时显示对应地面时间）======
+// 太阳方向（惯性系单位向量）：低精度天文算法（误差 <0.5°，判断地影足够）
+function sunEci(date) {
+  const jd = date.getTime() / 86400000 + 2440587.5;
+  const n = jd - 2451545.0;
+  const D2R = Math.PI / 180;
+  const L = (280.460 + 0.9856474 * n) * D2R;            // 平黄经
+  const g = (357.528 + 0.9856003 * n) * D2R;            // 平近点角
+  const lam = L + (1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * D2R; // 视黄经
+  const eps = 23.439 * D2R;                             // 黄赤交角
+  return [Math.cos(lam), Math.cos(eps) * Math.sin(lam), Math.sin(eps) * Math.sin(lam)];
+}
+// 太阳方向（地固系）：与轨道用同一套 GMST 变换，保证相对几何一致
+function sunFixed(date) {
+  return eciToFixed(sunEci(date), gmstFromDate(date));
+}
+// 圆柱地影模型：空间站落在地球背光侧的圆柱内即为地影（忽略半影/大气，科普足够）
+function inShadow(time) {
+  const p = stationPosition(time);
+  const s = Cesium.Cartesian3.normalize(sunFixed(Cesium.JulianDate.toDate(time)), new Cesium.Cartesian3());
+  const c = -Cesium.Cartesian3.dot(p, s);               // 沿背光方向的投影（>0 = 在夜半球一侧）
+  if (c <= 0) return false;
+  const perp2 = Cesium.Cartesian3.magnitudeSquared(p) - c * c;
+  return perp2 < EARTH_R * EARTH_R;
+}
+const _cart = new Cesium.Cartographic();
+function subpointOf(p) {
+  const c = Cesium.Cartographic.fromCartesian(p, Cesium.Ellipsoid.WGS84, _cart);
+  if (!c) return null;
+  return { lat: c.latitude * 180 / Math.PI, lon: c.longitude * 180 / Math.PI };
+}
+function fmtLatLon(sp) {
+  if (!sp) return '—';
+  const a = Math.abs(sp.lat).toFixed(1) + '°' + (sp.lat >= 0 ? 'N' : 'S');
+  const o = Math.abs(sp.lon).toFixed(1) + '°' + (sp.lon >= 0 ? 'E' : 'W');
+  return `${a} ${o}`;
+}
+// 北京时间（UTC+8）——展示"轨道行进到此处时，地面上是几点"
+function fmtBeijing(date) {
+  const t = new Date(date.getTime() + 8 * 3600 * 1000);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(t.getUTCMonth() + 1)}-${p(t.getUTCDate())} ${p(t.getUTCHours())}:${p(t.getUTCMinutes())}:${p(t.getUTCSeconds())}`;
+}
+// 进/出地影的相位节点：扫描一圈，取状态翻转处（太阳方位每天只移 1°，会话内稳定）
+function shadowNodes() {
+  const out = [];
+  if (!_t0) return out;
+  const N = 360;
+  let prev = null;
+  for (let i = 0; i <= N; i++) {
+    const u = (i / N) * 2 * Math.PI;
+    const t = Cesium.JulianDate.addSeconds(_t0, (u - _phase0) / MEAN_MOTION, new Cesium.JulianDate());
+    const s = inShadow(t);
+    if (prev !== null && s !== prev) {
+      out.push({ u, kind: 'shadow', name: s ? '进入地影：站上进入夜区（不可见）' : '离开地影：站上复见阳光' });
+    }
+    prev = s;
+  }
+  return out;
+}
+
+// ====== 球体在"右侧展示页"居中（2026-10-28 用户要求）======
+// 背景：画布是 #cesiumContainer（flex:1，已在左栏右侧），但①底部巡游面板会盖住画面下沿、
+// ②若左栏改为浮层压在画布上，还得让出左栏宽度。这里按"未被遮挡的矩形"求中心，
+// 再把相机平移过去（平移量 = 距离 × tan(半张角) × 遮挡占比，纯几何，与机位无关）。
+function fovTans(cam) {
+  const def = { h: Math.tan(Math.PI / 6), v: Math.tan(Math.PI / 6) / (16 / 9) };
+  try {
+    const f = cam && cam.frustum;
+    if (f && typeof f.fov === 'number' && isFinite(f.fov) && f.fov > 0) {
+      let asp = f.aspectRatio;
+      if (!(asp > 0) || !isFinite(asp)) asp = 16 / 9;
+      // Cesium：aspect>=1 时 fov 是**水平**张角，否则是竖直张角
+      return asp >= 1
+        ? { h: Math.tan(f.fov / 2), v: Math.tan(f.fov / 2) / asp }
+        : { v: Math.tan(f.fov / 2), h: Math.tan(f.fov / 2) * asp };
+    }
+  } catch { /* 忽略 */ }
+  return def;
+}
+function occludedRect(canvas) {
+  const r = canvas.getBoundingClientRect();
+  const W = canvas.clientWidth || r.width || 1;
+  const H = canvas.clientHeight || r.height || 1;
+  // 左栏遮挡宽度（flex 布局下通常为 0；若左栏浮在画布上则为其压住的宽度）
+  let leftOcc = 0;
+  try {
+    const panel = document.getElementById('panel');
+    if (panel && !document.body.classList.contains('panel-collapsed')) {
+      const pr = panel.getBoundingClientRect();
+      if (pr.width > 0) leftOcc = Math.max(0, Math.min(pr.right - r.left, W * 0.5));
+    }
+  } catch { /* 忽略 */ }
+  // 底部巡游面板遮挡高度
+  let botOcc = 0;
+  try {
+    const tp = document.getElementById('tourPanel');
+    if (tp && !tp.classList.contains('hidden')) {
+      const tr = tp.getBoundingClientRect();
+      if (tr.height > 0) botOcc = Math.max(0, Math.min(r.bottom - tr.top + 12, H * 0.45));
+    }
+  } catch { /* 忽略 */ }
+  return { leftOcc, botOcc, W, H };
+}
+/** 把地球球心移到"未被遮挡区域"的中心（相机反向平移，保持视线方向不变） */
+function centerGlobeInView(viewer, duration = 0.5) {
+  const cam = viewer && viewer.camera;
+  const canvas = viewer && viewer.scene && viewer.scene.canvas;
+  if (!cam || !canvas) return;
+  const { leftOcc, botOcc, W, H } = occludedRect(canvas);
+  if (leftOcc <= 0 && botOcc <= 0) return;
+  const dist = Cesium.Cartesian3.magnitude(cam.positionWC);   // 地心距（球心即 ECEF 原点）
+  if (!(dist > 0)) return;
+  const { h: tanH, v: tanV } = fovTans(cam);
+  const dRight = dist * tanH * (leftOcc / W);   // 球体需右移 → 相机左移
+  const dUp = dist * tanV * (botOcc / H);       // 球体需上移 → 相机下移
+  const pos = Cesium.Cartesian3.clone(cam.positionWC, new Cesium.Cartesian3());
+  const right = Cesium.Cartesian3.clone(cam.rightWC, new Cesium.Cartesian3());
+  const up = Cesium.Cartesian3.clone(cam.upWC, new Cesium.Cartesian3());
+  Cesium.Cartesian3.multiplyByScalar(right, -dRight, right);
+  Cesium.Cartesian3.multiplyByScalar(up, -dUp, up);
+  Cesium.Cartesian3.add(pos, right, pos);
+  Cesium.Cartesian3.add(pos, up, pos);
+  const dir = Cesium.Cartesian3.clone(cam.directionWC, new Cesium.Cartesian3());
+  const upv = Cesium.Cartesian3.clone(cam.upWC, new Cesium.Cartesian3());
+  cam.flyTo({ destination: pos, orientation: { direction: dir, up: upv }, duration });
+}
+
 function updatePanelClock(viewer) {
   const label = $('timeSpeedLabel');
   if (label) label.textContent = `${viewer.clock.multiplier}×`;
@@ -102,7 +241,7 @@ function showPanel(viewer) {
   $('flyControls').classList.add('hidden');
   $('rocketControls').classList.add('hidden');
   $('btnLaunch').classList.add('hidden');
-  $('compressNote')?.classList.add('hidden');
+  $('timelineNote')?.classList.add('hidden');
   $('actCard')?.classList.add('hidden');
   $('tourBar').style.width = '0%';
   $('tourProgressText').textContent = '0%';
@@ -117,18 +256,19 @@ function hidePanel() {
   if (panel) panel.classList.add('hidden');
 }
 
-// 进度条上的 4 个相位节点（点击跳转空间站相位）
+// 进度条上的节点：4 个几何相位 + 2 个光照（进/出地影）；点击跳转空间站相位
 function buildPhaseTicks() {
   const wrap = $('tourTicks');
   if (!wrap) return;
   wrap.innerHTML = '';
-  for (const t of PHASE_TICKS) {
+  const nodes = PHASE_TICKS.concat(shadowNodes());
+  for (const t of nodes) {
     const dot = document.createElement('span');
-    dot.className = 'fly-tick';
+    dot.className = 'fly-tick' + (t.kind === 'shadow' ? ' night' : '');
     dot.style.left = ((t.u / (2 * Math.PI)) * 100).toFixed(2) + '%';
     dot.style.pointerEvents = 'auto';
     dot.style.cursor = 'pointer';
-    dot.title = t.name;
+    dot.title = t.name + ' · 点击跳到此处';
     dot.addEventListener('pointerdown', (e) => e.stopPropagation());
     dot.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -154,11 +294,31 @@ function seekPhase(u) {
 
 function updatePhaseUI() {
   if (!_viewer) return;
-  const f = stationFraction(_viewer.clock.currentTime) / (2 * Math.PI);
+  const now = _viewer.clock.currentTime;
+  const f = stationFraction(now) / (2 * Math.PI);
   const bar = $('tourBar');
   if (bar) bar.style.width = (f * 100).toFixed(1) + '%';
+
+  // 地面时间 + 星下点 + 光照（行进中实时刷新）
+  const sp = subpointOf(stationPosition(now));
+  const night = inShadow(now);
+  const overCN = !!sp && sp.lon >= CN_BOX.w && sp.lon <= CN_BOX.e && sp.lat >= CN_BOX.s && sp.lat <= CN_BOX.n;
   const txt = $('tourProgressText');
-  if (txt) txt.textContent = `${Math.round(f * 100)}% · ${(ORBIT_ALT / 1000).toFixed(0)} km 轨道`;
+  if (txt) {
+    txt.textContent = `${Math.round(f * 100)}% · 星下点 ${fmtLatLon(sp)}`;
+    txt.title = `轨道高度 ${(ORBIT_ALT / 1000).toFixed(0)} km · 周期 ${(PERIOD_S / 60).toFixed(1)} min · 倾角 41.5°`;
+  }
+  const clk = $('tourClock');
+  if (clk) {
+    clk.textContent = `🕐 北京 ${fmtBeijing(Cesium.JulianDate.toDate(now))} · ${night ? '🌑 地影' : '☀ 日照'}${overCN ? ' · 🇨🇳 中国上空' : ''}`;
+    clk.title = '空间站当前位置对应的地面时间（北京时间 UTC+8）与光照状态';
+  }
+
+  // 地影节点随太阳方位缓慢漂移：模拟时间推进超过 1 小时就重算一次刻度
+  if (_tickT == null || Math.abs(Cesium.JulianDate.secondsDifference(now, _tickT)) > 3600) {
+    _tickT = Cesium.JulianDate.clone(now, _tickT || new Cesium.JulianDate());
+    buildPhaseTicks();
+  }
 }
 
 // 跟随/取消跟随空间站机位
@@ -299,11 +459,23 @@ export async function loadTiangong(viewer) {
     window.addEventListener('pointerup', _onTrackUp);
   }
 
-  // 飞到可见轨道的位置
+  // 飞到可见轨道的位置：视线**正对地心** → 球心落在画面正中
+  // （旧写法是 heading0/pitch−75，视线偏离天底 15°，球体被推到画面上方且顶部出画；
+  //   再由 centerGlobeInView 让出底部巡游面板：球体落到"未被遮挡区域"的中心）
+  const dest = Cesium.Cartesian3.fromDegrees(VIEW_LON, VIEW_LAT, VIEW_RANGE);
+  const dir = Cesium.Cartesian3.normalize(
+    Cesium.Cartesian3.negate(dest, new Cesium.Cartesian3()), new Cesium.Cartesian3());
+  const enu = Cesium.Transforms.eastNorthUpToFixedFrame(dest);
+  const north = Cesium.Matrix4.getColumn(enu, 1, new Cesium.Cartesian3());
+  const d = Cesium.Cartesian3.dot(north, dir);
+  const up = Cesium.Cartesian3.normalize(
+    Cesium.Cartesian3.subtract(north, Cesium.Cartesian3.multiplyByScalar(dir, d, new Cesium.Cartesian3()), new Cesium.Cartesian3()),
+    new Cesium.Cartesian3());
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(110, 30, 24000000),
-    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-75), roll: 0 },
+    destination: dest,
+    orientation: { direction: dir, up },
     duration: 1.5,
+    complete: () => centerGlobeInView(viewer),
   });
   console.log('[tiangong] 轨道已加载（闭环示意 · 暂停/seek/跟随可用）');
   return true;
@@ -337,8 +509,12 @@ export function removeTiangong(viewer) {
     _pausedByUs = false;
     $('tourPause')?.classList.add('hidden');
     $('tourTicks').innerHTML = '';
+    // 地面时间芯片是面板共用元素：退出时必须清空，否则巡礼/探月会残留天宫的时间
+    const clk = $('tourClock');
+    if (clk) { clk.textContent = ''; clk.title = ''; }
     hidePanel();
   }
+  _tickT = null;
   _viewer = null;
   console.log('[tiangong] 轨道已移除');
 }

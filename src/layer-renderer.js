@@ -71,30 +71,72 @@ export function createLayerRenderer(viewer, globe) {
   let onStatusCallback = null;
   let offscreen = null;      // 屏幕边缘指示器（背面标记的折线引出，由 main.js 注入）
 
-  // ====== 背面虚影：按「标注点朝向 vs 相机方向」平滑淡化背面实体 ======
-  // disableDepthTestDistance=∞ 使背面点原本完全实心地透过地球显示；
-  // 现在用 CallbackProperty 每帧计算朝向余弦，d≈1 正对相机(不透明)，d<0 背面(残影)。
-  const GHOST_MIN_ALPHA = 0.15;
-  const _camScratch = new Cesium.Cartesian3();
+  // ====== 背面虚影：按「距地平线的角距」平滑淡化 ======
+  // disableDepthTestDistance=∞ 使背面点原本完全实心地透过地球显示；现在按「离地平线还有多远」淡化。
+  //
+  // ⭐ 2026-10-29 修正（实测）：旧版把过渡带写死成 d∈[0.05,0.35]（d = 标注法向·相机方向余弦），
+  //   但地平线阈值随相机高度变（EllipsoidalOccluder 判据 = R/|camPos|）：
+  //     全球 20000km → 0.239｜区域 1200km → 0.842｜城市 220km → 0.961
+  //   → 低空时整条淡出带都落在地平线之外，标注在 alpha=1 时被硬切掉（实测切断瞬间 alpha：
+  //     0.685 / 1.0 / 1.0），转球时"啪"一下消失。淡出机制在高空以外等于死代码。
+  //   改法：淡出带 = **可见球冠最外圈 15%（角度）**，θ_h 由 scaled-space 的 |c| 实时算出
+  //   （ccos≥1/|c| 与官方 occluder 判据同源），任何高度都在地平线处平滑归零。
+  const GHOST_MIN_ALPHA = 0.15;                 // 背面（地平线之外）残影透明度
+  const LIMB_FADE_FRAC = 0.15;                  // 淡出带占球冠角半径的比例
+  const _camScaled = new Cesium.Cartesian3();
+  const _unitPos = new Cesium.Cartesian3();
+  const _unitCam = new Cesium.Cartesian3();
+  let _limbMag = -1;
+  let _limbThetaH = 0;                          // 可见球冠的角半径（弧度）
+
+  function activeEllipsoid() {
+    return (viewer.scene && viewer.scene.globe && viewer.scene.globe.ellipsoid) || Cesium.Ellipsoid.WGS84;
+  }
+
+  /** 可见球冠角半径：scaled space 下 |c| = |camPos|/R，地平线条件 cosθ ≥ 1/|c|（与官方 occluder 同源） */
+  function limbThetaH() {
+    const cam = viewer.camera.positionWC;
+    Cesium.Cartesian3.multiplyComponents(cam, activeEllipsoid().oneOverRadii, _camScaled);
+    const m = Cesium.Cartesian3.magnitude(_camScaled);
+    if (Math.abs(m - _limbMag) > 1e-6) {
+      _limbMag = m;
+      _limbThetaH = m > 1 ? Math.acos(1 / m) : 0;
+    }
+    return _limbThetaH;
+  }
+
+  /** 1 = 视野正中；0 = 正好在地平线上（再远就是背面） */
+  function limbFade(posCartesian) {
+    Cesium.Cartesian3.normalize(posCartesian, _unitPos);
+    Cesium.Cartesian3.normalize(viewer.camera.positionWC, _unitCam);
+    const cos = Cesium.Cartesian3.dot(_unitPos, _unitCam);
+    const theta = Math.acos(Math.min(1, Math.max(-1, cos)));
+    const th = limbThetaH();
+    if (!(th > 0)) return 1;
+    return Math.min(1, Math.max(0, (th - theta) / (LIMB_FADE_FRAC * th)));
+  }
 
   function fadeColor(posCartesian, baseColor, baseAlpha = 1) {
-    const unit = Cesium.Cartesian3.normalize(
-      posCartesian,
-      new Cesium.Cartesian3()
-    );
     return new Cesium.CallbackProperty(() => {
-      Cesium.Cartesian3.normalize(viewer.camera.positionWC, _camScratch);
-      const d = Cesium.Cartesian3.dot(unit, _camScratch);
-      const t = Math.min(1, Math.max(0, (d - 0.05) / 0.30)); // 0.05~0.35 平滑过渡带
-      return baseColor.withAlpha(baseAlpha * (GHOST_MIN_ALPHA + (1 - GHOST_MIN_ALPHA) * t));
+      const t = limbFade(posCartesian);
+      // t=0 表示已到地平线或更远：正面侧归零（不再有切断感），背面侧留残影（关闭剔除时的旧行为）
+      if (t <= 0) return baseColor.withAlpha(baseAlpha * GHOST_MIN_ALPHA);
+      return baseColor.withAlpha(baseAlpha * t);
     }, false);
   }
 
   function createEntity(entityData, options) {
     const { color, marker } = options;
+    // ⭐ 2026-10-30：若标注带 url，则在 InfoBox 描述里追加「🔗 线上漫游」链接
+    //   （Cesium InfoBox 原生支持 <a target="_blank">，点击在新标签打开）。
+    let desc = entityData.description ?? '';
+    if (entityData.url) {
+      const safeUrl = String(entityData.url).replace(/"/g, '&quot;');
+      desc += (desc ? '<br/>' : '') + `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">🔗 线上漫游 ↗</a>`;
+    }
     const common = {
       name: entityData.name,
-      description: entityData.description ?? undefined,
+      description: desc ? desc : undefined,
     };
 
     if (entityData.type === 'point') {
@@ -339,7 +381,21 @@ export function createLayerRenderer(viewer, globe) {
     return String(t || '');
   }
 
-  /** 包围盒宽度估算：CJK 近似方字（1em），拉丁/数字约 0.55em */
+  // ⭐ 2026-10-29 实测：按字符数估算的宽度系统性偏小（真实 bbox 比估算宽 20~45px，
+  //   「德朗海峡（东北航道瓶颈）」估算 174 / 实际 219）→ 避让按错宽度排布，照旧叠字。
+  //   改用 canvas measureText 量真实字宽（回退到估算）。
+  let _mctx = null;
+  function measureTextWidth(text, fontPx) {
+    try {
+      if (!_mctx) _mctx = document.createElement('canvas').getContext('2d');
+      _mctx.font = `bold ${fontPx}px "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif`;
+      const w = _mctx.measureText(text).width;
+      if (w > 0) return w;
+    } catch { /* 量不到就回退 */ }
+    return estimateTextWidth(text, fontPx);
+  }
+
+  /** 包围盒宽度估算（回退用）：CJK 近似方字（1em），拉丁/数字约 0.55em */
   function estimateTextWidth(text, fontPx) {
     let em = 0;
     for (const ch of text) {
@@ -360,6 +416,36 @@ export function createLayerRenderer(viewer, globe) {
     return m ? parseFloat(m[1]) : 17;
   }
 
+  // ====== 正面标注密度控制（LOD 配额）+ 同名去重（2026-10-29）======
+  // 症状：全球视角下 344 条标注全量铺开，顶/底/欧洲—中东糊成一片（截图实测）；
+  //       同名地点（「雅典」在 wonders / worldcities 两层各一次）被错开成上下两条。
+  // 做法：① 配额 —— 按相机高度给定「本帧最多显示多少条文字」，超出者**只藏文字不藏图标**；
+  //       ② 排序 —— 一级地名（城市/首都/山峰/奇迹/遗产）优先，其次按离相机近的优先；
+  //       ③ 去重 —— 同名且屏幕距离 < 90px 的第二条直接让出。
+  const LOD_QUOTA = [                 // [相机高度下限, 文字配额]，从高到低匹配
+    [1.2e7, 60],
+    [4.0e6, 110],
+    [1.2e6, 180],
+    [3.0e5, 260],
+  ];
+  const TIER0_LAYERS = new Set(['cities', 'worldcities', 'worldcapitals', 'peaks', 'wonders', 'heritage']);
+  const DEDUP_PX = 90;
+
+  function camAltitude() {
+    return Math.max(0, Cesium.Cartesian3.magnitude(viewer.camera.positionWC) - activeEllipsoid().maximumRadius);
+  }
+
+  function labelQuota() {
+    const h = camAltitude();
+    for (const [min, n] of LOD_QUOTA) if (h > min) return n;
+    return DODGE_MAX_ENTITIES;
+  }
+
+  const _dedupKey = (s) => String(s || '').replace(/[（）()\s]/g, '').toLowerCase();
+
+  /** 冒烟/调试：上一帧标注避让的统计（配额 / 去重 / 冲突各藏了多少条） */
+  let _labelStats = null;
+
   function applyDodges() {
     const scene = viewer.scene;
     const canvas = scene && scene.canvas;
@@ -369,7 +455,8 @@ export function createLayerRenderer(viewer, globe) {
     const julian = Cesium.JulianDate.now();
     const cands = [];
 
-    for (const groupMap of groupEntityMap.values()) {
+    for (const [layerId, groupMap] of groupEntityMap) {
+      const tier = TIER0_LAYERS.has(layerId) ? 0 : 1;
       for (const st of groupMap.values()) {
         if (!st.built) continue;
         for (const ent of st.entities) {
@@ -384,11 +471,14 @@ export function createLayerRenderer(viewer, globe) {
           // 屏外（含余量）不参与避让，也不该被隐藏——交给边缘指示器处理
           if (win.x < -160 || win.y < -160 || win.x > W + 160 || win.y > H + 160) continue;
           const fontPx = labelFontPx(ent);
+          const text = labelText(ent);
           cands.push({
             ent,
+            tier,
+            text,
             wx: win.x,
             wy: win.y,
-            w: estimateTextWidth(labelText(ent), fontPx),
+            w: measureTextWidth(text, fontPx) + 12,   // +12：showBackground 的左右 padding
             h: fontPx * 1.4 + 8,
             dist: Cesium.Cartesian3.distance(pos, viewer.camera.positionWC),
           });
@@ -396,17 +486,43 @@ export function createLayerRenderer(viewer, globe) {
       }
     }
 
-    // 近处标注优先占位（更符合「先看近的」的直觉）
-    cands.sort((a, b) => a.dist - b.dist);
-    if (cands.length > DODGE_MAX_ENTITIES) cands.length = DODGE_MAX_ENTITIES;
+    // 排序：一级地名优先 → 近处优先（更符合「先看近的」的直觉）
+    cands.sort((a, b) => (a.tier - b.tier) || (a.dist - b.dist));
+    const quota = labelQuota();
 
     let checker = null;
     try { checker = new Cesium.RectangleCollisionChecker(); } catch { checker = null; }
     if (!checker) return;   // 官方类缺失时保持原样，不做半吊子避让
 
     let _insertId = 0;
-    for (const c of cands) {
+    // ⭐ 保留区：侧栏 #panel 是半透明浮层卡片（z20），铺在球面上的标注会被它压住、看着很脏。
+    //   把面板矩形先塞进碰撞检查器，落在它下面的标注五档偏移全失败 → 自动让位隐藏。
+    try {
+      const pnl = document.getElementById('panel');
+      if (pnl) {
+        const r = pnl.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) {
+          checker.insert(++_insertId, new Cesium.Rectangle(
+            r.left - DODGE_PAD, r.top - DODGE_PAD, r.right + DODGE_PAD, r.bottom + DODGE_PAD
+          ));
+        }
+      }
+    } catch { /* 拿不到面板矩形就按无保留区处理 */ }
+    const placedNames = new Map();          // 归一化名称 → {x,y}（同名去重，见上）
+    let nQuota = 0, nDedup = 0, nCollide = 0, nPlaced = 0;   // 冒烟/调试计数（见 debugLabelStats）
+    for (let ci = 0; ci < cands.length; ci++) {
+      const c = cands[ci];
       const ent = c.ent;
+      // 本高度档位的文字配额用满即止（只藏文字，图标/点保留）。
+      // ⚠ 判据用「已放下几条」而不是「处理到第几条」：首批候选往往挤在视线中心互相冲突，
+      //    按处理序号截断会把配额全浪费在冲突项上（实测全球视角 60 条配额只放下 11 条）。
+      if (nPlaced >= quota) { ent.label.show = false; nQuota++; continue; }
+      // 同名去重：与已放置的同名标注屏幕距离 < 90px 视为同一处（如「雅典」在两层各一次）
+      const nk = _dedupKey(c.text);
+      if (nk) {
+        const prev = placedNames.get(nk);
+        if (prev && Math.hypot(prev.x - c.wx, prev.y - c.wy) < DEDUP_PX) { ent.label.show = false; nDedup++; continue; }
+      }
       // 基线偏移：第一次记录，之后每帧从基线重算（避免逐帧累加漂移）
       if (!ent._labelOffset0) {
         let cur = null;
@@ -441,6 +557,8 @@ export function createLayerRenderer(viewer, globe) {
           checker.insert(++_insertId, rect);
           ent.label.pixelOffset = new Cesium.Cartesian2(bx, by + dy);
           ent.label.show = true;
+          if (nk) placedNames.set(nk, { x: c.wx, y: c.wy });
+          nPlaced++;
           placed = true;
           break;
         }
@@ -448,8 +566,10 @@ export function createLayerRenderer(viewer, globe) {
       if (!placed) {
         // 五档全冲突：让位隐藏（官方 demo 的取舍——宁缺毋乱）
         ent.label.show = false;
+        nCollide++;
       }
     }
+    _labelStats = { cands: cands.length, quota, placed: nPlaced, quotaHidden: nQuota, dedupHidden: nDedup, collideHidden: nCollide };
     // 未参与本帧避让的标注（背面/屏外/超上限）恢复显示，避免被上一帧的结论误伤
     const inFrame = new Set(cands.map((c) => c.ent));
     for (const groupMap of groupEntityMap.values()) {
@@ -733,6 +853,7 @@ export function createLayerRenderer(viewer, globe) {
       viewer.scene.requestRender();
     },
     isOccludeBack: () => occludeBack,
+    debugLabelStats: () => _labelStats,
     /** 冒烟/调试：当前被判为背面的标记数量 */
     debugBackfaceCount: () => {
       let n = 0;

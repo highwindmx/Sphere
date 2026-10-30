@@ -1,0 +1,103 @@
+{
+ "马德里": {
+  "ok": true,
+  "file": "pmtiles/欧洲_西班牙_马德里.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -4.2,
+   39.92,
+   -3.2,
+   40.92
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 45100273,
+  "pbf": "spain"
+ },
+ "巴塞罗那": {
+  "ok": true,
+  "file": "pmtiles/欧洲_西班牙_巴塞罗那.pmtiles",
+  "resumed": true,
+  "bbox": [
+   1.67,
+   40.89,
+   2.67,
+   41.89
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 39677245,
+  "pbf": "spain"
+ },
+ "塞维利亚": {
+  "ok": true,
+  "file": "pmtiles/欧洲_西班牙_塞维利亚.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -6.220000000000001,
+   37.15,
+   -5.74,
+   37.63
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 7816777,
+  "pbf": "spain"
+ },
+ "巴伦西亚": {
+  "ok": true,
+  "file": "pmtiles/欧洲_西班牙_巴伦西亚.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -0.62,
+   39.23,
+   -0.14,
+   39.71
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 13909883,
+  "pbf": "spain"
+ },
+ "毕尔巴鄂": {
+  "ok": true,
+  "file": "pmtiles/欧洲_西班牙_毕尔巴鄂.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -3.17,
+   43.019999999999996,
+   -2.6900000000000004,
+   43.5
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 11678133,
+  "pbf": "spain"
+ },
+ "帕洛斯港": {
+  "ok": true,
+  "file": "pmtiles/欧洲_葡萄牙_帕洛斯港.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -6.92,
+   36.980000000000004,
+   -6.68,
+   37.22
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 266162,
+  "pbf": "spain"
+ },
+ "里斯本": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   -9.64,
+   38.22,
+   -8.64,
+   39.22
+  ],
+  "pbf": "spain"
+ }
+}

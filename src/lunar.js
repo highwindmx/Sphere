@@ -252,6 +252,10 @@ export function createMoonViewer(containerId = 'moonContainer', onStatus = null)
   });
   viewer.allowDataSourcesToSuspendAnimation = false;
   viewer.scene.globe.depthTestAgainstTerrain = true;
+  // 2026-10-22 瓦片加速（DS 建议）：焦点加载（优先中心瓦片）+ 动态 SSE（远处降分辨率），
+  // 动力下降近距离段更快变清晰，且不影响中心画质
+  viewer.scene.globe.foveatedScreenSpaceError = true;
+  viewer.scene.globe.dynamicScreenSpaceError = true;
   // 非地球椭球下 Cesium 可能不创建 skyAtmosphere，需判空
   if (viewer.scene.skyAtmosphere) viewer.scene.skyAtmosphere.show = false;
   if ('showGroundAtmosphere' in viewer.scene.globe) {

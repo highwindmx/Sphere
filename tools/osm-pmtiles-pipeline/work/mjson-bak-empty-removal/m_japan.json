@@ -1,0 +1,610 @@
+{
+ "名古屋": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_名古屋.pmtiles",
+  "resumed": true,
+  "bbox": [
+   136.41,
+   34.68,
+   137.41,
+   35.68
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 105933842,
+  "pbf": "japan"
+ },
+ "大阪": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_大阪.pmtiles",
+  "resumed": true,
+  "bbox": [
+   135.0,
+   34.19,
+   136.0,
+   35.19
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 131946112,
+  "pbf": "japan"
+ },
+ "福冈": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_福冈.pmtiles",
+  "resumed": true,
+  "bbox": [
+   129.9,
+   33.09,
+   130.9,
+   34.09
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 57673528,
+  "pbf": "japan"
+ },
+ "丰田": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_丰田.pmtiles",
+  "resumed": true,
+  "bbox": [
+   136.91,
+   34.839999999999996,
+   137.39000000000001,
+   35.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 37502685,
+  "pbf": "japan"
+ },
+ "京都": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_京都.pmtiles",
+  "resumed": true,
+  "bbox": [
+   135.53,
+   34.769999999999996,
+   136.01000000000002,
+   35.25
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 37244485,
+  "pbf": "japan"
+ },
+ "冈山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_冈山.pmtiles",
+  "resumed": true,
+  "bbox": [
+   133.69,
+   34.419999999999995,
+   134.17000000000002,
+   34.9
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 24805005,
+  "pbf": "japan"
+ },
+ "北九州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_北九州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   130.64,
+   33.64,
+   131.12,
+   34.120000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 8015034,
+  "pbf": "japan"
+ },
+ "大分": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_大分.pmtiles",
+  "resumed": true,
+  "bbox": [
+   131.37,
+   33.0,
+   131.85000000000002,
+   33.480000000000004
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 7328102,
+  "pbf": "japan"
+ },
+ "奈良": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_奈良.pmtiles",
+  "resumed": true,
+  "bbox": [
+   135.59,
+   34.449999999999996,
+   136.07000000000002,
+   34.93
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 40131782,
+  "pbf": "japan"
+ },
+ "富山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_富山.pmtiles",
+  "resumed": true,
+  "bbox": [
+   136.97,
+   36.46,
+   137.45000000000002,
+   36.940000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 9208196,
+  "pbf": "japan"
+ },
+ "广岛": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_广岛.pmtiles",
+  "resumed": true,
+  "bbox": [
+   132.22,
+   34.15,
+   132.70000000000002,
+   34.63
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 16904709,
+  "pbf": "japan"
+ },
+ "松山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_松山.pmtiles",
+  "resumed": true,
+  "bbox": [
+   132.47,
+   33.6,
+   132.95000000000002,
+   34.080000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 6111813,
+  "pbf": "japan"
+ },
+ "熊本": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_熊本.pmtiles",
+  "resumed": true,
+  "bbox": [
+   130.5,
+   32.55,
+   130.98000000000002,
+   33.03
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 16667428,
+  "pbf": "japan"
+ },
+ "神户": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_神户.pmtiles",
+  "resumed": true,
+  "bbox": [
+   134.95999999999998,
+   34.449999999999996,
+   135.44,
+   34.93
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 23293142,
+  "pbf": "japan"
+ },
+ "那霸": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_那霸.pmtiles",
+  "resumed": true,
+  "bbox": [
+   127.44000000000001,
+   25.970000000000002,
+   127.92,
+   26.45
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 8212136,
+  "pbf": "japan"
+ },
+ "金泽": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_金泽.pmtiles",
+  "resumed": true,
+  "bbox": [
+   136.39,
+   36.35,
+   136.87,
+   36.830000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 7567492,
+  "pbf": "japan"
+ },
+ "长崎": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_长崎.pmtiles",
+  "resumed": true,
+  "bbox": [
+   129.63,
+   32.51,
+   130.11,
+   32.99
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 8715145,
+  "pbf": "japan"
+ },
+ "高松": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_高松.pmtiles",
+  "resumed": true,
+  "bbox": [
+   133.81,
+   34.1,
+   134.29000000000002,
+   34.580000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 10305098,
+  "pbf": "japan"
+ },
+ "鹿儿岛": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_鹿儿岛.pmtiles",
+  "resumed": true,
+  "bbox": [
+   130.31,
+   31.360000000000003,
+   130.79000000000002,
+   31.84
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 13626085,
+  "pbf": "japan"
+ },
+ "滨松": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_滨松.pmtiles",
+  "tiles": 2064,
+  "bytes": 16473754,
+  "bbox": [
+   137.48999999999998,
+   34.47,
+   137.97,
+   34.95
+  ],
+  "center": [
+   137.73,
+   34.71
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "松本": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_松本.pmtiles",
+  "tiles": 3260,
+  "bytes": 7895774,
+  "bbox": [
+   137.73,
+   36.0,
+   138.21,
+   36.480000000000004
+  ],
+  "center": [
+   137.97,
+   36.24
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "长野": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_长野.pmtiles",
+  "tiles": 3315,
+  "bytes": 11453131,
+  "bbox": [
+   137.94,
+   36.41,
+   138.42000000000002,
+   36.89
+  ],
+  "center": [
+   138.18,
+   36.65
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "静冈": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_静冈.pmtiles",
+  "tiles": 2280,
+  "bytes": 15286992,
+  "bbox": [
+   138.14,
+   34.739999999999995,
+   138.62,
+   35.22
+  ],
+  "center": [
+   138.38,
+   34.98
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "新潟": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_新潟.pmtiles",
+  "tiles": 1857,
+  "bytes": 10446603,
+  "bbox": [
+   138.78,
+   37.68,
+   139.26000000000002,
+   38.160000000000004
+  ],
+  "center": [
+   139.02,
+   37.92
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "横滨": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_横滨.pmtiles",
+  "tiles": 2542,
+  "bytes": 71721245,
+  "bbox": [
+   139.39999999999998,
+   35.199999999999996,
+   139.88,
+   35.68
+  ],
+  "center": [
+   139.64,
+   35.44
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "埼玉": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_埼玉.pmtiles",
+  "tiles": 3572,
+  "bytes": 94761274,
+  "bbox": [
+   139.41,
+   35.62,
+   139.89000000000001,
+   36.1
+  ],
+  "center": [
+   139.65,
+   35.86
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "横须贺": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_横须贺.pmtiles",
+  "tiles": 1833,
+  "bytes": 32973442,
+  "bbox": [
+   139.42999999999998,
+   35.04,
+   139.91,
+   35.52
+  ],
+  "center": [
+   139.67,
+   35.28
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "东京": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_东京.pmtiles",
+  "tiles": 12672,
+  "bytes": 217225749,
+  "bbox": [
+   139.19,
+   35.19,
+   140.19,
+   36.19
+  ],
+  "center": [
+   139.69,
+   35.69
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "川崎": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_川崎.pmtiles",
+  "tiles": 2843,
+  "bytes": 97652642,
+  "bbox": [
+   139.45999999999998,
+   35.29,
+   139.94,
+   35.77
+  ],
+  "center": [
+   139.7,
+   35.53
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "筑波": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_筑波.pmtiles",
+  "tiles": 3703,
+  "bytes": 18487126,
+  "bbox": [
+   139.87,
+   35.839999999999996,
+   140.35000000000002,
+   36.32
+  ],
+  "center": [
+   140.11,
+   36.08
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "千叶": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_千叶.pmtiles",
+  "tiles": 3118,
+  "bytes": 22851540,
+  "bbox": [
+   139.88,
+   35.37,
+   140.36,
+   35.85
+  ],
+  "center": [
+   140.12,
+   35.61
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "福岛": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_福岛.pmtiles",
+  "tiles": 3302,
+  "bytes": 9792756,
+  "bbox": [
+   140.22,
+   37.519999999999996,
+   140.70000000000002,
+   38.0
+  ],
+  "center": [
+   140.46,
+   37.76
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "仙台": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_仙台.pmtiles",
+  "tiles": 2934,
+  "bytes": 19243009,
+  "bbox": [
+   140.63,
+   38.03,
+   141.11,
+   38.510000000000005
+  ],
+  "center": [
+   140.87,
+   38.27
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "函馆": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_函馆.pmtiles",
+  "tiles": 1845,
+  "bytes": 5274232,
+  "bbox": [
+   140.48999999999998,
+   41.53,
+   140.97,
+   42.010000000000005
+  ],
+  "center": [
+   140.73,
+   41.77
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "札幌": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_札幌.pmtiles",
+  "tiles": 3180,
+  "bytes": 19266790,
+  "bbox": [
+   141.10999999999999,
+   42.82,
+   141.59,
+   43.300000000000004
+  ],
+  "center": [
+   141.35,
+   43.06
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ },
+ "钏路": {
+  "ok": true,
+  "file": "pmtiles/亚洲_日本_钏路.pmtiles",
+  "tiles": 2004,
+  "bytes": 3605277,
+  "bbox": [
+   144.14,
+   42.739999999999995,
+   144.62,
+   43.22
+  ],
+  "center": [
+   144.38,
+   42.98
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "japan"
+ }
+}

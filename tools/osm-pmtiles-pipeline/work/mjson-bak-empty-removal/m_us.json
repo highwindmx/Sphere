@@ -1,0 +1,605 @@
+{
+ "华盛顿": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_华盛顿.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -77.54,
+   38.41,
+   -76.54,
+   39.41
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 111597388,
+  "pbf": "us"
+ },
+ "亚特兰大": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_亚特兰大.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -84.89,
+   33.25,
+   -83.89,
+   34.25
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 80822983,
+  "pbf": "us"
+ },
+ "休斯顿": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_休斯顿.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -95.87,
+   29.26,
+   -94.87,
+   30.26
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 66300265,
+  "pbf": "us"
+ },
+ "芝加哥": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_芝加哥.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -88.13,
+   41.38,
+   -87.13,
+   42.38
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 88384312,
+  "pbf": "us"
+ },
+ "费城": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_费城.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -75.67,
+   39.45,
+   -74.67,
+   40.45
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 68359065,
+  "pbf": "us"
+ },
+ "迈阿密": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_迈阿密.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -80.69,
+   25.26,
+   -79.69,
+   26.26
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 45040516,
+  "pbf": "us"
+ },
+ "丹佛": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_丹佛.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -105.22999999999999,
+   39.5,
+   -104.75,
+   39.980000000000004
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 42571583,
+  "pbf": "us"
+ },
+ "克利夫兰": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_克利夫兰.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -81.92999999999999,
+   41.26,
+   -81.45,
+   41.74
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 14550989,
+  "pbf": "us"
+ },
+ "凤凰城": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_凤凰城.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -112.30999999999999,
+   33.21,
+   -111.83,
+   33.690000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 39292125,
+  "pbf": "us"
+ },
+ "匹兹堡": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_匹兹堡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -80.23599999999999,
+   40.199999999999996,
+   -79.756,
+   40.68
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 23325416,
+  "pbf": "us"
+ },
+ "圣何塞": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_圣何塞.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -122.13,
+   37.1,
+   -121.65,
+   37.580000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 33038249,
+  "pbf": "us"
+ },
+ "圣安东尼奥": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_圣安东尼奥.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -98.72999999999999,
+   29.180000000000003,
+   -98.25,
+   29.66
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 18570330,
+  "pbf": "us"
+ },
+ "圣路易斯": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_圣路易斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -90.44,
+   38.39,
+   -89.96000000000001,
+   38.870000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 15805457,
+  "pbf": "us"
+ },
+ "圣迭戈": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_圣迭戈.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -117.39999999999999,
+   32.48,
+   -116.92,
+   32.96
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 21818524,
+  "pbf": "us"
+ },
+ "堪萨斯城": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_堪萨斯城.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -94.82,
+   38.86,
+   -94.34,
+   39.34
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 24225528,
+  "pbf": "us"
+ },
+ "夏洛特": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_夏洛特.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -81.08,
+   34.989999999999995,
+   -80.60000000000001,
+   35.47
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 28166267,
+  "pbf": "us"
+ },
+ "奥兰多": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_奥兰多.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -81.61999999999999,
+   28.3,
+   -81.14,
+   28.779999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 25516076,
+  "pbf": "us"
+ },
+ "奥斯汀": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_奥斯汀.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -97.97999999999999,
+   30.03,
+   -97.5,
+   30.509999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 30652481,
+  "pbf": "us"
+ },
+ "安克雷奇": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_安克雷奇.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -150.14000000000001,
+   60.98,
+   -149.66,
+   61.46
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 5352289,
+  "pbf": "us"
+ },
+ "布法罗": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_布法罗.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -79.11999999999999,
+   42.65,
+   -78.64,
+   43.13
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 10488459,
+  "pbf": "us"
+ },
+ "底特律": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_底特律.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -83.28999999999999,
+   42.089999999999996,
+   -82.81,
+   42.57
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 29298734,
+  "pbf": "us"
+ },
+ "拉斯维加斯": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_拉斯维加斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -115.38,
+   35.93,
+   -114.9,
+   36.410000000000004
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 22487289,
+  "pbf": "us"
+ },
+ "新奥尔良": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_新奥尔良.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -90.30999999999999,
+   29.71,
+   -89.83,
+   30.189999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 13084566,
+  "pbf": "us"
+ },
+ "旧金山": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_旧金山.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -122.66,
+   37.53,
+   -122.18,
+   38.010000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 28709697,
+  "pbf": "us"
+ },
+ "明尼阿波利斯": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_明尼阿波利斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -93.50999999999999,
+   44.739999999999995,
+   -93.03,
+   45.22
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 31807019,
+  "pbf": "us"
+ },
+ "杰克逊维尔": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_杰克逊维尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -81.89999999999999,
+   30.09,
+   -81.42,
+   30.569999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 14840575,
+  "pbf": "us"
+ },
+ "檀香山": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_美国_檀香山.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -158.10000000000002,
+   21.07,
+   -157.62,
+   21.549999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 6080176,
+  "pbf": "us"
+ },
+ "波士顿": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_波士顿.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -71.3,
+   42.12,
+   -70.82000000000001,
+   42.6
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 36641138,
+  "pbf": "us"
+ },
+ "波特兰": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_波特兰.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -122.92,
+   45.28,
+   -122.44000000000001,
+   45.760000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 35653918,
+  "pbf": "us"
+ },
+ "洛杉矶": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_洛杉矶.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -118.47999999999999,
+   33.809999999999995,
+   -118.0,
+   34.29
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 84123412,
+  "pbf": "us"
+ },
+ "盐湖城": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_盐湖城.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -112.13,
+   40.519999999999996,
+   -111.65,
+   41.0
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 22326186,
+  "pbf": "us"
+ },
+ "纳什维尔": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_纳什维尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -87.02,
+   35.919999999999995,
+   -86.54,
+   36.4
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 14097451,
+  "pbf": "us"
+ },
+ "纽约": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_纽约.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -74.25,
+   40.47,
+   -73.77000000000001,
+   40.95
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 57975441,
+  "pbf": "us"
+ },
+ "西雅图": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_西雅图.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -122.57,
+   47.37,
+   -122.09,
+   47.85
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 32639128,
+  "pbf": "us"
+ },
+ "辛辛那提": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_辛辛那提.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -84.75,
+   38.86,
+   -84.27000000000001,
+   39.34
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 26016864,
+  "pbf": "us"
+ },
+ "达拉斯": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_达拉斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -97.03999999999999,
+   32.54,
+   -96.56,
+   33.02
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 37773372,
+  "pbf": "us"
+ },
+ "里士满": {
+  "ok": true,
+  "file": "pmtiles/北美洲_美国_里士满.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -77.67999999999999,
+   37.3,
+   -77.2,
+   37.78
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 22839973,
+  "pbf": "us"
+ },
+ "夏威夷": {
+  "ok": true,
+  "file": "pmtiles/北美洲_北美洲_夏威夷.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -156.02,
+   19.38,
+   -155.78,
+   19.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 268922,
+  "pbf": "us"
+ },
+ "古巴北岸": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   -77.82000000000001,
+   21.779999999999998,
+   -77.58,
+   22.02
+  ],
+  "pbf": "us"
+ },
+ "圣萨尔瓦多": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   -74.52000000000001,
+   23.98,
+   -74.28,
+   24.220000000000002
+  ],
+  "pbf": "us"
+ },
+ "伊斯帕尼奥拉": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   -70.82000000000001,
+   19.68,
+   -70.58,
+   19.92
+  ],
+  "pbf": "us"
+ }
+}

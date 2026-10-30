@@ -1,0 +1,36 @@
+{
+ "特拉维夫": {
+  "ok": true,
+  "file": "pmtiles/亚洲_以色列_特拉维夫.pmtiles",
+  "resumed": true,
+  "bbox": [
+   34.54,
+   31.84,
+   35.02,
+   32.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 14064732,
+  "pbf": "israel-and-palestine"
+ },
+ "耶路撒冷": {
+  "ok": true,
+  "file": "pmtiles/亚洲_巴勒斯坦_耶路撒冷.pmtiles",
+  "tiles": 10081,
+  "bytes": 32384668,
+  "bbox": [
+   34.73,
+   31.27,
+   35.73,
+   32.269999999999996
+  ],
+  "center": [
+   35.23,
+   31.769999999999996
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "israel-and-palestine"
+ }
+}

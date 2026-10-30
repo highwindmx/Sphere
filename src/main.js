@@ -11,7 +11,10 @@ import { LAYERS, LAYER_MAP, LAYER_CATEGORIES, resolveCategories } from './layers
 import { createLayerRenderer } from './layer-renderer.js';
 import { createOffscreenIndicator } from './offscreen.js';
 import { loadTiangong, isTiangongLoaded, removeTiangong } from './tiangong.js';
-import { startRouteTour, isRouteTourFollowing, isRouteTourActive } from './route-tour.js';
+import { startRouteTour, stopRouteTour, isRouteTourFollowing, isRouteTourActive, seekRouteTourToStation } from './route-tour.js';
+import { createSearchRegistry } from './search-registry.js';
+import { initSearchBar } from './search-bar.js';
+import { createShownLayers } from './shown-layers.js';
 import {
   ImagerySourceManager,
   getSourceDef,
@@ -21,6 +24,8 @@ import {
 import { resolvePolarProfile, getSeason, profileStatusText } from './polar-profiles.js';
 import { initSourcePanel } from './source-settings.js';
 import { createMoonMission } from './rocket.js';
+import { createHistoryAtlas, mountHistoryPanel } from './history-atlas.js';
+import { initOsmScene, attachGlobeOverlay, mountOsmNavBtn, setOsmNavBtnVisible } from './osm-map-scene.js';
 import {
   createMoonViewer,
   destroyMoonViewer,
@@ -122,7 +127,6 @@ function getBaseMode() {
 // ====== DOM 引用 ======
 const statusEl = $('status');
 const exagValEl = $('exagVal');
-const layerSearchEl = $('layerSearch');
 const layersTreeEl = $('layersTree');
 
 // ====== 活动视图（地球/月球/火星）与统一坐标控件 ======
@@ -140,6 +144,10 @@ const _lastCursor = { lon: null, lat: null };   // 最近一次坐标（「留�
 // 负值**保留符号**（🌊 -4,118 m），只用图标区分水上/水下，不抹掉负号。
 function showAlt(v) {
   if (!coordAltEl) return;
+  // 火星无可用 3D 高程源（MOLA 瓦片近乎全空，见 mars.js），海拔读数恒为 —、无意义，整行隐藏；
+  // 切回地球/月球时 refreshCoordUI→writeCoord→showAlt 会重新显示并填真实值。
+  if (isMarsMode) { coordAltEl.style.display = 'none'; return; }
+  coordAltEl.style.display = '';
   if (typeof v !== 'number' || !isFinite(v)) { coordAltEl.innerHTML = '⛰ <span class="na">—</span>'; return; }
   const r = Math.round(v).toLocaleString();   // toLocaleString 对负数自带符号：-4,118
   coordAltEl.innerHTML = v < -5
@@ -152,11 +160,15 @@ function showAlt(v) {
 
 // 把一对经纬度 + 海拔写进左上控件（placeholder 只在输入为空时可见）
 function writeCoord(lon, lat, ground) {
+  // OSM 场景（Cesium 容器已隐藏、渲染循环暂停）时，坐标由 osm-map-scene.js 调用本函数刷新，
+  // 否则进 OSM 后经纬度就冻在切换瞬间不再变化。
   _lastCursor.lon = lon; _lastCursor.lat = lat;
   if (coordLonEl) coordLonEl.placeholder = `经度 ${lon.toFixed(2)}°`;
   if (coordLatEl) coordLatEl.placeholder = `纬度 ${lat.toFixed(2)}°`;
   showAlt(ground);
 }
+// 暴露给 osm-map-scene.js：OSM 场景（Cesium 容器隐藏、渲染循环暂停）下刷新经纬度回显
+window.__writeCoord = writeCoord;
 const _carto2 = new Cesium.Cartographic();   // 采样海拔用的临时 Cartographic
 
 // 当前应读取的 Viewer：月球/火星模式返回各自 viewer，否则地球 viewer
@@ -165,6 +177,202 @@ function activeViewer() {
   if (isMarsMode) return getMarsViewer();
   return viewer;
 }
+// 供 osm-map-scene.js 浮动区使用（跨模块取当前 viewer）
+window.activeViewer = activeViewer;
+
+// ====== 瓦片加载状态灯（左上角 #tileDot，三层同心 SVG）======
+// 中心色 = 状态（黄加载中 / 绿完成 / 绿+双层环已达最大精度 / 橙部分为空 / 红上游不可达）
+// 中环   = 进度弧（globe.tileLoadProgressEvent，公开 API，替代原先读私有 _surface 队列）
+// 外环   = 来源（实线=本地直出，虚线=回源在线；数据来自 /api/tile-health）
+// ⚠ 不能只看 globe.tilesLoaded：上游不可达时 app.py 回 1×1 透明 PNG(200)，
+//   Cesium 视为成功、队列照样清空 → 会把「画面是空的」报成「已全部加载」。
+const tileDotEl = $('tileDot');
+const _tdProg = tileDotEl ? tileDotEl.querySelector('.td-prog') : null;
+const _TD_C = 2 * Math.PI * 6.2;          // 中环周长，用 dashoffset 画进度弧
+const _TD_BOUND = new WeakSet();
+let _tdState = null;      // 已应用的状态（变了才动 DOM）
+let _tdSrc = null;
+let _tdPending = 0;       // 待载瓦片数
+let _tdHealth = null;     // /api/tile-health 最近一次结果
+let _tdDoneStreak = 0;    // 防抖：回到「完成」需连续 2 次采样（600ms）
+
+/** 待载数走公开事件；viewer 会随星球切换重建，故按 globe 实例去重绑定 */
+function _tdBindProgress(v) {
+  try {
+    const g = v && v.scene && v.scene.globe;
+    if (!g || _TD_BOUND.has(g)) return;
+    _TD_BOUND.add(g);
+    if (g.tileLoadProgressEvent) {
+      g.tileLoadProgressEvent.addEventListener((n) => { _tdPending = Math.max(0, n | 0); });
+    }
+  } catch { /* 忽略 */ }
+}
+
+/** 数据源上限：影像与地形取最严格的那个。
+ *  ⚠ 必须过滤 <=0：本地地形等自定义 provider 可能把 maximumLevel 暴露成 0，
+ *    直接取 min 会被它拉到 0，导致「已达最大精度」永远误触发（探针实测）。 */
+let _tdLevels = [];
+function _tdMaxLevel(v) {
+  try {
+    const g = v.scene.globe;
+    const ls = [];
+    const ils = g.imageryLayers;
+    for (let i = 0; i < ils.length; i++) {
+      const p = ils.get(i) && ils.get(i).imageryProvider;
+      if (p && typeof p.maximumLevel === 'number' && isFinite(p.maximumLevel) && p.maximumLevel > 0) ls.push(p.maximumLevel);
+    }
+    const tp = g.terrainProvider;
+    if (tp && typeof tp.maximumLevel === 'number' && isFinite(tp.maximumLevel) && tp.maximumLevel > 0) ls.push(tp.maximumLevel);
+    _tdLevels = ls;
+    return ls.length ? Math.min.apply(null, ls) : null;
+  } catch { return null; }
+}
+
+/** 相机高度 → 目标瓦片级别（近似）。只用于「是否已顶到数据源上限」的布尔判断，
+ *  ±1 级误差不影响结论；取不到就返回 null，该态自动不显示。 */
+function _tdLevelEstimate(v) {
+  try {
+    const cg = v.camera.positionCartographic;
+    if (!cg || !isFinite(cg.height) || cg.height <= 0) return null;
+    const fov = (v.camera.frustum && v.camera.frustum.fov) || 1.0;
+    const pxH = (v.scene.canvas && v.scene.canvas.clientHeight) || 800;
+    const mpp = (2 * cg.height * Math.tan(fov / 2)) / pxH;
+    const circ = 2 * Math.PI * 6378137 * Math.cos(cg.latitude || 0);
+    if (!(mpp > 0) || !(circ > 0)) return null;
+    return Math.log2(circ / (256 * mpp * 2));
+  } catch { return null; }
+}
+
+function _tdIsMaxLevel(v) {
+  const mx = _tdMaxLevel(v);
+  const L = _tdLevelEstimate(v);
+  if (mx == null || L == null) return false;
+  return L >= mx - 0.5;
+}
+
+const _TD_TEXT = {
+  loading: '正在加载瓦片',
+  done: '视野内瓦片已全部加载',
+  max: '已达数据源最大精度（再放大不会更清晰）',
+  degraded: '部分瓦片为空（上游失败，已回退透明图）',
+  unreachable: '上游不可达（画面为空，不是加载慢）',
+};
+
+function refreshTileDot() {
+  if (!tileDotEl) return;
+  const v = activeViewer();
+  const globe = v && v.scene && v.scene.globe;
+  if (!globe) return;
+  _tdBindProgress(v);
+  let loading;
+  try { loading = !globe.tilesLoaded; } catch { return; }
+
+  // 防抖：进入 loading 立即生效；回到 done 需连续 2 次采样（600ms），
+  // 否则快速飞行时 tilesLoaded 反复跳变会让灯高频黄绿闪。
+  _tdDoneStreak = loading ? 0 : _tdDoneStreak + 1;
+  const settled = loading || _tdDoneStreak >= 2;
+
+  let state;
+  if (loading) state = 'loading';
+  else if (!settled) state = _tdState || 'loading';   // 未稳定 → 维持原态，不闪
+  else {
+    const hh = _tdHealth || {};
+    if (hh.unreachable) state = 'unreachable';
+    else if (hh.degraded) state = 'degraded';
+    else if (_tdIsMaxLevel(v)) state = 'max';
+    else state = 'done';
+  }
+
+  const h = _tdHealth || {};
+  const src = h.total ? (h.remote > 0 ? 'remote' : 'local') : 'none';
+
+  if (state !== _tdState) {
+    _tdState = state;
+    tileDotEl.classList.remove('is-loading', 'is-done', 'is-max', 'is-degraded', 'is-unreachable');
+    tileDotEl.classList.add('is-' + state);
+  }
+  if (src !== _tdSrc) {
+    _tdSrc = src;
+    tileDotEl.classList.remove('src-local', 'src-remote', 'src-none');
+    tileDotEl.classList.add('src-' + src);
+  }
+
+  // 进度弧：pending 越多弧越空（无总数也能表达「在推进 vs 卡住」）
+  if (_tdProg) {
+    const frac = loading ? 1 / (1 + _tdPending / 8) : 1;
+    _tdProg.style.strokeDasharray = _TD_C.toFixed(2);
+    _tdProg.style.strokeDashoffset = (_TD_C * (1 - frac)).toFixed(2);
+  }
+
+  const srcTxt = src === 'none' ? '' : (src === 'local' ? `本地 ${h.local} 片` : `在线 ${h.remote} 片（本地 ${h.local}）`);
+  const pendTxt = loading && _tdPending > 0 ? `，待载 ${_tdPending} 块` : '';
+  const fbTxt = h.fallback ? `，回退 ${h.fallback} 块` : '';
+  tileDotEl.title = `${_TD_TEXT[state]}${srcTxt ? ' · ' + srcTxt : ''}${pendTxt}${fbTxt} · 点此重载瓦片`;
+  tileDotEl.setAttribute('aria-label', tileDotEl.title);
+}
+setInterval(refreshTileDot, 300);
+
+// ====== 点击灯 = 强制重载瓦片 ======
+// Cesium 没有「只重载视野内局部」的公开 API（失败瓦片会带指数退避重试，队列可能长期不清零）。
+// 唯一可靠的重置手段是重建数据源：影像层 remove + addImageryProvider（丢弃已解码纹理与失败态），
+// 地形则重建 provider 实例。本地已落盘的瓦片命中磁盘缓存会秒回，代价只是短暂重解码。
+function forceReloadTiles() {
+  const v = activeViewer();
+  if (!v) return;
+  const g = v.scene && v.scene.globe;
+  if (!g) return;
+  try {
+    // 月球/火星各有自己的地形 provider，地球才用本地 terrarium 地形
+    if (!isMoonMode && !isMarsMode && typeof createLocalTerrainProvider === 'function') {
+      g.terrainProvider = createLocalTerrainProvider();
+    }
+  } catch { /* 星球模式无本地地形，忽略 */ }
+  try {
+    const ls = g.imageryLayers;
+    const saved = [];
+    for (let i = ls.length - 1; i >= 0; i--) {
+      const L = ls.get(i);
+      saved.unshift({ p: L.imageryProvider, alpha: L.alpha, show: L.show, brightness: L.brightness,
+        contrast: L.contrast, hue: L.hue, saturation: L.saturation, gamma: L.gamma });
+      ls.remove(L, false);
+    }
+    for (const s of saved) {
+      const n = ls.addImageryProvider(s.p);
+      if (!n) continue;
+      n.alpha = s.alpha; n.show = s.show; n.brightness = s.brightness; n.contrast = s.contrast;
+      n.hue = s.hue; n.saturation = s.saturation; n.gamma = s.gamma;
+    }
+  } catch { /* 图层重建失败不影响主流程 */ }
+  try { v.scene.requestRender(); } catch { /* 忽略 */ }
+  _tdDoneStreak = 0;   // 立即回到 loading，别让残留的稳定计数维持绿色假象
+}
+if (tileDotEl) {
+  tileDotEl.addEventListener('click', forceReloadTiles);
+  tileDotEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); forceReloadTiles(); }
+  });
+}
+window.__forceReloadTiles = forceReloadTiles;
+
+// 瓦片来源/回退统计：app.py 在 serve 直出 / 代理回源 / 透明回退三处埋点，5s 滑动窗
+setInterval(async () => {
+  try {
+    const r = await fetch('/api/tile-health', { cache: 'no-store' });
+    if (r.ok) _tdHealth = await r.json();
+  } catch { /* 后端不可用则保留旧值，灯自动退化为纯 tilesLoaded 两态 */ }
+}, 2000);
+
+window.__tileDotDbg = (override) => {
+  const v = activeViewer();
+  const L = _tdLevelEstimate(v);
+  const mx = _tdMaxLevel(v);
+  if (override && typeof override.health === 'object') _tdHealth = override.health;   // 便于探针注入假数据验状态机
+  return {
+    state: _tdState, src: _tdSrc, pending: _tdPending, health: _tdHealth,
+    maxLevel: mx, levels: _tdLevels.slice(), isMax: _tdIsMaxLevel(v),
+    estLevel: L == null ? null : +L.toFixed(2),
+  };
+};
 
 // 刷新「视点」坐标（相机正下方地面海拔）到左上控件；悬停光标时由光标读数接管。
 // 地球用 globe.getHeight（含垂直夸张还原），月球用 sampleMoonHeight（Terrarium DEM），
@@ -231,13 +439,54 @@ function updateCursorCoord(clientX, clientY) {
 
 document.addEventListener('mousemove', (e) => updateCursorCoord(e.clientX, e.clientY));
 
+/** 顶部居中浮层提示（2026-10-24 用户：原右上角提示改为页面顶部、自动隐藏、不挤占空间）。
+ *  absolute 定位本就不在文档流里（不挤占空间）；这里加**自动淡出**：
+ *  显示 2.8 s 后开始淡出（0.4 s），期间有新消息则重置计时（连续操作不会闪断）。
+ *  kind = '' / 'ok' / 'warn' / 'error' → 左侧色条。 */
+let _statusTimer = 0;
 function setStatus(msg, kind = '') {
+  if (!statusEl) return;
+  if (_statusTimer) { clearTimeout(_statusTimer); _statusTimer = 0; }
   statusEl.textContent = msg || '';
   statusEl.className = kind ? kind : '';
+  if (msg) {
+    statusEl.classList.add('show');
+    _statusTimer = setTimeout(() => {
+      statusEl.classList.remove('show');
+      _statusTimer = setTimeout(() => { statusEl.textContent = ''; _statusTimer = 0; }, 450);
+    }, 2800);
+  } else {
+    statusEl.classList.remove('show');
+  }
 }
 
 // ====== 场景初始化 ======
-const viewer = new Cesium.Viewer('cesiumContainer', {
+// WebGL 预检：GPU 进程崩溃/驱动异常时，getContext 直接返回 null。
+// 这里先探一次，给清晰指引而不是只抛 Cesium 栈跟踪（后者用户无法自行恢复）。
+(function _probeWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl2') || c.getContext('webgl');
+    if (!gl) {
+      const box = document.getElementById('cesiumContainer');
+      if (box) box.innerHTML =
+        '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+        'color:#e8b4b4;font:15px/1.7 system-ui;padding:28px;text-align:center">' +
+        '⚠ 浏览器 WebGL 初始化失败。<br>请按顺序排查：①完全关闭并重启浏览器；' +
+        '②打开 chrome://gpu 确认 WebGL 为 “Hardware accelerated”；③访问 get.webgl.org 自检；' +
+        '④必要时更新显卡驱动或换浏览器。<br><br>' +
+        '（此类报错多见于 GPU 进程崩溃之后，重启浏览器通常即可恢复，并非应用代码问题。）</div>';
+      throw new Error('WebGL unavailable — viewer creation skipped');
+    }
+  } catch (e) {
+    if (/WebGL unavailable/.test(e.message)) throw e;
+    // 探测本身异常（极少见）→ 不拦截，仍交给 Cesium 正常处理
+  }
+})();
+
+var viewer = null;   // var 不进 TDZ：WebGL 不可用时保持 null，早期回调的 !v 守卫可正常短路
+try {
+viewer = new Cesium.Viewer('cesiumContainer', {
   animation: false,
   timeline: false,
   geocoder: false,
@@ -258,7 +507,30 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   useBrowserRecommendedResolution: (window.devicePixelRatio || 1) <= 1,
   contextOptions: { webgl: { alpha: false } },
 });
+} catch (e) {
+  const box = document.getElementById('cesiumContainer');
+  if (box) box.innerHTML =
+    '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+    'color:#e8b4b4;font:15px/1.7 system-ui;padding:28px;text-align:center">' +
+    '⚠ 浏览器 WebGL 初始化失败（Cesium 创建 Viewer 抛错）。<br>请：①完全关闭并重启浏览器；' +
+    '②打开 chrome://gpu 确认 WebGL 状态；③访问 get.webgl.org 自检；④更新显卡驱动或换浏览器。<br><br>' +
+    '（多为 GPU 进程崩溃后现象，重启浏览器即可恢复。）</div>';
+  console.error('[WebGL] Cesium Viewer 创建失败：', e);
+  throw e;
+}
 window.viewer = viewer;
+
+// WebGL 上下文丢失（GPU 进程崩溃 / 驱动重置）时给出明确提示，而非静默黑屏
+try {
+  const _cv = viewer.scene.canvas;
+  _cv.addEventListener('webglcontextlost', (ev) => {
+    ev.preventDefault();
+    if (typeof setStatus === 'function') setStatus('⚠ WebGL 上下文丢失（GPU 进程可能崩溃），请重启浏览器恢复。', 'err');
+  });
+  _cv.addEventListener('webglcontextrestored', () => {
+    if (typeof setStatus === 'function') setStatus('WebGL 上下文已恢复。', 'ok');
+  });
+} catch (e) {}
 viewer.allowDataSourcesToSuspendAnimation = false;
 
 // 导航控件（指南针/缩放/重置视图/比例尺），仅地球 Viewer；重置视图对齐「回到中国」
@@ -270,6 +542,29 @@ const earthNav = new CesiumNavigation(viewer, {
   orientation: { heading: 0, pitch: Cesium.Math.toRadians(-90), roll: 0 },
   duration: 1.5,
 });
+// 地表OSM 贴邻钮：挂到导航控件列正下方（独立 DOM，视觉同款）
+mountOsmNavBtn(viewer);
+
+// ====== 右侧控件自动隐藏（2026-10-30 用户要求）======
+// 默认隐藏（透明 + 不拦截鼠标，避免挡住球体拖拽）；hover 视口右缘区域或操作球体（拖拽/旋转/相机变化）
+// 时被唤起，离开后自动收起。Cesium 原生导航与 .scene-nav-col 都锚定视口右缘，永远同列。
+(function setupRightDockAutoHide() {
+  const body = document.body;
+  const ZONE = 120;          // 视口右缘 120px 内视为「靠近右侧控件」
+  let hideTimer = null;
+  const show = () => { body.classList.add('right-active'); if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; } };
+  const hideSoon = (ms) => { if (hideTimer) clearTimeout(hideTimer); hideTimer = setTimeout(() => body.classList.remove('right-active'), ms); };
+  document.addEventListener('mousemove', (e) => {
+    if (e.clientX > window.innerWidth - ZONE) show();
+    else hideSoon(500);              // 离开右缘 500ms 后收起
+  }, { passive: true });
+  // 操作球体（地球）：按下或相机变化 → 显形并保持 2500ms，方便顺手用缩放/指北针
+  const poke = () => { show(); hideSoon(2500); };
+  try {
+    viewer.scene.canvas.addEventListener('pointerdown', poke);
+    viewer.scene.camera.changed.addEventListener(poke);
+  } catch { /* 忽略 */ }
+})();
 
 const globe = viewer.scene.globe;
 globe.depthTestAgainstTerrain = true;
@@ -281,13 +576,13 @@ globe.baseColor = Cesium.Color.fromCssColorString('#26527c');
 globe.maximumScreenSpaceError = 4;
 
 // 本地 Terrarium 高程地形（离线瓦片 tiles/terrain/…；缺失瓦片由内置 provider 自动回退父级）
-// 下载范围（与 tools/download_terrain_tiles.py 对齐）：z0-z5 全球 + z6-z9 中国 bbox + z10-z12 山脉兴趣点。
+// 下载范围（与 tools/build/download_terrain_tiles.py 对齐）：z0-z5 全球 + z6-z9 中国 bbox + z10-z12 山脉兴趣点。
 // callback 内置区域判断：z0-z5 全球、z6-z9 中国、z10-z12 仅山脉矩形，其余回落父级。
 // ⚠ 极冠黑洞根因（2026-10-16）：globe 的瓦片几何 tilingScheme 只读 terrainProvider.tilingScheme，
 // 本 provider 曾直接声明 WebMercatorTilingScheme → 地球 quadtree 在 ±85.05° 外没有任何几何，
 // 极冠区域永远是黑洞。现改为「对外 GeographicTilingScheme + 内部墨卡托瓦片重采样」，
 // 详见 terrarium-provider.js 文件头。
-// 运行 python tools/download_terrain_tiles.py 后才有明显地形。
+// 运行 python tools/build/download_terrain_tiles.py 后才有明显地形。
 try {
   globe.terrainProvider = createLocalTerrainProvider();
 } catch { /* 保持默认椭球（Geographic，极区几何仍在） */ }
@@ -304,7 +599,7 @@ viewer.camera.setView({
 
 // ====== 图层渲染器 ======
 const renderer = createLayerRenderer(viewer, globe);
-// 调试/冒烟导出（tools/layers-smoke.mjs 依赖）
+// 调试/冒烟导出（tools/smoke/layers-smoke.mjs 依赖）
 window.renderer = renderer;
 
 // ====== 屏幕边缘指示器：球背面/屏外标注的折线引出（2026-10-17）======
@@ -1140,13 +1435,45 @@ function applyOnlineBase(layerOptions = {}) {
 
 // ====== 左侧面板交互 ======
 
-// 地形夸张滑块
+// 地形夸张（2026-10-29 用户第 2 点：滑块改成按钮控件）
+// 真值仍是隐藏的 #exag range：按钮只负责「点一下换一个档位」并派发 input，
+// 上面这套 input 逻辑（globe.terrainExaggeration + 极冠/瓦片自动跟随）一行都不用改。
 $('exag').addEventListener('input', (e) => {
   const v = parseFloat(e.target.value);
   globe.terrainExaggeration = v;
   exagValEl.textContent = `${v.toFixed(1)}×`;
   // 极冠为底层影像层（非实体），自动跟随地形夸张，无需任何同步处理。
 });
+
+// 行星模式下的场景控件收放（2026-10-29）：地形夸张改成按钮后与晨夜/海底同列，
+// 原来那行是「仅地球模式显示」，若整行隐藏会把晨夜与地形夸张一起带走。改为只收地球专属的两项。
+// （侧栏 OSM 钮 2026-10-29 第五轮已删除，不再有 #osmRow；OSM 入口只剩右侧导航列那一颗。）
+function setSceneControlsMode(isEarth) {
+  $('btnOceanBase')?.classList.toggle('hidden', !isEarth);
+  $('btnGeocode')?.classList.toggle('hidden', !isEarth);
+  // 2026-10-30：月球/火星模式不需要「回到中国」按钮（地球模式才保留，作为切回地球入口）
+  $('btnHome')?.classList.toggle('hidden', !isEarth);
+  setOsmNavBtnVisible(isEarth);   // 右侧 🗺 是唯一 OSM 入口，月/火模式必须收起
+}
+
+const EXAG_STEPS = [1.0, 1.2, 1.5, 2.0, 3.0];
+function syncExagBtn() {
+  const btn = $('exagBtn');
+  if (!btn) return;
+  const v = parseFloat($('exag').value);
+  btn.classList.toggle('active', v > 1.0001);
+  btn.title = `地形夸张 ${v.toFixed(1)}× —— 点击切换到下一档（1.0 / 1.2 / 1.5 / 2 / 3×，超过 3× 会明显失真）`;
+}
+$('exagBtn')?.addEventListener('click', () => {
+  const cur = parseFloat($('exag').value);
+  // 找下一个更大的档位，到头回到 1.0（= 关闭夸张）
+  const next = EXAG_STEPS.find((v) => v > cur + 1e-6) ?? EXAG_STEPS[0];
+  $('exag').value = String(next);
+  $('exag').dispatchEvent(new Event('input', { bubbles: true }));
+  syncExagBtn();
+  setStatus(next > 1.0001 ? `地形夸张 ${next.toFixed(1)}×` : '地形夸张关闭（1.0× 真实比例）', 'ok');
+});
+syncExagBtn();
 
 // 晨夜光影（极冠为底层影像层，自动跟随全局光照，无需任何额外处理）
 $('lighting').addEventListener('click', () => {
@@ -1195,6 +1522,79 @@ $('btnOceanBase')?.addEventListener('click', () => {
   setOceanBasemap(!oceanLayer);
 });
 
+// （已删除：OSM 栅格街道底图按钮全家 —— 2026-10-25 用户拍板删按钮+JS。
+//   osmLayer/probeOsmUpstream/setOsmBasemap 仅服务 btnOsm；功能由「地表OSM」MapLibre
+//   场景完全取代，图源设置抽屉里的 osm 源定义保留不动。）
+
+
+
+// ====== 点击地球反查地名（Nominatim 逆向地理编码；境外/参考，限频 1 次/秒） ======
+let geocodeMode = false;
+let _geoPopup = null;
+let _lastGeoReq = 0;
+function ensureGeoPopup() {
+  if (_geoPopup) return _geoPopup;
+  const el = document.createElement('div');
+  el.id = 'geoPopup';
+  el.className = 'geo-popup hidden';
+  el.innerHTML = '<button class="geo-close" title="关闭">✕</button><div class="geo-name"></div><div class="geo-meta"></div>';
+  document.body.appendChild(el);
+  el.querySelector('.geo-close').addEventListener('click', (e) => { e.stopPropagation(); el.classList.add('hidden'); });
+  _geoPopup = el;
+  return el;
+}
+function showGeoPopup(screenPos, name, meta) {
+  const el = ensureGeoPopup();
+  const rect = viewer.scene.canvas.getBoundingClientRect();
+  let left = rect.left + screenPos.x + 14;
+  let top = rect.top + screenPos.y + 14;
+  // 防止超出右/下边界（画布宽高）
+  const maxX = rect.left + rect.width - el.offsetWidth - 8;
+  const maxY = rect.top + rect.height - el.offsetHeight - 8;
+  if (left > maxX) left = rect.left + screenPos.x - el.offsetWidth - 14;
+  if (top > maxY) top = rect.top + screenPos.y - el.offsetHeight - 14;
+  el.style.left = Math.max(rect.left + 4, left) + 'px';
+  el.style.top = Math.max(rect.top + 4, top) + 'px';
+  el.querySelector('.geo-name').textContent = name;
+  el.querySelector('.geo-meta').textContent = meta ? `📍 ${meta.lat.toFixed(4)}, ${meta.lon.toFixed(4)}` : '';
+  el.classList.remove('hidden');
+}
+async function reverseGeocode(lat, lon, screenPos) {
+  const now = Date.now();
+  if (now - _lastGeoReq < 1100) {
+    showGeoPopup(screenPos, '请求过快（Nominatim 限 1 次/秒），稍后再点', null);
+    return;
+  }
+  _lastGeoReq = now;
+  showGeoPopup(screenPos, '查询中…', null);
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}&zoom=10&accept-language=zh-CN&email=sphere-demo@example.com`;
+    const r = await fetch(url, { headers: { 'User-Agent': 'Sphere/1.0 (https://github.com/highwindmx/sphere; demo)' } });
+    if (!r.ok) { showGeoPopup(screenPos, `查询失败（HTTP ${r.status}）`, null); return; }
+    const j = await r.json();
+    const name = (j && (j.display_name || j.name)) || '未知地点';
+    showGeoPopup(screenPos, name, { lat, lon });
+  } catch (e) {
+    showGeoPopup(screenPos, '查询失败（网络 / CORS 拦截）', null);
+  }
+}
+const geocodeHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+geocodeHandler.setInputAction((movement) => {
+  if (!geocodeMode) return;
+  const cart = viewer.camera.pickEllipsoid(movement.position, viewer.scene.globe.ellipsoid);
+  if (!cart) { showGeoPopup(movement.position, '此处不是地球表面（请点向地球陆地/海洋）', null); return; }
+  const c = Cesium.Cartographic.fromCartesian(cart);
+  const lat = Cesium.Math.toDegrees(c.latitude);
+  const lon = Cesium.Math.toDegrees(c.longitude);
+  reverseGeocode(lat, lon, movement.position);
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+$('btnGeocode')?.addEventListener('click', () => {
+  geocodeMode = !geocodeMode;
+  const btn = $('btnGeocode');
+  btn && btn.classList.toggle('active', geocodeMode);
+  setStatus(geocodeMode ? '地名查询已开启：点地球任意位置反查地名（再点关闭）' : '地名查询已关闭', 'ok');
+});
+
 // ====== 侧栏折叠 ======
 $('panelToggle')?.addEventListener('click', () => {
   const collapsed = document.body.classList.toggle('panel-collapsed');
@@ -1227,9 +1627,424 @@ function flyToLonLat() {
   if (coordLatEl) coordLatEl.value = '';
   navHistoryPush(lon, lat);
 }
+
+// 天宫轨道：加载 / 移除（检索栏「航天」快捷行用，可反复开关——原分区按钮的唯一替代）
+function toggleTiangong() {
+  if (isTiangongLoaded()) {
+    removeTiangong(viewer);
+    viewer.clock.shouldAnimate = false;
+    syncTiangongButtons();
+    setStatus('天宫空间站已移除', 'ok');
+    return;
+  }
+  loadTiangong(viewer).then((ok) => {
+    if (!ok) { setStatus('天宫轨道加载失败', 'warn'); return; }
+    viewer.clock.shouldAnimate = true;
+    syncTiangongButtons();
+    setStatus('天宫空间站轨道已加载（闭环 · 实时位置）', 'ok');
+  });
+}
+
+// 程序化启用图层。航天两个特殊层（天宫/探月）原本挂在已删除的「航天探索」分区按钮上，
+// 没有 #layer-* checkbox，这里直接走它们的特例逻辑；其余图层复用到手点一致的 checkbox 分支。
+function enableLayerById(id) {
+  if (id === 'tiangong') {
+    if (isTiangongLoaded()) {
+      setStatus('天宫空间站轨道已在显示中', 'ok');
+      syncTiangongButtons();
+      return true;
+    }
+    toggleTiangong();
+    return true;
+  }
+  if (id === 'moonmission') {
+    enterRocketMode();
+    return true;
+  }
+  const cb = document.getElementById(`layer-${id}`);
+  if (!cb) return false;
+  if (!cb.checked) {
+    cb.checked = true;
+    cb.dispatchEvent(new Event('change'));
+  }
+  return true;
+}
+
+// ⭐⭐ OSM 全屏场景（#osmMap z-index 5）整屏盖住球体容器：在它里面点检索结果，
+// 相机飞了、球体也切了，用户看到的仍是 MapLibre 那张图 —— 表现就是「点了没反应」
+// （2026-10-29 用户实测：进 OSM 后搜「火星」点条目毫无变化）。
+// 故任何检索落地 / 切星球动作前，必须先退出 OSM 回到球体。isActive 为假时什么也不做（幂等）。
+function exitOsmIfActive() {
+  const s = window.__osmScene;
+  if (s && typeof s.isActive === 'function' && s.isActive()) {
+    try { s.hide(); } catch (e) { /* 忽略：退回球体失败也不该阻断后续动作 */ }
+    return true;
+  }
+  return false;
+}
+
+// 检索栏的地名 / 巡礼 / 历史 / 图层 都是地球数据（坐标系 WGS84、历史疆域只属于地球），
+// 月球/火星模式下直接飞会飞到错的椭球上。
+// 2026-10-29 第四轮：从「只提示不动作」改为**自动切回地球**——检索结果已经统一成「点了就跳到该去的地方」，
+// 月面/火星会切球体，地球条目再只弹提示就成了单向门（用户得自己找回 🌍 按钮）。
+function requireEarth(what) {
+  exitOsmIfActive();          // OSM 场景里先退出来，否则飞了也看不见
+  if (!isMoonMode && !isMarsMode) return true;
+  if (planetBusy()) {   // 探月任务第三/四幕就在月球容器里演出，切走会销毁场景
+    setStatus('探月任务进行中，请先停止任务再切回地球', 'warn');
+    return false;
+  }
+  setStatus(`${what}在地球上，已切回 🌍 地球`, 'ok');
+  enterEarthMode();
+  return true;
+}
+
+// ====== 检索结果 → 「显示图层」列表 ======
+// 2026-10-29 用户设计：检索结果点一下 = 往「显示图层」里加一行；**默认互斥**（新项顶掉旧项），
+// 每行可手动点亮叠加、可 ✕ 移除。侧栏不再有「标注图层」勾选树与「历史时空」面板。
+let shownList = null;
+
+// 按经纬度飞行定位
+function flyToCoords(lon, lat, name) {
+  if (!requireEarth('地名定位')) return;
+  const ellipsoid = isMoonMode ? MOON_ELLIPSOID : isMarsMode ? MARS_ELLIPSOID : Cesium.Ellipsoid.WGS84;
+  activeViewer().camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(lon, lat, 2e6, ellipsoid),
+    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
+    duration: 1.8,
+  });
+  setStatus(`已飞到 ${name ? name + '（' : ''}${lon.toFixed(2)}°, ${lat.toFixed(2)}°${name ? '）' : ''}`, 'ok');
+  navHistoryPush(lon, lat);
+}
+
+/**
+ * 该经纬度当前是否落在球背面（2026-10-29）。
+ * 判据与 layer-renderer 的 EllipsoidalOccluder 同源：scaled space（各分量 /椭球半径）下
+ * dot(P, C) ≥ 1 才可见；< 1 即被地平线挡住。月/火模式与 OSM 场景内一律返回 false（那两套
+ * 视角/坐标系不同，标"背面"没有意义）。
+ */
+function isBacksideLonLat(lon, lat) {
+  if (!isFinite(lon) || !isFinite(lat)) return false;
+  if (isMoonMode || isMarsMode) return false;
+  try {
+    const ell = Cesium.Ellipsoid.WGS84;
+    const p = Cesium.Cartesian3.fromDegrees(lon, lat, 0, ell);
+    const c = Cesium.Cartesian3.multiplyComponents(viewer.camera.positionWC, ell.oneOverRadii, new Cesium.Cartesian3());
+    const q = Cesium.Cartesian3.multiplyComponents(p, ell.oneOverRadii, new Cesium.Cartesian3());
+    return Cesium.Cartesian3.dot(q, c) < 1;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 底部「统一巡游面板」(#tourPanel) 是单例，路线巡礼 / 天宫 / 历史时间轴 / 探月 都想写它。
+ * 谁要接管就先喊一声，把别人的播放循环停掉——否则会出现「长征还在、时间轴没切到天宫」的串台
+ * （用户 2026-10-29 实测反馈的 3 号问题，根因就是 route-tour 的 rAF 没停、还在覆盖同一批 DOM）。
+ */
+function releasePanels(keep) {
+  // ⭐ 2026-10-30：探月任务第三/四幕就在**月球容器**里演出，用的是同一块 #tourPanel。
+  //   而 enterMoonMode() 内部必然调 releasePanels(null)（本意是清掉地球侧的巡礼/历史/天宫），
+  //   历史巡礼的收尾 __historyStopTour → hideEraPanel() 会顺手把整块面板 hidden 掉、
+  //   并清空 #tourTicks → 结果「第三幕一开始时间轴不见了」。
+  //   任务播放期间面板归探月，历史只能停表、不能收面板。
+  const missionOwnsPanel = !!moonMission && moonMission.isActive();
+  if (keep !== 'tour' && isRouteTourActive()) {
+    stopRouteTour();
+    markOffPrefix('tour:');
+  }
+  if (keep !== 'history') {
+    window.__historyStopTour?.(missionOwnsPanel ? { keepPanel: true } : undefined);
+    markOffPrefix('history:');
+  }
+  if (keep !== 'tiangong' && isTiangongLoaded()) {
+    removeTiangong(viewer);
+    viewer.clock.shouldAnimate = false;
+    syncTiangongButtons();
+    markOffPrefix('layer:tiangong');
+  }
+  // 兜底（2026-10-30）：上面三条收尾路径（stopRouteTour / hideEraPanel / removeTiangong）里
+  //   任何一条把共用的 #tourPanel 藏了，只要探月任务还在播就得立刻取回来——第三/四幕没有时间轴
+  //   等于没法看进度。（幕节点 ticks 的补画在 rocket.js ensureTourPanelOwned 里做。）
+  if (missionOwnsPanel) $('tourPanel')?.classList.remove('hidden');
+}
+
+/** 把「显示图层」里以某前缀开头的行统一置灰（外部停了播放，列表不能还亮着） */
+function markOffPrefix(prefix) {
+  if (!shownList) return;
+  for (const k of [...shownList.items.keys()]) {
+    if (k.startsWith(prefix)) shownList.markOff(k);
+  }
+}
+
+// 关闭图层（与 enableLayerById 对称）
+function disableLayerById(id) {
+  if (id === 'tiangong') {
+    if (isTiangongLoaded()) {
+      removeTiangong(viewer);
+      viewer.clock.shouldAnimate = false;
+      syncTiangongButtons();
+    }
+    return true;
+  }
+  if (id === 'moonmission') {
+    try { exitRocketMode(); } catch { /* 没在任务里就忽略 */ }
+    return true;
+  }
+  const cb = document.getElementById(`layer-${id}`);
+  if (!cb) return false;
+  if (cb.checked) { cb.checked = false; cb.dispatchEvent(new Event('change')); }
+  return true;
+}
+
+// 检索栏"图层"结果 → 显示图层列表项
+function applyLayerEntry(entry) {
+  const id = entry.id;
+  const isSpace = (id === 'tiangong' || id === 'moonmission');
+  shownList?.add({
+    key: `layer:${id}`,
+    label: entry.name,
+    icon: entry.icon || (isSpace ? '🛰️' : '👁'),
+    kind: isSpace ? 'tiangong' : 'layer',
+    setOn: () => {
+      if (isSpace) releasePanels(id === 'tiangong' ? 'tiangong' : 'mission');
+      enableLayerById(id);
+    },
+    setOff: () => disableLayerById(id),
+  });
+}
+
+// 检索栏"地点"结果 → 只做定位（不参与互斥：它不产生图层，只是"最近去过哪"）
+function applyPlaceEntry(entry) {
+  shownList?.add({
+    key: `place:${entry.name}`,
+    label: entry.name,
+    icon: '📍',
+    kind: 'place',
+    mutex: false,
+    setOn: () => flyToCoords(entry.lon, entry.lat, entry.name),
+    setOff: () => {},
+  });
+}
+
+// 检索栏"巡礼"结果 → 启层 + 起路线巡礼 +（若指定节点）瞬移落点（不重放中间路径）
+function applyTourEntry(entry) {
+  const stationName = entry.station ? (entry.station.name || entry.station.title) : '';
+  shownList?.add({
+    key: `tour:${entry.layerId}`,
+    label: stationName ? `${entry.layerName} · ${stationName}` : entry.layerName,
+    icon: '🎬',
+    kind: 'tour',
+    setOn: () => {
+      if (!requireEarth('路线巡礼')) return;
+      releasePanels('tour');
+      enableLayerById(entry.layerId);
+      startRouteTour(viewer, {
+        title: entry.ent.name || entry.layerName,
+        color: entry.ent.color,
+        coords: entry.ent.coords,
+        stations: entry.ent.stations,
+      });
+      if (entry.station) {
+        seekRouteTourToStation((s) => s === entry.station
+          || (entry.station.name && s.name === entry.station.name)
+          || (entry.station.body && s.body === entry.station.body));
+      }
+    },
+    setOff: () => {
+      if (isRouteTourActive()) stopRouteTour();
+      disableLayerById(entry.layerId);
+    },
+  });
+}
+
+// 检索栏"历史"结果 → 起历史时间轴（底部巡礼面板接管）
+function applyHistoryEntry(entry) {
+  const isMs = entry.histKind === 'milestone';
+  shownList?.add({
+    key: `history:${isMs ? entry.dynastyKey : entry.key}${isMs ? ':' + entry.year : ''}`,
+    label: isMs ? `${entry.dynastyTitle} · ${entry.year < 0 ? '前' + -entry.year : entry.year} 年` : entry.title,
+    icon: '📜',
+    kind: 'history',
+    setOn: () => { launchHistory(entry); },
+    setOff: () => {
+      window.__historyStopTour?.();
+      const a = historyAtlas || window.historyAtlas;
+      if (a && a.isEnabled()) a.setEnabled(false);
+    },
+  });
+}
+
+// ====== 检索栏「月面 / 火星」结果（2026-10-29 用户要求：两个行星的标注也做进搜索）======
+// 两个球体各有独立 Cesium.Viewer 与独立标注组（MOON_GROUPS / MARS_GROUPS），不在 LAYERS 里，
+// 所以点击流程是「切球体 → 勾上所属分组 → 相机飞到该点」，而不是地球那套 checkbox 派发。
+const BODY_CFG = {
+  moon: {
+    label: '月球',
+    ellipsoid: () => MOON_ELLIPSOID,
+    viewer: () => getMoonViewer(),
+    isOn: () => isMoonMode,
+    enter: () => enterMoonMode(),
+    toggle: (gid, on) => toggleLunarGroup(gid, on),
+  },
+  mars: {
+    label: '火星',
+    ellipsoid: () => MARS_ELLIPSOID,
+    viewer: () => getMarsViewer(),
+    isOn: () => isMarsMode,
+    enter: () => enterMarsMode(),
+    toggle: (gid, on) => toggleMarsGroup(gid, on),
+  },
+};
+
+function bodyCfg(body) {
+  return body === 'mars' ? BODY_CFG.mars : BODY_CFG.moon;
+}
+
+/** 同步侧栏里那个分组复选框（月球模式下月面标注面板才可见，未建时静默跳过） */
+function setBodyGroupChecked(body, groupId, checked) {
+  const sel = body === 'mars' ? '#marsGroups' : '#moonGroups';
+  const cb = document.querySelector(`${sel} input[data-group="${CSS.escape(groupId)}"]`);
+  if (cb) cb.checked = checked;
+}
+
+/** 跳到某个行星标注：必要时先切球体 */
+function flyToBodyPoint(entry) {
+  const cfg = bodyCfg(entry.body);
+  exitOsmIfActive();                         // ⭐ OSM 场景整屏盖住球体，不退出来切了也看不见
+  releasePanels(null);                       // 底部面板上的地球巡礼/历史/天宫在这里没有意义，先让位
+  if (!cfg.isOn()) cfg.enter();
+  cfg.toggle(entry.groupId, true);           // 标注组默认不勾选，不勾就飞过去只看得到一片地表
+  setBodyGroupChecked(entry.body, entry.groupId, true);
+  const v = cfg.viewer();
+  if (!v) { setStatus(`${cfg.label}视图尚未就绪，请稍后重试`, 'warn'); return; }
+  // 高度取该球体半径的 0.25（月球≈434 km、火星≈849 km），正俯视：
+  //   ⚠ 不要用 -60° 斜视 —— 倾斜后视线中心会偏到标注点以北几百公里，标注点直接跑出画面
+  //   （2026-10-29 实测：-60° 时静海落在屏幕外，以为"没跳过去"）。
+  const R = cfg.ellipsoid().maximumRadius;
+  v.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(entry.lon, entry.lat, R * 0.25, cfg.ellipsoid()),
+    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-90), roll: 0 },
+    duration: 1.6,
+  });
+  setStatus(`已跳到 ${cfg.label} · ${entry.groupName} · ${entry.name}（${entry.lon.toFixed(1)}°, ${entry.lat.toFixed(1)}°）`, 'ok');
+}
+
+function applyBodyEntry(entry) {
+  const cfg = bodyCfg(entry.body);
+  shownList?.add({
+    key: entry.id,
+    label: `${entry.name} · ${entry.groupName}`,
+    icon: entry.body === 'mars' ? '🔴' : '🌙',
+    kind: 'body',
+    setOn: () => flyToBodyPoint(entry),
+    setOff: () => {
+      cfg.toggle(entry.groupId, false);
+      setBodyGroupChecked(entry.body, entry.groupId, false);
+    },
+  });
+}
+
+// 历史巡礼启动（含首次加载 2.7MB 中国史包）
+async function launchHistory(entry) {
+  if (!requireEarth('历史时空')) return;
+  const atlas = historyAtlas || window.historyAtlas;
+  if (!atlas) { setStatus('历史时空尚未就绪，请稍后重试', 'warn'); return; }
+  releasePanels('history');
+  try {
+    if (!atlas.isEnabled()) await atlas.setEnabled(true);
+    if (typeof window.__historyStartEraTour !== 'function') {
+      setStatus('历史巡礼未就绪（面板挂载未完成）', 'warn');
+      return;
+    }
+    if (entry.histKind === 'milestone') await window.__historyStartEraTour(entry.dynastyKey, entry.year);
+    else await window.__historyStartEraTour(entry.key);
+  } catch (e) {
+    console.error('[search] 历史巡礼启动失败', e);
+    setStatus('历史巡礼启动失败（见控制台）', 'warn');
+  }
+}
+
 $('btnGoto')?.addEventListener('click', flyToLonLat);
 $('gotoLat')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') flyToLonLat(); });
 $('gotoLon')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') flyToLonLat(); });
+
+// ====== 局部放大（地物密集区一键拉近：四渡赤水等）======
+let _localFocus = null;
+const LOCAL_FOCUS_CHIP_ID = 'localFocusChip';
+
+function enterLocalFocus(v, focus) {
+  if (!v || !focus) return;
+  if (isRouteTourActive()) stopRouteTour(); // 巡礼相机跟随会与新视角打架，先停
+  exitLocalFocus(v, false);                 // 清掉上一次的框/按钮（不还原相机）
+  const lon = focus.lon, lat = focus.lat;
+  const height = focus.height ?? 140000;
+  const heading = Cesium.Math.toRadians(focus.heading ?? 0);
+  const pitch = Cesium.Math.toRadians(focus.pitch ?? -90);
+
+  // 记录当前视角，供「返回」还原
+  _localFocus = {
+    viewer: v,
+    saved: {
+      destination: Cesium.Cartesian3.clone(v.camera.positionWC),
+      heading: v.camera.heading,
+      pitch: v.camera.pitch,
+      roll: v.camera.roll,
+    },
+    ringEnt: null,
+  };
+
+  // 视野框：以 focus 为圆心的实线圆（闭合环不用 PolylineDash，垂直/闭合段会丢线）
+  if (focus.ringRadius) {
+    const r = focus.ringRadius;
+    const dLat = r / 111320;
+    const dLon = r / (111320 * Math.cos(Cesium.Math.toRadians(lat)));
+    const arr = [];
+    for (let i = 0; i <= 128; i++) {
+      const a = (i / 128) * Math.PI * 2;
+      arr.push(lon + dLon * Math.cos(a), lat + dLat * Math.sin(a));
+    }
+    _localFocus.ringEnt = v.entities.add({
+      polyline: {
+        positions: Cesium.Cartesian3.fromDegreesArray(arr),
+        width: 2,
+        material: Cesium.Color.fromCssColorString('#ffd24a').withAlpha(0.85),
+        arcType: Cesium.ArcType.GEODESIC,
+      },
+    });
+  }
+
+  v.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(lon, lat, height),
+    orientation: { heading, pitch, roll: 0 },
+    duration: 1.6,
+  });
+
+  let chip = document.getElementById(LOCAL_FOCUS_CHIP_ID);
+  if (!chip) {
+    chip = document.createElement('button');
+    chip.id = LOCAL_FOCUS_CHIP_ID;
+    chip.className = 'local-focus-chip';
+    document.body.appendChild(chip);
+  }
+  chip.textContent = `↩ 返回全景（${focus.title || '局部放大'}）`;
+  chip.onclick = () => exitLocalFocus(v, true);
+}
+
+function exitLocalFocus(v, restoreCamera) {
+  if (!_localFocus) return;
+  const st = _localFocus;
+  _localFocus = null;
+  if (st.ringEnt && st.viewer) st.viewer.entities.remove(st.ringEnt);
+  document.getElementById(LOCAL_FOCUS_CHIP_ID)?.remove();
+  if (restoreCamera && st.saved && st.viewer) {
+    st.viewer.camera.flyTo({
+      destination: st.saved.destination,
+      orientation: { heading: st.saved.heading, pitch: st.saved.pitch, roll: st.saved.roll },
+      duration: 1.2,
+    });
+  }
+}
 
 // ====== 浏览历史（坐标控件内可折叠列表：倒序 · 点击回飞 · 可清空 · localStorage 持久化）=====
 const NAV_HIST_KEY = 'sphere-nav-history';
@@ -1319,6 +2134,9 @@ function buildMoonGroupUI() {
     label.className = 'check';
     const cb = document.createElement('input');
     cb.type = 'checkbox';
+    // dataset 供检索栏跳转时反查/同步（月面标注没有 #layer-* 那套 id 体系）
+    cb.dataset.body = 'moon';
+    cb.dataset.group = g.id;
     cb.addEventListener('change', () => toggleLunarGroup(g.id, cb.checked));
     label.appendChild(cb);
     const span = document.createElement('span');
@@ -1337,6 +2155,8 @@ function buildMarsGroupUI() {
     label.className = 'check';
     const cb = document.createElement('input');
     cb.type = 'checkbox';
+    cb.dataset.body = 'mars';
+    cb.dataset.group = g.id;
     cb.addEventListener('change', () => toggleMarsGroup(g.id, cb.checked));
     label.appendChild(cb);
     const span = document.createElement('span');
@@ -1346,15 +2166,28 @@ function buildMarsGroupUI() {
   }
 }
 
+// 右侧导航列里「按球体出现」的钮（2026-10-30 用户：从侧栏「月面标注 / 火星标注」移出；同轮 🏠 星球归位已删）：
+//   月球 = 🛰 高清瓦片；火星 = 🌋 地形晕渲；地球 = 都隐藏（地球归位在坐标栏 🏠）。
+// 地球专属的 🌊 海底 / 🗺 OSM / 📍 查地名 由 setSceneControlsMode() 管，两处互不重叠。
+function setNavColBodyMode(mode) {
+  const show = (id, on) => { const el = $(id); if (el) el.classList.toggle('hidden', !on); };
+  show('btnMoonHiRes', mode === 'moon');
+  show('btnMarsHillshade', mode === 'mars');
+}
+
 function enterMoonMode() {
+  exitOsmIfActive();          // ⭐ 从 OSM 场景点 🌙：必须先退 OSM，否则 #osmMap 仍盖在最上层
   $('btnMoonMode').classList.add('active');
   $('btnEarthMode').classList.remove('active');
   $('btnMarsMode').classList.remove('active');
   $('cesiumContainer').classList.add('hidden');
   $('marsContainer').classList.add('hidden');
   $('moonContainer').classList.remove('hidden');
-  $('marsSection').classList.add('hidden');
-  $('moonSection').classList.remove('hidden');
+  setNavColBodyMode('moon');                 // 🏠 归位 + 🛰 高清瓦片（火星晕渲收起）
+  setHistorySectionVisible(false);          // 历史政区只属于地球
+  setSceneControlsMode(false);   // 海底 / OSM / 点图查地名 仅地球（晨夜 / 地形夸张保留）
+  releasePanels(null);           // 地球的巡礼 / 历史 / 天宫 在月球上没有意义，先停掉（面板不能继续播）
+  attachGlobeOverlay();   // 浮动区（回顶视/提示卡）挪到月球容器
   createMoonViewer('moonContainer', (msg, kind) => setStatus(msg, kind));
   buildMoonGroupUI();
   // 坐标栏切换为月球：标记模式 + 绑定月球相机刷新（仅绑一次）
@@ -1371,14 +2204,18 @@ function enterMoonMode() {
 }
 
 function enterMarsMode() {
+  exitOsmIfActive();          // ⭐ 同上：OSM 场景下切火星必须先退 OSM
   $('btnMarsMode').classList.add('active');
   $('btnEarthMode').classList.remove('active');
   $('btnMoonMode').classList.remove('active');
   $('cesiumContainer').classList.add('hidden');
   $('moonContainer').classList.add('hidden');
   $('marsContainer').classList.remove('hidden');
-  $('moonSection').classList.add('hidden');
-  $('marsSection').classList.remove('hidden');
+  setNavColBodyMode('mars');                 // 🏠 归位 + 🌋 地形晕渲（月面瓦片收起）
+  setHistorySectionVisible(false);          // 历史政区只属于地球
+  setSceneControlsMode(false);   // 海底 / OSM / 点图查地名 仅地球（晨夜 / 地形夸张保留）
+  releasePanels(null);           // 同月球：地球的巡礼 / 历史 / 天宫 先停
+  attachGlobeOverlay();   // 浮动区（回顶视/提示卡）挪到火星容器
   createMarsViewer('marsContainer', (msg, kind) => setStatus(msg, kind));
   buildMarsGroupUI();
   isMarsMode = true;
@@ -1394,16 +2231,22 @@ function enterMarsMode() {
 }
 
 function enterEarthMode() {
+  exitOsmIfActive();          // ⭐ 同上（OSM 里点 🌍 / 检索地球条目）
   $('btnMoonMode').classList.remove('active');
   $('btnMarsMode').classList.remove('active');
   $('btnEarthMode').classList.add('active');
   $('cesiumContainer').classList.remove('hidden');
   $('moonContainer').classList.add('hidden');
   $('marsContainer').classList.add('hidden');
-  $('moonSection').classList.add('hidden');
-  $('marsSection').classList.add('hidden');
+  setNavColBodyMode('earth');                // 🏠 / 🛰 / 🌋 全部收起（地球归位在坐标栏）
+  setHistorySectionVisible(true);              // 回到地球：历史时空可用
+  setSceneControlsMode(true);   // 回到地球：海底 / OSM / 点图查地名 恢复
+  attachGlobeOverlay();   // 浮动区（回顶视/提示卡）挪回地球容器
   destroyMoonViewer();
   destroyMarsViewer();
+  // 两个行星的 Viewer 已销毁、分组勾选状态也不再保留 → 列表里对应的行星标注行同步置灰
+  markOffPrefix('moon:');
+  markOffPrefix('mars:');
   isMoonMode = false;
   isMarsMode = false;
   refreshCoordUI();
@@ -1433,35 +2276,24 @@ $('btnEarthMode').addEventListener('click', () => {
 });
 
 // 火星地形晕渲开关（见 mars.js：火星无可用 3D 高程源，用晕渲图层做视觉地形）
+// 2026-10-30：侧栏「火星标注」整块移除 → 改成右侧导航列的 🌋 按钮，按当前状态点亮/熄灭
 {
-  const cb = $('marsHillshade');
-  if (cb) {
-    cb.checked = isMarsHillshade();
-    cb.addEventListener('change', () => {
-      setMarsHillshade(cb.checked, (msg, kind) => setStatus(msg, kind));
+  const btn = $('btnMarsHillshade');
+  if (btn) {
+    const sync = () => btn.classList.toggle('active', !!isMarsHillshade());
+    btn.addEventListener('click', () => {
+      setMarsHillshade(!isMarsHillshade(), (msg, kind) => setStatus(msg, kind));
+      sync();
     });
+    sync();
   }
 }
 
-// 冒烟/调试钩子：星球 viewer 句柄 + 月面高程采样（tools/planet-smoke.mjs 用）
+// 冒烟/调试钩子：星球 viewer 句柄 + 月面高程采样（tools/smoke/planet-smoke.mjs 用）
 window.__getMarsViewer = getMarsViewer;
 window.__getMoonViewer = getMoonViewer;
 window.__sampleMoonHeight = sampleMoonHeight;
 window.__isMoonTerrainReady = isMoonTerrainReady;
-
-// 火星一键归位：飞回默认俯瞰视角（水手谷—塔尔西斯一带）
-$('btnMarsHome')?.addEventListener('click', () => {
-  const mv = getMarsViewer();
-  if (!mv) return;
-  try { mv.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); } catch { /* 忽略 */ }
-  const r = MARS_ELLIPSOID.radii.x;
-  mv.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(300, -10, r * 3.0, MARS_ELLIPSOID),
-    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-90), roll: 0 },
-    duration: 1.5,
-  });
-  setStatus('已回到火星默认俯瞰视角', 'ok');
-});
 
 // ====== 探月任务控制器（三幕剧）======
 let moonMission = null;
@@ -1495,15 +2327,30 @@ function updateSiteButtons() {
   for (const [id, on] of pairs) $(id)?.classList.toggle('active', on);
 }
 
+// ====== 天宫轨道按钮同步 ======
+// 文案恒定「📡 天宫轨道」，用 .active 金边表示"已加载"（与晨夜/海底/地名等开关一致），
+// 不再变成「移除轨道」——那样会把"这是什么"的信息丢掉，只留下一个动作词。
+// ⚠ 图层树与「航天探索」面板各有一个按钮（此前两者都写 id=btnTiangong，重复 id 导致
+//    getElementById 只能更新第一个），统一用 data-tiangong 标记后批量同步。
+function syncTiangongButtons() {
+  const on = isTiangongLoaded();
+  document.querySelectorAll('[data-tiangong]').forEach((b) => {
+    b.textContent = '📡 天宫轨道';
+    b.classList.toggle('active', on);
+    b.title = on
+      ? '天宫空间站轨道已加载：再点一次即移除（也可取消上方勾选）'
+      : '加载天宫空间站轨道：400 km 圆轨道示意 · 显示地面时间 / 星下点 / 光照';
+  });
+}
+
 function enterRocketMode() {
   // 与天宫轨道互斥：进入任务时移除天宫并同步取消其顶层勾选
   if (isTiangongLoaded()) {
     removeTiangong(viewer);
     const tgCb = document.getElementById('layer-tiangong');
     if (tgCb) tgCb.checked = false;
-    const tgBtn = document.getElementById('btnTiangong');
-    if (tgBtn) tgBtn.textContent = '📡 天宫轨道';
   }
+  syncTiangongButtons();
   // 探月任务在地球 Viewer 上演出：若停在月球/火星模式先切回（否则预览火箭画在隐藏容器里）
   if (isMoonMode || isMarsMode) enterEarthMode();
   // 勾选同步：任务面板打开 ⇔ 探月任务顶层勾选
@@ -1520,7 +2367,7 @@ function enterRocketMode() {
   $('rocketControls')?.classList.remove('hidden');
   $('rocketPhase')?.classList.add('hidden');
   $('tourPause')?.classList.add('hidden');
-  $('compressNote')?.classList.add('hidden');
+  $('timelineNote')?.classList.add('hidden');
   $('actCard')?.classList.add('hidden');
   $('tourBar').style.width = '0%';
   $('tourProgressText').textContent = '0%';
@@ -1542,33 +2389,18 @@ function exitRocketMode() {
 }
 
 // 月面高清瓦片开关（见 lunar.js：本地贴图只有 ≈660 m/像素，高清需在线源）
+// 2026-10-30：同上，侧栏复选框 → 右侧导航列 🛰 按钮（默认开启，按钮点亮）
 {
-  const cb = $('moonHiRes');
-  if (cb) {
-    cb.checked = isLunarHiRes();
-    cb.addEventListener('change', () => {
-      setLunarHiRes(cb.checked, (msg, kind) => setStatus(msg, kind));
+  const btn = $('btnMoonHiRes');
+  if (btn) {
+    const sync = () => btn.classList.toggle('active', !!isLunarHiRes());
+    btn.addEventListener('click', () => {
+      setLunarHiRes(!isLunarHiRes(), (msg, kind) => setStatus(msg, kind));
+      sync();
     });
+    sync();
   }
 }
-
-// 月球一键归位：停止跟随，飞回默认正面俯瞰视角（对应地球「回到中国」）
-$('btnMoonHome')?.addEventListener('click', () => {
-  const mv = getMoonViewer();
-  if (!mv) return;
-  if (moonMission && moonMission.isActive()) {
-    setStatus('探月任务进行中，请先「停止」任务再归位', 'warn');
-    return;
-  }
-  try { mv.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); } catch { /* 忽略 */ }
-  const r = MOON_ELLIPSOID.radii.x;
-  mv.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(0, 10, r * 3.2, MOON_ELLIPSOID),
-    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-90), roll: 0 },
-    duration: 1.5,
-  });
-  setStatus('已回到月球正面俯瞰视角', 'ok');
-});
 
 $('siteJiuquan')?.addEventListener('click', () => { getMission().setLaunchSite('jiuquan'); updateSiteButtons(); });
 $('siteWenchang')?.addEventListener('click', () => { getMission().setLaunchSite('wenchang'); updateSiteButtons(); });
@@ -1657,78 +2489,13 @@ document.addEventListener('pointerdown', (e) => {
   if (_tourMenuEl && !e.target.closest('.tour-menu')) closeTourMenu();
 }, true);
 
-// ====== 图层悬停只显示当前（hover 预览，替代原「只显示当前」按钮） ======
-// 默认关闭：必须由用户在「标注图层」面板显式勾选「悬停预览图层」才生效，
-// 开关状态持久化到 localStorage。
-let layerHoverActive = false;
-let layerHoverTimer = 0;
-const HOVER_PREVIEW_KEY = 'sphere-layer-hover-preview';
-function getHoverPreviewEnabled() {
-  try { return localStorage.getItem(HOVER_PREVIEW_KEY) === '1'; } catch { return false; }
-}
-function initHoverPreviewToggle() {
-  const cb = $('layerHoverPreview');
-  if (!cb) return;
-  cb.checked = getHoverPreviewEnabled();
-  cb.addEventListener('change', () => {
-    try { localStorage.setItem(HOVER_PREVIEW_KEY, cb.checked ? '1' : '0'); } catch { /* 忽略 */ }
-    if (!cb.checked) cancelLayerHover(true); // 关掉时立刻恢复，避免卡在"只显示一层"
-    setStatus(cb.checked ? '悬停预览已开启：鼠标停在图层行 0.35 秒即临时只显示该图层' : '悬停预览已关闭', 'ok');
-  });
-}
-
-// 按 groupStateMap 恢复全部图层可见性与复选框
-function restoreLayerVisibility() {
-  for (const [layerId, gmap] of groupStateMap) {
-    for (const [gid, on] of gmap) {
-      renderer.setGroupVisible(layerId, gid, on);
-      const c = document.getElementById(`layer-${layerId}-g-${gid}`);
-      if (c) c.checked = on;
-    }
-    const layer = LAYERS.find((l) => l.id === layerId);
-    if (layer) updateTopCbState(layer);
-  }
-}
-
-// 进入预览：全部隐藏，仅显示悬停图层
-function enterLayerHover(layer) {
-  if (layerHoverActive) return;
-  layerHoverActive = true;
-  for (const [layerId, gmap] of groupStateMap) {
-    for (const [gid] of gmap) {
-      renderer.setGroupVisible(layerId, gid, false);
-      const c = document.getElementById(`layer-${layerId}-g-${gid}`);
-      if (c) c.checked = false;
-    }
-  }
-  const gmap = groupStateMap.get(layer.id);
-  if (gmap) {
-    for (const [gid] of gmap) {
-      renderer.setGroupVisible(layer.id, gid, true);
-      const c = document.getElementById(`layer-${layer.id}-g-${gid}`);
-      if (c) c.checked = true;
-    }
-  }
-  setStatus(`仅显示「${layer.name}」，移开鼠标恢复`, 'ok');
-}
-
-function cancelLayerHover(restore) {
-  clearTimeout(layerHoverTimer);
-  if (!layerHoverActive) return;
-  layerHoverActive = false;
-  if (restore) {
-    restoreLayerVisibility();
-    setStatus('');
-  }
-}
-
 function buildLayerTree() {
   layersTreeEl.innerHTML = '';
   const categories = resolveCategories();
 
   for (const cat of categories) {
-    // 航天探索作为「工具」单独渲染为按钮（见 buildToolsPanel），不进勾选树
-    if (cat.id === 'space') { buildToolsPanel(cat); continue; }
+    // 航天类（天宫 / 探月）不进勾选树：入口已移到检索栏的「航天」快捷行（2026-10-29 删除航天探索分区）
+    if (cat.id === 'space') continue;
 
     const catEl = document.createElement('details');
     catEl.className = 'layer-category';
@@ -1752,6 +2519,12 @@ function buildLayerTree() {
       const layerEl = document.createElement('div');
       layerEl.className = 'layer-item';
       layerEl.dataset.layerId = layer.id;
+      // 供统一检索栏过滤图层树（旧 #layerSearch 从未给 dataset.search 赋值，等于失效；这里补上）
+      layerEl.dataset.search = (
+        layer.name + ' ' + layer.id + ' ' + (layer.description || '')
+        + (layer.id === 'tiangong' ? ' 天宫 轨道 空间站' : '')
+        + (layer.id === 'moonmission' ? ' 探月 月球 火箭' : '')
+      ).toLowerCase();
 
       // 分组状态初始化
       const layerGroupState = new Map();
@@ -1768,7 +2541,6 @@ function buildLayerTree() {
       topCb.type = 'checkbox';
       topCb.id = `layer-${layer.id}`;
       topCb.addEventListener('change', () => {
-        cancelLayerHover(true); // 悬停预览期间手动操作则先恢复全量状态
         const checked = topCb.checked;
         // 天宫空间站为动态图层（groups 为空，实体由 tiangong.js 运行时创建）
         if (layer.id === 'tiangong') {
@@ -1779,8 +2551,7 @@ function buildLayerTree() {
                 topCb.checked = false;
                 setStatus('天宫轨道加载失败', 'warn');
           } else {
-            const b = document.getElementById('btnTiangong');
-            if (b) b.textContent = '📡 移除轨道';
+            syncTiangongButtons();
             setStatus('天宫空间站轨道已加载（闭环 · 实时位置）', 'ok');
             // 开启时钟动画以驱动轨道运行（空闲时关闭以省电，见下方移除分支）
             viewer.clock.shouldAnimate = true;
@@ -1791,8 +2562,7 @@ function buildLayerTree() {
         removeTiangong(viewer);
         // 关闭时钟动画，恢复空闲省电（当前仅天宫依赖时钟动画）
         viewer.clock.shouldAnimate = false;
-        const b = document.getElementById('btnTiangong');
-        if (b) b.textContent = '📡 天宫轨道';
+        syncTiangongButtons();
         setStatus('天宫空间站已移除', 'ok');
       }
           return;
@@ -1833,7 +2603,8 @@ function buildLayerTree() {
         const btn = document.createElement('button');
         btn.className = 'layer-space-btn';
         btn.id = 'btnTiangong';
-        btn.textContent = isTiangongLoaded() ? '📡 移除轨道' : '📡 天宫轨道';
+        btn.dataset.tiangong = '1';
+        btn.textContent = '📡 天宫轨道';
         btn.addEventListener('click', () => {
           const cbx = document.getElementById(`layer-${layer.id}`);
           if (cbx) {
@@ -1842,6 +2613,7 @@ function buildLayerTree() {
           }
         });
         head.appendChild(btn);
+        syncTiangongButtons();
       }
       if (layer.id === 'moonmission') {
         const btn = document.createElement('button');
@@ -1852,21 +2624,6 @@ function buildLayerTree() {
           enterRocketMode();
         });
         head.appendChild(btn);
-      }
-
-      // 悬停预览：停留 0.35s 临时只显示当前图层，移开恢复。
-      // 默认关闭（面板上的「悬停预览图层」勾选框控制，记在 localStorage），
-      // 因为它会临时改动勾选框状态，静默开启时容易被误认为"我的勾选被改了"。
-      if (layer.id !== 'tiangong') {
-        layerEl.addEventListener('mouseenter', () => {
-          if (!getHoverPreviewEnabled()) return;
-          clearTimeout(layerHoverTimer);
-          layerHoverTimer = setTimeout(() => enterLayerHover(layer), 350);
-        });
-        layerEl.addEventListener('mouseleave', () => {
-          if (!getHoverPreviewEnabled()) return;
-          cancelLayerHover(true);
-        });
       }
 
       layerEl.appendChild(head);
@@ -1889,7 +2646,6 @@ function buildLayerTree() {
           cb.id = `layer-${layer.id}-g-${g.id}`;
           cb.dataset.groupId = g.id;
           cb.addEventListener('change', () => {
-            cancelLayerHover(true); // 悬停预览期间手动操作则先恢复全量状态
             const checked = cb.checked;
             layerGroupState.set(g.id, checked);
             renderer.setGroupVisible(layer.id, g.id, checked);
@@ -1927,6 +2683,7 @@ function buildLayerTree() {
                   title: ent.name || g.name,
                   color: g.color ?? layer.defaultColor,
                   coords: ent.coords,
+                  stations: ent.stations ?? null,
                 });
               if (polys.length === 1) {
                 start(polys[0]);
@@ -1937,6 +2694,25 @@ function buildLayerTree() {
               }
             });
             row.appendChild(tourBtn);
+          }
+
+          // 局部放大：组内声明 focus 时显示（四渡赤水等地物密集区）
+          if (g.focus) {
+            const focusBtn = document.createElement('button');
+            focusBtn.className = 'layer-space-btn layer-focus-btn';
+            focusBtn.textContent = '🔍';
+            focusBtn.title = `局部放大：${g.focus.title || g.name}`;
+            focusBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (!cb.checked) {
+                cb.checked = true;
+                layerGroupState.set(g.id, true);
+                renderer.setGroupVisible(layer.id, g.id, true);
+                updateTopCbState(layer);
+              }
+              enterLocalFocus(viewer, g.focus);
+            });
+            row.appendChild(focusBtn);
           }
 
           subgroups.appendChild(row);
@@ -1960,120 +2736,6 @@ function updateTopCbState(layer) {
   const someOn = states.some(Boolean);
   cb.checked = allOn;
   cb.indeterminate = someOn && !allOn;
-}
-
-// ====== 航天探索工具面板（独立按钮，不进勾选树）======
-function buildToolsPanel(cat) {
-  const host = document.getElementById('toolButtons');
-  if (!host) return;
-  host.innerHTML = '';
-  for (const layer of cat.layers) {
-    if (layer.id === 'tiangong') {
-      const btn = document.createElement('button');
-      btn.className = 'scene-btn';
-      btn.id = 'btnTiangong';
-      btn.textContent = isTiangongLoaded() ? '📡 移除轨道' : '📡 天宫轨道';
-      btn.addEventListener('click', () => {
-        if (isTiangongLoaded()) {
-          removeTiangong(viewer);
-          viewer.clock.shouldAnimate = false;
-          btn.textContent = '📡 天宫轨道';
-          setStatus('天宫空间站已移除', 'ok');
-        } else {
-          loadTiangong(viewer).then((ok) => {
-            if (!ok) { setStatus('天宫轨道加载失败', 'warn'); return; }
-            viewer.clock.shouldAnimate = true;
-            btn.textContent = '📡 移除轨道';
-            setStatus('天宫空间站轨道已加载（闭环 · 实时位置）', 'ok');
-          });
-        }
-      });
-      host.appendChild(btn);
-    } else if (layer.id === 'moonmission') {
-      const btn = document.createElement('button');
-      btn.className = 'scene-btn';
-      btn.textContent = '🚀 探月任务';
-      btn.addEventListener('click', () => enterRocketMode());
-      host.appendChild(btn);
-    }
-  }
-}
-
-// ====== 场景预设：一键讲清一个故事，避免面对几十个勾选框 ======
-const SCENARIOS = [
-  { id: 'silkroad',  name: '🐫 丝绸之路',   layerIds: ['silkroad', 'cities'] },
-  { id: 'zhenghe',   name: '⛵ 郑和下西洋', layerIds: ['zhenghe'] },
-  { id: 'longmarch', name: '🚩 长征',       layerIds: ['longmarch', 'cities'] },
-  { id: 'shanhai',   name: '⛰️ 山川形胜',   layerIds: ['shanhai', 'wall', 'peaks'] },
-  { id: 'dynasties', name: '🏯 中国朝代',   layerIds: ['dynasties', 'cities'] },
-  { id: 'worldgeo',  name: '🌍 世界地理',   layerIds: ['worldcapitals', 'worldrivers', 'plates'] },
-  { id: 'worldhist', name: '🏛️ 世界史',     layerIds: ['civilizations', 'wonders', 'heritage'] },
-  { id: 'moon',      name: '🌕 探月',       layerIds: [], tools: ['moonmission'] },
-  { id: 'mars',      name: '🔴 火星',       layerIds: [], tools: ['marsmode'], title: '切换到火星视图' },
-];
-
-// 把渲染器实体显隐状态同步回侧栏勾选框（场景预设 / 全清后调用）
-function syncLayerCheckboxes() {
-  for (const layer of LAYERS) {
-    if (layer.id === 'tiangong' || layer.id === 'moonmission') continue;
-    const topCb = document.getElementById('layer-' + layer.id);
-    if (!topCb) continue;
-    const st = groupStateMap.get(layer.id);
-    if (!st) continue;
-    for (const [gid, on] of st) {
-      const sub = document.getElementById('layer-' + layer.id + '-g-' + gid);
-      if (sub) sub.checked = on;
-    }
-    updateTopCbState(layer);
-  }
-}
-
-function applyScenario(sc) {
-  for (const layer of LAYERS) {
-    if (layer.id === 'tiangong' || layer.id === 'moonmission') continue;
-    const on = sc.layerIds.includes(layer.id);
-    const st = groupStateMap.get(layer.id);
-    if (st) for (const gid of st.keys()) st.set(gid, on);
-    renderer.setLayerVisible(layer.id, on);
-  }
-  if (sc.tools && sc.tools.includes('moonmission')) {
-    if (!(moonMission && moonMission.isActive())) enterRocketMode();
-  }
-  if (sc.tools && sc.tools.includes('marsmode')) {
-    if (!planetBusy()) enterMarsMode();
-  }
-  syncLayerCheckboxes();
-  setStatus('已载入场景：' + sc.name, 'ok');
-}
-
-function clearAllScenes() {
-  for (const layer of LAYERS) {
-    if (layer.id === 'tiangong' || layer.id === 'moonmission') continue;
-    const st = groupStateMap.get(layer.id);
-    if (st) for (const gid of st.keys()) st.set(gid, false);
-    renderer.setLayerVisible(layer.id, false);
-  }
-  syncLayerCheckboxes();
-  setStatus('已清空所有图层', 'ok');
-}
-
-function buildSceneButtons() {
-  const host = document.getElementById('sceneButtons');
-  if (!host) return;
-  host.innerHTML = '';
-  for (const sc of SCENARIOS) {
-    const b = document.createElement('button');
-    b.className = 'scene-btn';
-    b.textContent = sc.name;
-    b.title = '一键载入：' + (sc.layerIds.join('、') || sc.title || '（探月任务）');
-    b.addEventListener('click', () => applyScenario(sc));
-    host.appendChild(b);
-  }
-  const clr = document.createElement('button');
-  clr.className = 'scene-btn clear';
-  clr.textContent = '🧹 清空';
-  clr.addEventListener('click', clearAllScenes);
-  host.appendChild(clr);
 }
 
 // ====== 代码版本号（显式化，终结「改了没生效」类扯皮） ======
@@ -2123,12 +2785,127 @@ function initBuildTag() {
   }
 }
 
+// ====== 历史时空：世界历史国界 + 中国历代疆域 ======
+// 数据资产在 public/data/history/（由 tools/history/ 下两个脚本从上游仓库构建）。
+// 面板默认关闭，首次勾选「启用历史时空」才加载 2.7 MB 的中国史包 + 按年分片的世界国界。
+let historyAtlas = null;
+
+function initHistoryAtlas() {
+  const root = $('historyPanel');
+  if (!root) return;
+  try {
+    historyAtlas = createHistoryAtlas(viewer, {
+      onStatus: () => {},
+      onPick: () => {},
+    });
+    mountHistoryPanel(historyAtlas, root).catch((e) => {
+      console.error('[history-atlas] 面板挂载失败', e);
+      root.innerHTML = '<p class="hint">历史时空初始化失败（见控制台）。</p>';
+    });
+  } catch (e) {
+    console.error('[history-atlas] 初始化失败', e);
+  }
+}
+
+/** 切到月球/火星时收起历史时空（政区数据只属于地球） */
+function setHistorySectionVisible(on) {
+  const sec = $('historySection');
+  if (!sec) return;
+  sec.classList.toggle('hidden', !on);
+  if (!on && historyAtlas && historyAtlas.isEnabled()) {
+    window.__historyStopTour?.();
+    historyAtlas.setEnabled(false);
+    const cb = $('histEnable');
+    if (cb) cb.checked = false;
+  }
+}
+
 buildLayerTree();
-initHoverPreviewToggle();
 initOffscreenIndicator();
 initBackfaceToggles();
+initOsmScene();
 initBuildTag();
-buildSceneButtons();
+initHistoryAtlas();
+
+// ====== 统一检索栏（取代「标注图层」勾选树 / 「历史时空」面板 / 「航天探索」分区）======
+// ⚠ 必须包 try/catch：索引构建期间任何一处抛错都发生在模块顶层，会连带整个 app 起不来
+//   （2026-10-29 曾因 kw.push 写错导致 viewer 建好但侧栏全空、检索栏不挂载）。
+try {
+  const searchRegistry = createSearchRegistry();
+  shownList = createShownLayers({ host: $('shownLayers') });
+  window.__shownList = shownList; // 调试/外部停止时同步列表状态用
+  initSearchBar({
+    registry: searchRegistry,
+    ctx: {
+      // ⭐ 每个回调先 exitOsmIfActive()：OSM 全屏场景盖住球体，不退出来点了就像"没反应"
+      // （2026-10-29 用户实测：进 OSM 搜火星条目 → 毫无变化）。requireEarth / flyToBodyPoint
+      // 里也各写了一次（它们还有别的调用入口，如 🎯 定位、🏠 回国、🌙🌍 按钮）。
+      onLayer: (entry) => { exitOsmIfActive(); applyLayerEntry(entry); },
+      onPlace: (entry) => { exitOsmIfActive(); applyPlaceEntry(entry); },
+      onTour: (entry) => { exitOsmIfActive(); applyTourEntry(entry); },
+      onHistory: (entry) => { exitOsmIfActive(); applyHistoryEntry(entry); },
+      onBody: (entry) => { exitOsmIfActive(); applyBodyEntry(entry); },
+      // 2026-10-29：地点结果若当前在球背面，下拉里标「🌗 背面」——背面标注在球体上是隐藏的，
+      // 不给提示的话用户点了会以为"没跳过去"。判据与渲染器的 EllipsoidalOccluder 同源（scaled space
+      // 下 dot(p,c) ≥ 1 可见），这里只需 lon/lat 就能算，不必等非得有实体。
+      isBackside: (entry) => isBacksideLonLat(entry.lon, entry.lat),
+    },
+  });
+} catch (e) {
+  console.error('[search] 统一检索栏初始化失败', e);
+  const bar = $('searchBar');
+  if (bar) bar.innerHTML = '<p class="hint">检索栏初始化失败（见控制台）</p>';
+}
+
+// 用户在底部面板点「停止」时，把「显示图层」里对应的行同步置灰（列表不能骗人）
+window.addEventListener('route-tour-stopped', () => markOffPrefix('tour:'));
+window.addEventListener('history-tour-stopped', () => markOffPrefix('history:'));
+
+// ====== 左栏优化：区块可折叠（A）+ 说明「?」气泡（C）======
+function initPanelSections() {
+  const KEY = 'sphere-collapsed-sections';
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch { /* 忽略 */ }
+  const collapsed = new Set(raw ? JSON.parse(raw) : []);
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...collapsed])); } catch { /* 忽略 */ } };
+  // 首访默认收起「历史时空」，减少拥挤（用户之后展开会记住）
+  const hist = document.getElementById('historySection');
+  if (raw === null && hist) hist.classList.add('collapsed');
+  document.querySelectorAll('section.panel-section > h2').forEach((h2) => {
+    const sec = h2.parentElement;
+    if (collapsed.has(sec.id)) sec.classList.add('collapsed');
+    h2.addEventListener('click', () => {
+      const on = sec.classList.toggle('collapsed');
+      if (sec.id) { if (on) collapsed.add(sec.id); else collapsed.delete(sec.id); save(); }
+    });
+  });
+}
+
+function initHints() {
+  document.querySelectorAll('.hint-q').forEach((btn) => {
+    const id = btn.getAttribute('aria-controls');
+    const pop = id && document.getElementById(id);
+    if (!pop) return;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = pop.hasAttribute('hidden');
+      if (open) { pop.removeAttribute('hidden'); btn.setAttribute('aria-expanded', 'true'); }
+      else { pop.setAttribute('hidden', ''); btn.setAttribute('aria-expanded', 'false'); }
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.hint-pop:not([hidden])').forEach((pop) => {
+      const btn = pop.parentElement.querySelector('.hint-q');
+      if (btn && !btn.contains(e.target) && !pop.contains(e.target)) {
+        pop.setAttribute('hidden', '');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+}
+
+initPanelSections();
+initHints();
 
 // ====== 图层全选/全清 ======
 $('layerSelectAll').addEventListener('click', () => {
@@ -2157,30 +2934,8 @@ $('layerClearAll').addEventListener('click', () => {
   }
 });
 
-// ====== 图层搜索 ======
-layerSearchEl.addEventListener('input', () => {
-  const q = layerSearchEl.value.trim().toLowerCase();
-  const items = layersTreeEl.querySelectorAll('.layer-item');
-  items.forEach((el) => {
-    const search = el.dataset.search || '';
-    if (!q || search.includes(q)) {
-      el.classList.remove('hidden-by-search');
-      el.closest('.layer-category')?.classList.remove('hidden-by-search');
-    } else {
-      el.classList.add('hidden-by-search');
-      // 如果分类下所有图层都隐藏，则整个分类也隐藏
-      const catBody = el.closest('.layer-category-body');
-      if (catBody) {
-        const any = catBody.querySelector(
-          '.layer-item:not(.hidden-by-search)'
-        );
-        if (!any) {
-          catBody.parentElement.classList.add('hidden-by-search');
-        }
-      }
-    }
-  });
-});
+// ====== 图层搜索（已移交统一检索栏 search-bar.js 处理；此处仅保留图层树过滤兼容）======
+// 注：旧 #layerSearch 输入框已删除，统一检索栏会同时驱动图层树过滤（见 search-bar.js filterTree）。
 
 // ====== 屏幕点击 → 图层 entity ======
 const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);

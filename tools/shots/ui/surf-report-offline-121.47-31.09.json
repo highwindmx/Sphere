@@ -1,0 +1,70 @@
+{
+ "tag": "offline-121.47-31.09",
+ "states": [
+  {
+   "asked": {
+    "z": 15.4,
+    "p": 40
+   },
+   "cache": "pmt",
+   "zoom": 15.4,
+   "pitch": 40,
+   "minZoom": 15,
+   "maxZoom": 19,
+   "n": 11,
+   "byZ": {
+    "15": 11
+   },
+   "st": {
+    "loaded": 11
+   },
+   "stByZ": {
+    "15:loaded": 11
+   },
+   "srcZ": {
+    "minzoom": 15,
+    "maxzoom": 15
+   },
+   "bad": []
+  }
+ ],
+ "zoomTest": {
+  "before": {
+   "zoom": 15.4,
+   "min": 15,
+   "max": 19
+  },
+  "setZoomMinus1": 15,
+  "afterSetZoom": 15,
+  "zoomOut": 15,
+  "zoomIn": 16,
+  "wheelBefore": 16,
+  "wheelIn": 16.33,
+  "wheelOut": 16,
+  "hasZoomInBtn": true,
+  "btnBefore": 16,
+  "btnAfterIn": 17,
+  "btnAfterOut": 16,
+  "hit": {
+   "tag": "CANVAS",
+   "cls": "maplibregl-canvas",
+   "id": ""
+  },
+  "atFloor": {
+   "zoom": 15.05,
+   "min": 15,
+   "mode": "offline"
+  },
+  "afterFloorWheel": {
+   "zoom": 15,
+   "min": 2,
+   "max": 19
+  },
+  "modeBadge": "online · zoom 15.0 · 瓦片 0 块 () · "
+ },
+ "diag": {
+  "active": true,
+  "bounds": true,
+  "badge": "offline · zoom 15.4 · 瓦片 11 块 (z15×11) · loaded:11"
+ }
+}

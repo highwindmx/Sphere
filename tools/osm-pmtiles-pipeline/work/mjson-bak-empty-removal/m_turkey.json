@@ -1,0 +1,51 @@
+{
+ "摩索拉斯陵墓": {
+  "ok": true,
+  "file": "pmtiles/亚洲_土耳其_摩索拉斯陵墓.pmtiles",
+  "resumed": true,
+  "bbox": [
+   27.279999999999998,
+   36.88,
+   27.52,
+   37.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 555466,
+  "pbf": "turkey"
+ },
+ "阿尔忒弥斯神庙": {
+  "ok": true,
+  "file": "pmtiles/亚洲_土耳其_阿尔忒弥斯神庙.pmtiles",
+  "resumed": true,
+  "bbox": [
+   27.279999999999998,
+   37.78,
+   27.52,
+   38.019999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 611039,
+  "pbf": "turkey"
+ },
+ "伊斯坦布尔": {
+  "ok": true,
+  "file": "pmtiles/亚洲_土耳其_伊斯坦布尔.pmtiles",
+  "tiles": 7000,
+  "bytes": 36375406,
+  "bbox": [
+   28.48,
+   40.51,
+   29.48,
+   41.51
+  ],
+  "center": [
+   28.98,
+   41.01
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "turkey"
+ }
+}

@@ -1,0 +1,956 @@
+{
+ "伊斯兰堡": {
+  "ok": true,
+  "file": "pmtiles/亚洲_阿富汗_伊斯兰堡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   72.55,
+   33.19,
+   73.55,
+   34.19
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 12812100,
+  "pbf": "asia"
+ },
+ "利雅得": {
+  "ok": true,
+  "file": "pmtiles/亚洲_沙特_利雅得.pmtiles",
+  "resumed": true,
+  "bbox": [
+   46.22,
+   24.21,
+   47.22,
+   25.21
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 12698893,
+  "pbf": "asia"
+ },
+ "多哈": {
+  "ok": true,
+  "file": "pmtiles/亚洲_卡塔尔_多哈.pmtiles",
+  "resumed": true,
+  "bbox": [
+   51.03,
+   24.79,
+   52.03,
+   25.79
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 14240189,
+  "pbf": "asia"
+ },
+ "新德里": {
+  "ok": true,
+  "file": "pmtiles/亚洲_巴基斯坦_新德里.pmtiles",
+  "resumed": true,
+  "bbox": [
+   76.71,
+   28.11,
+   77.71,
+   29.11
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 32242564,
+  "pbf": "asia"
+ },
+ "阿布扎比": {
+  "ok": true,
+  "file": "pmtiles/亚洲_阿联酋_阿布扎比.pmtiles",
+  "resumed": true,
+  "bbox": [
+   53.87,
+   23.98,
+   54.87,
+   24.98
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 10353860,
+  "pbf": "asia"
+ },
+ "卡拉奇": {
+  "ok": true,
+  "file": "pmtiles/亚洲_巴基斯坦_卡拉奇.pmtiles",
+  "resumed": true,
+  "bbox": [
+   66.51,
+   24.36,
+   67.51,
+   25.36
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 8619154,
+  "pbf": "asia"
+ },
+ "喀布尔": {
+  "ok": true,
+  "file": "pmtiles/亚洲_阿富汗_喀布尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   68.71,
+   34.06,
+   69.71,
+   35.06
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 18418112,
+  "pbf": "asia"
+ },
+ "塔什干": {
+  "ok": true,
+  "file": "pmtiles/亚洲_乌兹别克斯坦_塔什干.pmtiles",
+  "resumed": true,
+  "bbox": [
+   68.74,
+   40.8,
+   69.74,
+   41.8
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 25358565,
+  "pbf": "asia"
+ },
+ "孟买": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_孟买.pmtiles",
+  "resumed": true,
+  "bbox": [
+   72.38,
+   18.58,
+   73.38,
+   19.58
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 17684555,
+  "pbf": "asia"
+ },
+ "拉合尔": {
+  "ok": true,
+  "file": "pmtiles/亚洲_巴基斯坦_拉合尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   73.84,
+   31.05,
+   74.84,
+   32.05
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 9730519,
+  "pbf": "asia"
+ },
+ "浦那": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_浦那.pmtiles",
+  "resumed": true,
+  "bbox": [
+   73.36,
+   18.02,
+   74.36,
+   19.02
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 17755335,
+  "pbf": "asia"
+ },
+ "班加罗尔": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_班加罗尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   77.09,
+   12.47,
+   78.09,
+   13.47
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 34475653,
+  "pbf": "asia"
+ },
+ "艾哈迈达巴德": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_艾哈迈达巴德.pmtiles",
+  "resumed": true,
+  "bbox": [
+   72.07,
+   22.52,
+   73.07,
+   23.52
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 11249839,
+  "pbf": "asia"
+ },
+ "苏拉特": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_苏拉特.pmtiles",
+  "resumed": true,
+  "bbox": [
+   72.33,
+   20.67,
+   73.33,
+   21.67
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 7098117,
+  "pbf": "asia"
+ },
+ "迪拜": {
+  "ok": true,
+  "file": "pmtiles/亚洲_阿联酋_迪拜.pmtiles",
+  "resumed": true,
+  "bbox": [
+   54.77,
+   24.7,
+   55.77,
+   25.7
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 23762311,
+  "pbf": "asia"
+ },
+ "阿拉木图": {
+  "ok": true,
+  "file": "pmtiles/亚洲_哈萨克斯坦_阿拉木图.pmtiles",
+  "resumed": true,
+  "bbox": [
+   76.39,
+   42.74,
+   77.39,
+   43.74
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 25496405,
+  "pbf": "asia"
+ },
+ "吉达": {
+  "ok": true,
+  "file": "pmtiles/亚洲_沙特_吉达.pmtiles",
+  "resumed": true,
+  "bbox": [
+   38.949999999999996,
+   21.25,
+   39.43,
+   21.729999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3389069,
+  "pbf": "asia"
+ },
+ "大马士革": {
+  "ok": true,
+  "file": "pmtiles/亚洲_叙利亚_大马士革.pmtiles",
+  "resumed": true,
+  "bbox": [
+   35.18,
+   33.18,
+   35.419999999999995,
+   33.419999999999995
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 5407760,
+  "pbf": "asia"
+ },
+ "安曼": {
+  "ok": true,
+  "file": "pmtiles/亚洲_约旦_安曼.pmtiles",
+  "resumed": true,
+  "bbox": [
+   35.699999999999996,
+   31.71,
+   36.18,
+   32.19
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 7663896,
+  "pbf": "asia"
+ },
+ "撒马尔罕": {
+  "ok": true,
+  "file": "pmtiles/亚洲_乌兹别克斯坦_撒马尔罕.pmtiles",
+  "resumed": true,
+  "bbox": [
+   66.78,
+   39.580000000000005,
+   67.02000000000001,
+   39.82
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3316353,
+  "pbf": "asia"
+ },
+ "比什凯克": {
+  "ok": true,
+  "file": "pmtiles/亚洲_吉尔吉斯斯坦_比什凯克.pmtiles",
+  "resumed": true,
+  "bbox": [
+   74.37,
+   42.629999999999995,
+   74.85,
+   43.11
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 7225536,
+  "pbf": "asia"
+ },
+ "科威特城": {
+  "ok": true,
+  "file": "pmtiles/亚洲_科威特_科威特城.pmtiles",
+  "resumed": true,
+  "bbox": [
+   47.739999999999995,
+   29.14,
+   48.22,
+   29.619999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 6838243,
+  "pbf": "asia"
+ },
+ "贝鲁特": {
+  "ok": true,
+  "file": "pmtiles/亚洲_黎巴嫩_贝鲁特.pmtiles",
+  "resumed": true,
+  "bbox": [
+   35.26,
+   33.65,
+   35.74,
+   34.13
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 9315875,
+  "pbf": "asia"
+ },
+ "阿斯塔纳": {
+  "ok": true,
+  "file": "pmtiles/亚洲_哈萨克斯坦_阿斯塔纳.pmtiles",
+  "resumed": true,
+  "bbox": [
+   71.19000000000001,
+   50.89,
+   71.67,
+   51.370000000000005
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 4328741,
+  "pbf": "asia"
+ },
+ "麦加": {
+  "ok": true,
+  "file": "pmtiles/亚洲_沙特_麦加.pmtiles",
+  "resumed": true,
+  "bbox": [
+   39.589999999999996,
+   21.150000000000002,
+   40.07,
+   21.63
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2776059,
+  "pbf": "asia"
+ },
+ "佩特拉": {
+  "ok": true,
+  "file": "pmtiles/亚洲_约旦_佩特拉.pmtiles",
+  "resumed": true,
+  "bbox": [
+   35.28,
+   30.18,
+   35.519999999999996,
+   30.42
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 418267,
+  "pbf": "asia"
+ },
+ "泰姬陵": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_泰姬陵.pmtiles",
+  "resumed": true,
+  "bbox": [
+   77.88,
+   27.08,
+   78.12,
+   27.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1454179,
+  "pbf": "asia"
+ },
+ "印度河文明（摩亨佐达罗）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_巴基斯坦_印度河文明_摩亨佐达罗.pmtiles",
+  "resumed": true,
+  "bbox": [
+   67.97999999999999,
+   27.18,
+   68.22,
+   27.42
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 359826,
+  "pbf": "asia"
+ },
+ "印度河流域 · 标注": {
+  "ok": true,
+  "file": "pmtiles/亚洲_巴基斯坦_印度河流域___标注.pmtiles",
+  "resumed": true,
+  "bbox": [
+   70.38,
+   25.88,
+   70.62,
+   26.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 26849,
+  "pbf": "asia"
+ },
+ "卡利卡特": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_卡利卡特.pmtiles",
+  "resumed": true,
+  "bbox": [
+   75.67999999999999,
+   11.180000000000001,
+   75.92,
+   11.42
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1736356,
+  "pbf": "asia"
+ },
+ "托雷斯海峡": {
+  "ok": true,
+  "file": "pmtiles/大洋洲_巴布亚新几内亚_托雷斯海峡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   142.38,
+   -10.62,
+   142.62,
+   -10.38
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3046,
+  "pbf": "asia"
+ },
+ "布哈拉": {
+  "ok": true,
+  "file": "pmtiles/亚洲_乌兹别克斯坦_布哈拉.pmtiles",
+  "resumed": true,
+  "bbox": [
+   64.88,
+   39.38,
+   65.12,
+   39.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 75498,
+  "pbf": "asia"
+ },
+ "科摩林角": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_科摩林角.pmtiles",
+  "resumed": true,
+  "bbox": [
+   77.08,
+   8.38,
+   77.32000000000001,
+   8.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 829575,
+  "pbf": "asia"
+ },
+ "粟特（河中）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_乌兹别克斯坦_粟特_河中.pmtiles",
+  "resumed": true,
+  "bbox": [
+   68.88,
+   40.38,
+   69.12,
+   40.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 315284,
+  "pbf": "asia"
+ },
+ "凌山（天山隘口）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_吉尔吉斯斯坦_凌山_天山隘口.pmtiles",
+  "resumed": true,
+  "bbox": [
+   75.58,
+   42.68,
+   75.82000000000001,
+   42.919999999999995
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 341351,
+  "pbf": "asia"
+ },
+ "巴米扬": {
+  "ok": true,
+  "file": "pmtiles/亚洲_阿富汗_巴米扬.pmtiles",
+  "resumed": true,
+  "bbox": [
+   67.67999999999999,
+   34.68,
+   67.92,
+   34.919999999999995
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 924412,
+  "pbf": "asia"
+ },
+ "怛罗斯": {
+  "ok": true,
+  "file": "pmtiles/亚洲_吉尔吉斯斯坦_怛罗斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   71.17999999999999,
+   42.38,
+   71.42,
+   42.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 168497,
+  "pbf": "asia"
+ },
+ "犍陀罗（白沙瓦）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_阿富汗_犍陀罗_白沙瓦.pmtiles",
+  "resumed": true,
+  "bbox": [
+   71.38,
+   33.88,
+   71.62,
+   34.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1427584,
+  "pbf": "asia"
+ },
+ "迦湿弥罗（克什米尔）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_阿富汗_迦湿弥罗_克什米尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   74.38,
+   33.980000000000004,
+   74.62,
+   34.22
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 522281,
+  "pbf": "asia"
+ },
+ "安奇拉（安卡拉）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_土耳其_安奇拉_安卡拉.pmtiles",
+  "resumed": true,
+  "bbox": [
+   32.78,
+   39.78,
+   33.019999999999996,
+   40.019999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 5378267,
+  "pbf": "asia"
+ },
+ "海得拉巴": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_海得拉巴.pmtiles",
+  "tiles": 11077,
+  "bytes": 26655737,
+  "bbox": [
+   77.97,
+   16.88,
+   78.97,
+   17.88
+  ],
+  "center": [
+   78.47,
+   17.38
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "金奈": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_金奈.pmtiles",
+  "tiles": 6612,
+  "bytes": 16418322,
+  "bbox": [
+   79.77,
+   12.58,
+   80.77,
+   13.58
+  ],
+  "center": [
+   80.27,
+   13.08
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "南印度（建志）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_南印度_建志.pmtiles",
+  "tiles": 575,
+  "bytes": 6098628,
+  "bbox": [
+   80.17999999999999,
+   12.88,
+   80.42,
+   13.12
+  ],
+  "center": [
+   80.3,
+   13.0
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "科伦坡": {
+  "ok": true,
+  "file": "pmtiles/亚洲_斯里兰卡_科伦坡.pmtiles",
+  "tiles": 5725,
+  "bytes": 31633297,
+  "bbox": [
+   79.36,
+   6.43,
+   80.36,
+   7.43
+  ],
+  "center": [
+   79.86,
+   6.93
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "加德满都": {
+  "ok": true,
+  "file": "pmtiles/亚洲_尼泊尔_加德满都.pmtiles",
+  "tiles": 12943,
+  "bytes": 38239163,
+  "bbox": [
+   84.82,
+   27.22,
+   85.82,
+   28.22
+  ],
+  "center": [
+   85.32,
+   27.72
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "那烂陀寺": {
+  "ok": true,
+  "file": "pmtiles/亚洲_印度_那烂陀寺.pmtiles",
+  "tiles": 913,
+  "bytes": 305562,
+  "bbox": [
+   85.28,
+   24.98,
+   85.52000000000001,
+   25.220000000000002
+  ],
+  "center": [
+   85.4,
+   25.1
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "加尔各答": {
+  "ok": true,
+  "file": "pmtiles/亚洲_孟加拉_加尔各答.pmtiles",
+  "tiles": 11823,
+  "bytes": 30054760,
+  "bbox": [
+   87.86,
+   22.07,
+   88.86,
+   23.07
+  ],
+  "center": [
+   88.36,
+   22.57
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "达卡": {
+  "ok": true,
+  "file": "pmtiles/亚洲_孟加拉_达卡.pmtiles",
+  "tiles": 11624,
+  "bytes": 46507243,
+  "bbox": [
+   89.91,
+   23.31,
+   90.91,
+   24.31
+  ],
+  "center": [
+   90.41,
+   23.81
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "乌兰巴托": {
+  "ok": true,
+  "file": "pmtiles/亚洲_蒙古_乌兰巴托.pmtiles",
+  "tiles": 12922,
+  "bytes": 13611245,
+  "bbox": [
+   106.42,
+   47.42,
+   107.42,
+   48.42
+  ],
+  "center": [
+   106.92,
+   47.92
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "高雄": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_高雄.pmtiles",
+  "tiles": 1824,
+  "bytes": 6389728,
+  "bbox": [
+   120.06,
+   22.39,
+   120.53999999999999,
+   22.869999999999997
+  ],
+  "center": [
+   120.3,
+   22.63
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "青岛": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_青岛.pmtiles",
+  "tiles": 7695,
+  "bytes": 7475701,
+  "bbox": [
+   119.88,
+   35.57,
+   120.88,
+   36.57
+  ],
+  "center": [
+   120.38,
+   36.07
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "台中": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_台中.pmtiles",
+  "tiles": 2908,
+  "bytes": 11824269,
+  "bbox": [
+   120.43,
+   23.91,
+   120.91,
+   24.389999999999997
+  ],
+  "center": [
+   120.67,
+   24.15
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "台北": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_台北.pmtiles",
+  "tiles": 2621,
+  "bytes": 14673208,
+  "bbox": [
+   121.32000000000001,
+   24.790000000000003,
+   121.8,
+   25.27
+  ],
+  "center": [
+   121.56,
+   25.03
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "大连": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_大连.pmtiles",
+  "tiles": 5170,
+  "bytes": 4642071,
+  "bbox": [
+   121.12,
+   38.42,
+   122.12,
+   39.42
+  ],
+  "center": [
+   121.62,
+   38.92
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "平壤": {
+  "ok": true,
+  "file": "pmtiles/亚洲_朝鲜_平壤.pmtiles",
+  "tiles": 12187,
+  "bytes": 23896377,
+  "bbox": [
+   125.26,
+   38.54,
+   126.26,
+   39.54
+  ],
+  "center": [
+   125.76,
+   39.04
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "元山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_朝鲜_元山.pmtiles",
+  "tiles": 2489,
+  "bytes": 2228651,
+  "bbox": [
+   127.12,
+   38.919999999999995,
+   127.6,
+   39.4
+  ],
+  "center": [
+   127.36,
+   39.16
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "罗先": {
+  "ok": true,
+  "file": "pmtiles/亚洲_朝鲜_罗先.pmtiles",
+  "tiles": 2108,
+  "bytes": 898115,
+  "bbox": [
+   130.41,
+   42.19,
+   130.89000000000001,
+   42.67
+  ],
+  "center": [
+   130.65,
+   42.43
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "asia"
+ },
+ "关岛": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   144.68,
+   13.38,
+   144.92000000000002,
+   13.62
+  ],
+  "pbf": "asia"
+ },
+ "拜占庭（君士坦丁堡）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_土耳其_伊斯坦布尔.pmtiles",
+  "tiles": 7000,
+  "bytes": 36375406,
+  "bbox": [
+   28.48,
+   40.51,
+   29.48,
+   41.51
+  ],
+  "center": [
+   28.98,
+   41.01
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "turkey",
+  "name": "拜占庭（君士坦丁堡）"
+ }
+}

@@ -1,0 +1,433 @@
+{
+ "亚的斯亚贝巴": {
+  "ok": true,
+  "file": "pmtiles/非洲_埃塞俄比亚_亚的斯亚贝巴.pmtiles",
+  "resumed": true,
+  "bbox": [
+   38.24,
+   8.53,
+   39.24,
+   9.53
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 9074286,
+  "pbf": "africa"
+ },
+ "内罗毕": {
+  "ok": true,
+  "file": "pmtiles/非洲_肯尼亚_内罗毕.pmtiles",
+  "resumed": true,
+  "bbox": [
+   36.32,
+   -1.79,
+   37.32,
+   -0.79
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 27632750,
+  "pbf": "africa"
+ },
+ "开罗": {
+  "ok": true,
+  "file": "pmtiles/非洲_埃及_开罗.pmtiles",
+  "resumed": true,
+  "bbox": [
+   30.74,
+   29.54,
+   31.74,
+   30.54
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 31369224,
+  "pbf": "africa"
+ },
+ "拉各斯": {
+  "ok": true,
+  "file": "pmtiles/非洲_尼日利亚_拉各斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   2.88,
+   6.02,
+   3.88,
+   7.02
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 55570663,
+  "pbf": "africa"
+ },
+ "比勒陀利亚": {
+  "ok": true,
+  "file": "pmtiles/非洲_南非_比勒陀利亚.pmtiles",
+  "resumed": true,
+  "bbox": [
+   27.69,
+   -26.25,
+   28.69,
+   -25.25
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 26194986,
+  "pbf": "africa"
+ },
+ "亚历山大": {
+  "ok": true,
+  "file": "pmtiles/非洲_埃及_亚历山大.pmtiles",
+  "resumed": true,
+  "bbox": [
+   29.42,
+   30.7,
+   30.42,
+   31.7
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 8939623,
+  "pbf": "africa"
+ },
+ "卡诺": {
+  "ok": true,
+  "file": "pmtiles/非洲_尼日利亚_卡诺.pmtiles",
+  "resumed": true,
+  "bbox": [
+   8.02,
+   11.5,
+   9.02,
+   12.5
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 13576285,
+  "pbf": "africa"
+ },
+ "喀土穆": {
+  "ok": true,
+  "file": "pmtiles/非洲_苏丹_喀土穆.pmtiles",
+  "resumed": true,
+  "bbox": [
+   32.03,
+   15.0,
+   33.03,
+   16.0
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 34736217,
+  "pbf": "africa"
+ },
+ "约翰内斯堡": {
+  "ok": true,
+  "file": "pmtiles/非洲_南非_约翰内斯堡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   27.55,
+   -26.7,
+   28.55,
+   -25.7
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 28211894,
+  "pbf": "africa"
+ },
+ "罗安达": {
+  "ok": true,
+  "file": "pmtiles/非洲_安哥拉_罗安达.pmtiles",
+  "resumed": true,
+  "bbox": [
+   12.73,
+   -9.34,
+   13.73,
+   -8.34
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 7174247,
+  "pbf": "africa"
+ },
+ "达累斯萨拉姆": {
+  "ok": true,
+  "file": "pmtiles/非洲_坦桑尼亚_达累斯萨拉姆.pmtiles",
+  "resumed": true,
+  "bbox": [
+   38.78,
+   -7.29,
+   39.78,
+   -6.29
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 40041499,
+  "pbf": "africa"
+ },
+ "金沙萨": {
+  "ok": true,
+  "file": "pmtiles/非洲_安哥拉_金沙萨.pmtiles",
+  "resumed": true,
+  "bbox": [
+   14.77,
+   -4.94,
+   15.77,
+   -3.9400000000000004
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 20692766,
+  "pbf": "africa"
+ },
+ "阿比让": {
+  "ok": true,
+  "file": "pmtiles/非洲_科特迪瓦_阿比让.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -4.52,
+   4.85,
+   -3.5199999999999996,
+   5.85
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 13275369,
+  "pbf": "africa"
+ },
+ "卡萨布兰卡": {
+  "ok": true,
+  "file": "pmtiles/非洲_摩洛哥_卡萨布兰卡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -7.83,
+   33.33,
+   -7.35,
+   33.81
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 5604034,
+  "pbf": "africa"
+ },
+ "开普敦": {
+  "ok": true,
+  "file": "pmtiles/非洲_南非_开普敦.pmtiles",
+  "resumed": true,
+  "bbox": [
+   18.180000000000003,
+   -34.160000000000004,
+   18.66,
+   -33.68
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 11957069,
+  "pbf": "africa"
+ },
+ "德班": {
+  "ok": true,
+  "file": "pmtiles/非洲_南非_德班.pmtiles",
+  "resumed": true,
+  "bbox": [
+   30.78,
+   -30.099999999999998,
+   31.259999999999998,
+   -29.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 27366703,
+  "pbf": "africa"
+ },
+ "突尼斯": {
+  "ok": true,
+  "file": "pmtiles/非洲_突尼斯_突尼斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   9.94,
+   36.57,
+   10.42,
+   37.050000000000004
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 6363968,
+  "pbf": "africa"
+ },
+ "阿克拉": {
+  "ok": true,
+  "file": "pmtiles/非洲_加纳_阿克拉.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -0.43,
+   5.359999999999999,
+   0.04999999999999999,
+   5.84
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 17672115,
+  "pbf": "africa"
+ },
+ "阿尔及尔": {
+  "ok": true,
+  "file": "pmtiles/欧洲_西班牙_阿尔及尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   2.8200000000000003,
+   36.51,
+   3.3,
+   36.99
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 14138726,
+  "pbf": "africa"
+ },
+ "卢克索": {
+  "ok": true,
+  "file": "pmtiles/非洲_埃及_卢克索.pmtiles",
+  "resumed": true,
+  "bbox": [
+   32.480000000000004,
+   25.58,
+   32.72,
+   25.82
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1034974,
+  "pbf": "africa"
+ },
+ "金字塔（吉萨）": {
+  "ok": true,
+  "file": "pmtiles/非洲_埃及_金字塔_吉萨.pmtiles",
+  "resumed": true,
+  "bbox": [
+   30.98,
+   29.779999999999998,
+   31.220000000000002,
+   30.02
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2543609,
+  "pbf": "africa"
+ },
+ "加那利群岛": {
+  "ok": true,
+  "file": "pmtiles/非洲_西班牙_加那利群岛.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -15.62,
+   27.98,
+   -15.38,
+   28.220000000000002
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3169827,
+  "pbf": "africa"
+ },
+ "好望角": {
+  "ok": true,
+  "file": "pmtiles/非洲_南非_好望角.pmtiles",
+  "resumed": true,
+  "bbox": [
+   18.38,
+   -34.519999999999996,
+   18.62,
+   -34.28
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 41930,
+  "pbf": "africa"
+ },
+ "好望角外海": {
+  "ok": true,
+  "file": "pmtiles/非洲_南非_好望角外海.pmtiles",
+  "resumed": true,
+  "bbox": [
+   18.279999999999998,
+   -34.519999999999996,
+   18.52,
+   -34.28
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 41942,
+  "pbf": "africa"
+ },
+ "莫桑比克岛": {
+  "ok": true,
+  "file": "pmtiles/非洲_莫桑比克_莫桑比克岛.pmtiles",
+  "resumed": true,
+  "bbox": [
+   40.580000000000005,
+   -15.12,
+   40.82,
+   -14.88
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 242223,
+  "pbf": "africa"
+ },
+ "蒙巴萨·马林迪": {
+  "ok": true,
+  "file": "pmtiles/非洲_肯尼亚_蒙巴萨_马林迪.pmtiles",
+  "resumed": true,
+  "bbox": [
+   39.580000000000005,
+   -4.12,
+   39.82,
+   -3.88
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1875504,
+  "pbf": "africa"
+ },
+ "麻林地（马林迪）": {
+  "ok": true,
+  "file": "pmtiles/非洲_肯尼亚_麻林地_马林迪.pmtiles",
+  "resumed": true,
+  "bbox": [
+   39.980000000000004,
+   -3.22,
+   40.22,
+   -2.98
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 398784,
+  "pbf": "africa"
+ },
+ "安条克": {
+  "ok": true,
+  "file": "pmtiles/亚洲_叙利亚_安条克.pmtiles",
+  "resumed": true,
+  "bbox": [
+   36.080000000000005,
+   36.080000000000005,
+   36.32,
+   36.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2818314,
+  "pbf": "africa"
+ },
+ "尼罗河流域 · 标注": {
+  "ok": false,
+  "reason": "EMPTY (源pbf未覆盖该点)",
+  "bbox": [
+   31.88,
+   27.38,
+   32.12,
+   27.62
+  ],
+  "pbf": "africa"
+ }
+}

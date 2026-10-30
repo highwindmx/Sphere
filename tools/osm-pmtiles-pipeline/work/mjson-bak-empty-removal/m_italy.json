@@ -1,0 +1,150 @@
+{
+ "布林迪西": {
+  "ok": true,
+  "file": "pmtiles/欧洲_意大利_布林迪西.pmtiles",
+  "resumed": true,
+  "bbox": [
+   17.779999999999998,
+   40.480000000000004,
+   18.02,
+   40.72
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1886695,
+  "pbf": "italy"
+ },
+ "都灵": {
+  "ok": true,
+  "file": "pmtiles/欧洲_意大利_都灵.pmtiles",
+  "tiles": 4087,
+  "bytes": 15590820,
+  "bbox": [
+   7.45,
+   44.83,
+   7.930000000000001,
+   45.31
+  ],
+  "center": [
+   7.69,
+   45.07
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "italy"
+ },
+ "热那亚": {
+  "ok": true,
+  "file": "pmtiles/欧洲_意大利_热那亚.pmtiles",
+  "tiles": 2266,
+  "bytes": 9496786,
+  "bbox": [
+   8.69,
+   44.169999999999995,
+   9.17,
+   44.65
+  ],
+  "center": [
+   8.93,
+   44.41
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "italy"
+ },
+ "米兰": {
+  "ok": true,
+  "file": "pmtiles/欧洲_意大利_米兰.pmtiles",
+  "tiles": 4114,
+  "bytes": 29651521,
+  "bbox": [
+   8.95,
+   45.22,
+   9.43,
+   45.7
+  ],
+  "center": [
+   9.19,
+   45.46
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "italy"
+ },
+ "佛罗伦萨": {
+  "ok": true,
+  "file": "pmtiles/欧洲_意大利_佛罗伦萨.pmtiles",
+  "tiles": 3925,
+  "bytes": 15056125,
+  "bbox": [
+   11.02,
+   43.53,
+   11.5,
+   44.010000000000005
+  ],
+  "center": [
+   11.26,
+   43.77
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "italy"
+ },
+ "威尼斯": {
+  "ok": true,
+  "file": "pmtiles/欧洲_意大利_威尼斯.pmtiles",
+  "tiles": 3224,
+  "bytes": 13937254,
+  "bbox": [
+   12.08,
+   45.199999999999996,
+   12.56,
+   45.68
+  ],
+  "center": [
+   12.32,
+   45.44
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "italy"
+ },
+ "罗马": {
+  "ok": true,
+  "file": "pmtiles/欧洲_意大利_罗马.pmtiles",
+  "tiles": 11739,
+  "bytes": 41520429,
+  "bbox": [
+   12.0,
+   41.4,
+   13.0,
+   42.4
+  ],
+  "center": [
+   12.5,
+   41.9
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "italy"
+ },
+ "那不勒斯": {
+  "ok": true,
+  "file": "pmtiles/欧洲_意大利_那不勒斯.pmtiles",
+  "tiles": 2556,
+  "bytes": 17386220,
+  "bbox": [
+   14.03,
+   40.61,
+   14.51,
+   41.09
+  ],
+  "center": [
+   14.27,
+   40.85
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "italy"
+ }
+}

@@ -1,0 +1,1870 @@
+{
+ "北京": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_北京.pmtiles",
+  "resumed": true,
+  "bbox": [
+   115.9,
+   39.4,
+   116.9,
+   40.4
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 27009678,
+  "pbf": "china"
+ },
+ "乌鲁木齐": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_乌鲁木齐.pmtiles",
+  "resumed": true,
+  "bbox": [
+   87.12,
+   43.32,
+   88.12,
+   44.32
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 5304355,
+  "pbf": "china"
+ },
+ "南京": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_南京.pmtiles",
+  "resumed": true,
+  "bbox": [
+   118.28,
+   31.560000000000002,
+   119.28,
+   32.56
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 14499056,
+  "pbf": "china"
+ },
+ "南宁": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_南宁.pmtiles",
+  "resumed": true,
+  "bbox": [
+   107.87,
+   22.32,
+   108.87,
+   23.32
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 6011743,
+  "pbf": "china"
+ },
+ "南昌": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_南昌.pmtiles",
+  "resumed": true,
+  "bbox": [
+   115.39,
+   28.18,
+   116.39,
+   29.18
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 10952780,
+  "pbf": "china"
+ },
+ "厦门": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_厦门.pmtiles",
+  "resumed": true,
+  "bbox": [
+   117.59,
+   23.98,
+   118.59,
+   24.98
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 9136722,
+  "pbf": "china"
+ },
+ "合肥": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_合肥.pmtiles",
+  "resumed": true,
+  "bbox": [
+   116.78,
+   31.36,
+   117.78,
+   32.36
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 9245719,
+  "pbf": "china"
+ },
+ "呼和浩特": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_呼和浩特.pmtiles",
+  "resumed": true,
+  "bbox": [
+   111.25,
+   40.34,
+   112.25,
+   41.34
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 3412781,
+  "pbf": "china"
+ },
+ "哈尔滨": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_哈尔滨.pmtiles",
+  "resumed": true,
+  "bbox": [
+   126.03,
+   45.3,
+   127.03,
+   46.3
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 7053527,
+  "pbf": "china"
+ },
+ "天津": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_天津.pmtiles",
+  "resumed": true,
+  "bbox": [
+   116.7,
+   38.63,
+   117.7,
+   39.63
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 15129427,
+  "pbf": "china"
+ },
+ "太原": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_太原.pmtiles",
+  "resumed": true,
+  "bbox": [
+   112.05,
+   37.37,
+   113.05,
+   38.37
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 5593530,
+  "pbf": "china"
+ },
+ "宁波": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_宁波.pmtiles",
+  "resumed": true,
+  "bbox": [
+   121.05,
+   29.37,
+   122.05,
+   30.37
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 12402698,
+  "pbf": "china"
+ },
+ "昆明": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_昆明.pmtiles",
+  "resumed": true,
+  "bbox": [
+   102.33,
+   24.38,
+   103.33,
+   25.38
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 11200878,
+  "pbf": "china"
+ },
+ "杭州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_杭州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   119.66,
+   29.77,
+   120.66,
+   30.77
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 21929654,
+  "pbf": "china"
+ },
+ "沈阳": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_沈阳.pmtiles",
+  "resumed": true,
+  "bbox": [
+   122.93,
+   41.3,
+   123.93,
+   42.3
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 6205823,
+  "pbf": "china"
+ },
+ "济南": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_济南.pmtiles",
+  "resumed": true,
+  "bbox": [
+   116.5,
+   36.15,
+   117.5,
+   37.15
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 9918184,
+  "pbf": "china"
+ },
+ "深圳": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_深圳.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.56,
+   22.04,
+   114.56,
+   23.04
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 39673988,
+  "pbf": "china"
+ },
+ "石家庄": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_石家庄.pmtiles",
+  "resumed": true,
+  "bbox": [
+   114.01,
+   37.54,
+   115.01,
+   38.54
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 6449860,
+  "pbf": "china"
+ },
+ "福州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_福州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   118.8,
+   25.58,
+   119.8,
+   26.58
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 10257642,
+  "pbf": "china"
+ },
+ "西宁": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_西宁.pmtiles",
+  "resumed": true,
+  "bbox": [
+   101.28,
+   36.12,
+   102.28,
+   37.12
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 3056009,
+  "pbf": "china"
+ },
+ "西安": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_西安.pmtiles",
+  "resumed": true,
+  "bbox": [
+   108.44,
+   33.84,
+   109.44,
+   34.84
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 20436921,
+  "pbf": "china"
+ },
+ "贵阳": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_贵阳.pmtiles",
+  "resumed": true,
+  "bbox": [
+   106.13,
+   26.15,
+   107.13,
+   27.15
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 6003491,
+  "pbf": "china"
+ },
+ "郑州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_郑州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.13,
+   34.25,
+   114.13,
+   35.25
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 10045366,
+  "pbf": "china"
+ },
+ "银川": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_银川.pmtiles",
+  "resumed": true,
+  "bbox": [
+   105.73,
+   37.99,
+   106.73,
+   38.99
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 5037930,
+  "pbf": "china"
+ },
+ "长春": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_长春.pmtiles",
+  "resumed": true,
+  "bbox": [
+   124.82,
+   43.4,
+   125.82,
+   44.4
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 6173480,
+  "pbf": "china"
+ },
+ "长沙": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_长沙.pmtiles",
+  "resumed": true,
+  "bbox": [
+   112.44,
+   27.73,
+   113.44,
+   28.73
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 12404663,
+  "pbf": "china"
+ },
+ "澳门": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_澳门.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.30000000000001,
+   21.96,
+   113.78,
+   22.439999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 6631832,
+  "pbf": "china"
+ },
+ "香港": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_香港.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.93,
+   22.080000000000002,
+   114.41,
+   22.56
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 18877493,
+  "pbf": "china"
+ },
+ "丽江古城": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_丽江古城.pmtiles",
+  "resumed": true,
+  "bbox": [
+   100.08,
+   26.779999999999998,
+   100.32000000000001,
+   27.02
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1519916,
+  "pbf": "china"
+ },
+ "九寨沟": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_九寨沟.pmtiles",
+  "resumed": true,
+  "bbox": [
+   103.78,
+   33.080000000000005,
+   104.02000000000001,
+   33.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 157328,
+  "pbf": "china"
+ },
+ "布达拉宫": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_布达拉宫.pmtiles",
+  "resumed": true,
+  "bbox": [
+   90.97999999999999,
+   29.529999999999998,
+   91.22,
+   29.77
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 617391,
+  "pbf": "china"
+ },
+ "杭州西湖": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_杭州西湖.pmtiles",
+  "resumed": true,
+  "bbox": [
+   119.97999999999999,
+   30.08,
+   120.22,
+   30.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 4109108,
+  "pbf": "china"
+ },
+ "泰山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_泰山.pmtiles",
+  "resumed": true,
+  "bbox": [
+   116.97999999999999,
+   36.18,
+   117.22,
+   36.419999999999995
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 908206,
+  "pbf": "china"
+ },
+ "秦始皇陵兵马俑": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_秦始皇陵兵马俑.pmtiles",
+  "resumed": true,
+  "bbox": [
+   109.17999999999999,
+   34.28,
+   109.42,
+   34.519999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 870534,
+  "pbf": "china"
+ },
+ "苏州园林": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_苏州园林.pmtiles",
+  "resumed": true,
+  "bbox": [
+   120.47999999999999,
+   31.18,
+   120.72,
+   31.42
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 3192179,
+  "pbf": "china"
+ },
+ "莫高窟": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_莫高窟.pmtiles",
+  "resumed": true,
+  "bbox": [
+   94.67999999999999,
+   39.88,
+   94.92,
+   40.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 93730,
+  "pbf": "china"
+ },
+ "长城（八达岭）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_长城_八达岭.pmtiles",
+  "resumed": true,
+  "bbox": [
+   115.88,
+   40.28,
+   116.12,
+   40.519999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1320323,
+  "pbf": "china"
+ },
+ "黄山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_黄山.pmtiles",
+  "resumed": true,
+  "bbox": [
+   118.08,
+   30.18,
+   118.32000000000001,
+   30.42
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 278485,
+  "pbf": "china"
+ },
+ "黄河文明（二里头）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_黄河文明_二里头.pmtiles",
+  "resumed": true,
+  "bbox": [
+   112.38,
+   34.580000000000005,
+   112.62,
+   34.82
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 2046918,
+  "pbf": "china"
+ },
+ "黄河流域 · 标注": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_黄河流域___标注.pmtiles",
+  "resumed": true,
+  "bbox": [
+   109.88,
+   35.88,
+   110.12,
+   36.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 179490,
+  "pbf": "china"
+ },
+ "兰州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_兰州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   103.71,
+   35.940000000000005,
+   103.95,
+   36.18
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 7647878,
+  "pbf": "china"
+ },
+ "凉州（武威）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_凉州_武威.pmtiles",
+  "resumed": true,
+  "bbox": [
+   102.47999999999999,
+   37.88,
+   102.72,
+   38.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 509027,
+  "pbf": "china"
+ },
+ "合浦（北海）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_合浦_北海.pmtiles",
+  "resumed": true,
+  "bbox": [
+   109.47999999999999,
+   21.48,
+   109.72,
+   21.720000000000002
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 236826,
+  "pbf": "china"
+ },
+ "广州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_广州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.14999999999999,
+   23.009999999999998,
+   113.39,
+   23.25
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 28552453,
+  "pbf": "china"
+ },
+ "沙州（敦煌）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_沙州_敦煌.pmtiles",
+  "resumed": true,
+  "bbox": [
+   93.75,
+   40.24,
+   93.99000000000001,
+   40.48
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 126413,
+  "pbf": "china"
+ },
+ "泉州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_泉州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   118.47,
+   24.75,
+   118.71000000000001,
+   24.990000000000002
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1376902,
+  "pbf": "china"
+ },
+ "焉耆（库尔勒）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_焉耆_库尔勒.pmtiles",
+  "resumed": true,
+  "bbox": [
+   86.06,
+   41.660000000000004,
+   86.30000000000001,
+   41.9
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 460469,
+  "pbf": "china"
+ },
+ "甘州（张掖）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_甘州_张掖.pmtiles",
+  "resumed": true,
+  "bbox": [
+   100.33,
+   38.81,
+   100.57000000000001,
+   39.05
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 431468,
+  "pbf": "china"
+ },
+ "疏勒（喀什）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_疏勒_喀什.pmtiles",
+  "resumed": true,
+  "bbox": [
+   75.82,
+   39.330000000000005,
+   76.06,
+   39.57
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 577234,
+  "pbf": "china"
+ },
+ "肃州（酒泉）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_肃州_酒泉.pmtiles",
+  "resumed": true,
+  "bbox": [
+   98.38,
+   39.61,
+   98.62,
+   39.849999999999994
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 371972,
+  "pbf": "china"
+ },
+ "葱岭（帕米尔）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_葱岭_帕米尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   73.38,
+   38.88,
+   73.62,
+   39.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 72360,
+  "pbf": "china"
+ },
+ "焉耆": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_焉耆.pmtiles",
+  "resumed": true,
+  "bbox": [
+   86.08,
+   42.38,
+   86.32000000000001,
+   42.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 76906,
+  "pbf": "china"
+ },
+ "瓜州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_瓜州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   94.88,
+   40.38,
+   95.12,
+   40.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 111925,
+  "pbf": "china"
+ },
+ "秦州（天水）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_秦州_天水.pmtiles",
+  "resumed": true,
+  "bbox": [
+   105.58,
+   34.480000000000004,
+   105.82000000000001,
+   34.72
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 879144,
+  "pbf": "china"
+ },
+ "跋禄迦（阿克苏）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_跋禄迦_阿克苏.pmtiles",
+  "resumed": true,
+  "bbox": [
+   80.08,
+   41.080000000000005,
+   80.32000000000001,
+   41.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 500569,
+  "pbf": "china"
+ },
+ "高昌（吐鲁番）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_蒙古_高昌_吐鲁番.pmtiles",
+  "resumed": true,
+  "bbox": [
+   89.38,
+   42.78,
+   89.62,
+   43.019999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 262719,
+  "pbf": "china"
+ },
+ "龟兹（库车）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_龟兹_库车.pmtiles",
+  "resumed": true,
+  "bbox": [
+   82.78,
+   41.580000000000005,
+   83.02000000000001,
+   41.82
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 253789,
+  "pbf": "china"
+ },
+ "长乐太平港": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_长乐太平港.pmtiles",
+  "resumed": true,
+  "bbox": [
+   117.38,
+   23.88,
+   117.62,
+   24.12
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 423702,
+  "pbf": "china"
+ },
+ "长江口": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_长江口.pmtiles",
+  "resumed": true,
+  "bbox": [
+   120.97999999999999,
+   31.38,
+   121.22,
+   31.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1187099,
+  "pbf": "china"
+ },
+ "上海": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_上海.pmtiles",
+  "resumed": true,
+  "bbox": [
+   121.23,
+   30.990000000000002,
+   121.71,
+   31.47
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 26244111,
+  "pbf": "china"
+ },
+ "井陉关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_井陉关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.78,
+   37.86,
+   114.25999999999999,
+   38.34
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 330388,
+  "pbf": "china"
+ },
+ "仙霞关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_仙霞关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   118.25,
+   28.180000000000003,
+   118.72999999999999,
+   28.66
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 437487,
+  "pbf": "china"
+ },
+ "倒马关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_倒马关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   114.46000000000001,
+   38.69,
+   114.94,
+   39.17
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 204043,
+  "pbf": "china"
+ },
+ "偏头关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_偏头关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   110.97,
+   39.43,
+   111.44999999999999,
+   39.910000000000004
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 195022,
+  "pbf": "china"
+ },
+ "八宿": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_八宿.pmtiles",
+  "resumed": true,
+  "bbox": [
+   95.93,
+   29.560000000000002,
+   96.41,
+   30.04
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 397048,
+  "pbf": "china"
+ },
+ "函谷关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_函谷关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   110.62,
+   34.419999999999995,
+   111.1,
+   34.9
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 432485,
+  "pbf": "china"
+ },
+ "利川": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_利川.pmtiles",
+  "resumed": true,
+  "bbox": [
+   108.33,
+   30.060000000000002,
+   108.80999999999999,
+   30.54
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 198760,
+  "pbf": "china"
+ },
+ "剑门关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_剑门关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   105.13000000000001,
+   31.94,
+   105.61,
+   32.42
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 326407,
+  "pbf": "china"
+ },
+ "友谊关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_老挝_友谊关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   106.42,
+   21.76,
+   106.89999999999999,
+   22.24
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 700052,
+  "pbf": "china"
+ },
+ "吴起镇": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_吴起镇.pmtiles",
+  "resumed": true,
+  "bbox": [
+   107.98,
+   36.68,
+   108.46,
+   37.160000000000004
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 224484,
+  "pbf": "china"
+ },
+ "嘉峪关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_嘉峪关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   98.04,
+   39.559999999999995,
+   98.52,
+   40.04
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 427119,
+  "pbf": "china"
+ },
+ "大散关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_大散关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   106.61,
+   34.12,
+   107.08999999999999,
+   34.6
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 288733,
+  "pbf": "china"
+ },
+ "娘子关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_娘子关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.63000000000001,
+   37.82,
+   114.11,
+   38.300000000000004
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 249730,
+  "pbf": "china"
+ },
+ "安庆": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_安庆.pmtiles",
+  "resumed": true,
+  "bbox": [
+   116.82000000000001,
+   30.3,
+   117.3,
+   30.779999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 657903,
+  "pbf": "china"
+ },
+ "定日": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_定日.pmtiles",
+  "resumed": true,
+  "bbox": [
+   86.84,
+   28.400000000000002,
+   87.32,
+   28.88
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 324914,
+  "pbf": "china"
+ },
+ "宜昌": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_宜昌.pmtiles",
+  "resumed": true,
+  "bbox": [
+   111.05000000000001,
+   30.46,
+   111.53,
+   30.939999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1460070,
+  "pbf": "china"
+ },
+ "宣城": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_宣城.pmtiles",
+  "resumed": true,
+  "bbox": [
+   118.52000000000001,
+   30.71,
+   119.0,
+   31.189999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 491173,
+  "pbf": "china"
+ },
+ "居庸关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_居庸关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   115.83,
+   40.05,
+   116.30999999999999,
+   40.53
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1415014,
+  "pbf": "china"
+ },
+ "居延关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_蒙古_居延关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   100.83,
+   41.769999999999996,
+   101.30999999999999,
+   42.25
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 393266,
+  "pbf": "china"
+ },
+ "山海关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_山海关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   119.51,
+   39.8,
+   119.99,
+   40.28
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 426693,
+  "pbf": "china"
+ },
+ "左贡": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_左贡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   97.60000000000001,
+   29.430000000000003,
+   98.08,
+   29.91
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 78373,
+  "pbf": "china"
+ },
+ "巴塘": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_巴塘.pmtiles",
+  "resumed": true,
+  "bbox": [
+   98.87,
+   30.62,
+   99.35,
+   31.099999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 49606,
+  "pbf": "china"
+ },
+ "平型关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_平型关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.92,
+   39.08,
+   114.39999999999999,
+   39.56
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 151882,
+  "pbf": "china"
+ },
+ "康定": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_康定.pmtiles",
+  "resumed": true,
+  "bbox": [
+   101.79,
+   29.810000000000002,
+   102.27,
+   30.29
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 281617,
+  "pbf": "china"
+ },
+ "恩施": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_恩施.pmtiles",
+  "resumed": true,
+  "bbox": [
+   109.25,
+   30.03,
+   109.72999999999999,
+   30.509999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 440895,
+  "pbf": "china"
+ },
+ "成都": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_成都.pmtiles",
+  "resumed": true,
+  "bbox": [
+   103.83,
+   30.330000000000002,
+   104.30999999999999,
+   30.81
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 18310010,
+  "pbf": "china"
+ },
+ "日喀则": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_日喀则.pmtiles",
+  "resumed": true,
+  "bbox": [
+   88.64,
+   29.03,
+   89.11999999999999,
+   29.509999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 503880,
+  "pbf": "china"
+ },
+ "昆仑关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_昆仑关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   108.41000000000001,
+   22.69,
+   108.89,
+   23.169999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1638638,
+  "pbf": "china"
+ },
+ "林芝": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_林芝.pmtiles",
+  "resumed": true,
+  "bbox": [
+   94.12,
+   29.41,
+   94.6,
+   29.889999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 557218,
+  "pbf": "china"
+ },
+ "梅关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_梅关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   114.15,
+   24.860000000000003,
+   114.63,
+   25.34
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 314269,
+  "pbf": "china"
+ },
+ "樟木口岸": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_樟木口岸.pmtiles",
+  "resumed": true,
+  "bbox": [
+   85.74000000000001,
+   27.78,
+   86.22,
+   28.259999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 570576,
+  "pbf": "china"
+ },
+ "武关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_武关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   110.10000000000001,
+   33.379999999999995,
+   110.58,
+   33.86
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 624261,
+  "pbf": "china"
+ },
+ "武汉": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_武汉.pmtiles",
+  "resumed": true,
+  "bbox": [
+   114.07000000000001,
+   30.35,
+   114.55,
+   30.83
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 13780219,
+  "pbf": "china"
+ },
+ "武隆": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_武隆.pmtiles",
+  "resumed": true,
+  "bbox": [
+   107.52000000000001,
+   29.09,
+   108.0,
+   29.569999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 289564,
+  "pbf": "china"
+ },
+ "江油关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_江油关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   104.54,
+   31.540000000000003,
+   105.02,
+   32.02
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 540102,
+  "pbf": "china"
+ },
+ "池州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_池州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   117.25,
+   30.42,
+   117.72999999999999,
+   30.9
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 393085,
+  "pbf": "china"
+ },
+ "波密": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_波密.pmtiles",
+  "resumed": true,
+  "bbox": [
+   95.53,
+   29.62,
+   96.00999999999999,
+   30.099999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 508339,
+  "pbf": "china"
+ },
+ "泸定桥": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_泸定桥.pmtiles",
+  "resumed": true,
+  "bbox": [
+   101.99000000000001,
+   29.67,
+   102.47,
+   30.15
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 376750,
+  "pbf": "china"
+ },
+ "湖州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_湖州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   119.86,
+   30.630000000000003,
+   120.33999999999999,
+   31.11
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 823763,
+  "pbf": "china"
+ },
+ "潼关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_潼关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   109.97,
+   34.309999999999995,
+   110.44999999999999,
+   34.79
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 542491,
+  "pbf": "china"
+ },
+ "独松关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_独松关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   119.45,
+   30.490000000000002,
+   119.92999999999999,
+   30.97
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 497710,
+  "pbf": "china"
+ },
+ "理塘": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_理塘.pmtiles",
+  "resumed": true,
+  "bbox": [
+   100.03,
+   29.76,
+   100.50999999999999,
+   30.24
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 315944,
+  "pbf": "china"
+ },
+ "瑞金": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_瑞金.pmtiles",
+  "resumed": true,
+  "bbox": [
+   115.79,
+   25.650000000000002,
+   116.27,
+   26.13
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 398714,
+  "pbf": "china"
+ },
+ "白马关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_白马关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   116.92,
+   40.309999999999995,
+   117.39999999999999,
+   40.79
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 527429,
+  "pbf": "china"
+ },
+ "皎平渡": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_皎平渡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   102.0,
+   25.96,
+   102.47999999999999,
+   26.439999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 230337,
+  "pbf": "china"
+ },
+ "瞿塘关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_瞿塘关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   109.22,
+   30.810000000000002,
+   109.69999999999999,
+   31.29
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 393895,
+  "pbf": "china"
+ },
+ "紫荆关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_紫荆关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   114.93,
+   39.19,
+   115.41,
+   39.67
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 174435,
+  "pbf": "china"
+ },
+ "聂拉木": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_聂拉木.pmtiles",
+  "resumed": true,
+  "bbox": [
+   85.74000000000001,
+   27.92,
+   86.22,
+   28.4
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 686098,
+  "pbf": "china"
+ },
+ "腊子口": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_腊子口.pmtiles",
+  "resumed": true,
+  "bbox": [
+   103.81,
+   34.059999999999995,
+   104.28999999999999,
+   34.54
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 202010,
+  "pbf": "china"
+ },
+ "芒康": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_芒康.pmtiles",
+  "resumed": true,
+  "bbox": [
+   98.36,
+   29.44,
+   98.83999999999999,
+   29.919999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 126471,
+  "pbf": "china"
+ },
+ "荆州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_荆州.pmtiles",
+  "resumed": true,
+  "bbox": [
+   112.0,
+   30.09,
+   112.47999999999999,
+   30.569999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 629909,
+  "pbf": "china"
+ },
+ "萧关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_萧关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   106.0,
+   36.04,
+   106.47999999999999,
+   36.52
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 203281,
+  "pbf": "china"
+ },
+ "虎牢关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_虎牢关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.15,
+   34.519999999999996,
+   113.63,
+   35.0
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 744787,
+  "pbf": "china"
+ },
+ "遂宁": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_遂宁.pmtiles",
+  "resumed": true,
+  "bbox": [
+   105.35000000000001,
+   30.290000000000003,
+   105.83,
+   30.77
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 567011,
+  "pbf": "china"
+ },
+ "遵义": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_遵义.pmtiles",
+  "resumed": true,
+  "bbox": [
+   106.69000000000001,
+   27.490000000000002,
+   107.17,
+   27.97
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 665669,
+  "pbf": "china"
+ },
+ "重庆": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_重庆.pmtiles",
+  "resumed": true,
+  "bbox": [
+   106.31,
+   29.32,
+   106.78999999999999,
+   29.799999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 15123119,
+  "pbf": "china"
+ },
+ "雁门关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_雁门关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   112.59,
+   38.949999999999996,
+   113.07,
+   39.43
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 171616,
+  "pbf": "china"
+ },
+ "雅安": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_雅安.pmtiles",
+  "resumed": true,
+  "bbox": [
+   102.80000000000001,
+   29.740000000000002,
+   103.28,
+   30.22
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 702220,
+  "pbf": "china"
+ },
+ "韶关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_韶关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   113.36,
+   24.57,
+   113.83999999999999,
+   25.049999999999997
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1802982,
+  "pbf": "china"
+ },
+ "马关": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_马关.pmtiles",
+  "resumed": true,
+  "bbox": [
+   104.16000000000001,
+   22.770000000000003,
+   104.64,
+   23.25
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1053653,
+  "pbf": "china"
+ },
+ "黄冈": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_黄冈.pmtiles",
+  "resumed": true,
+  "bbox": [
+   114.63000000000001,
+   30.21,
+   115.11,
+   30.689999999999998
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 893217,
+  "pbf": "china"
+ },
+ "黔江": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_黔江.pmtiles",
+  "resumed": true,
+  "bbox": [
+   108.54,
+   29.290000000000003,
+   109.02,
+   29.77
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 286815,
+  "pbf": "china"
+ },
+ "伊州（哈密）": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_伊州_哈密.pmtiles",
+  "tiles": 2173,
+  "bytes": 643456,
+  "bbox": [
+   93.35,
+   42.68,
+   93.75,
+   43.08
+  ],
+  "center": [
+   93.55,
+   42.879999999999995
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "china"
+ },
+ "海口": {
+  "ok": true,
+  "file": "pmtiles/亚洲_中国_海口.pmtiles",
+  "tiles": 7867,
+  "bytes": 4370901,
+  "bbox": [
+   109.7,
+   19.54,
+   110.7,
+   20.54
+  ],
+  "center": [
+   110.2,
+   20.04
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "china"
+ }
+}

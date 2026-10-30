@@ -1,0 +1,106 @@
+{
+ "tag": "offline-121.46-31.1",
+ "states": [
+  {
+   "asked": {
+    "z": 16,
+    "p": 35
+   },
+   "cache": "pmt",
+   "zoom": 16,
+   "pitch": 35,
+   "minZoom": 15,
+   "maxZoom": 19,
+   "n": 7,
+   "byZ": {
+    "15": 7
+   },
+   "st": {
+    "loaded": 7
+   },
+   "stByZ": {
+    "15:loaded": 7
+   },
+   "srcZ": {
+    "minzoom": 15,
+    "maxzoom": 15
+   },
+   "bad": []
+  },
+  {
+   "asked": {
+    "z": 17.5,
+    "p": 45
+   },
+   "cache": "pmt",
+   "zoom": 17.5,
+   "pitch": 45,
+   "minZoom": 15,
+   "maxZoom": 19,
+   "n": 3,
+   "byZ": {
+    "15": 3
+   },
+   "st": {
+    "loaded": 3
+   },
+   "stByZ": {
+    "15:loaded": 3
+   },
+   "srcZ": {
+    "minzoom": 15,
+    "maxzoom": 15
+   },
+   "bad": []
+  },
+  {
+   "asked": {
+    "z": 19,
+    "p": 45
+   },
+   "cache": "pmt",
+   "zoom": 19,
+   "pitch": 45,
+   "minZoom": 15,
+   "maxZoom": 19,
+   "n": 2,
+   "byZ": {
+    "15": 2
+   },
+   "st": {
+    "loaded": 2
+   },
+   "stByZ": {
+    "15:loaded": 2
+   },
+   "srcZ": {
+    "minzoom": 15,
+    "maxzoom": 15
+   },
+   "bad": []
+  }
+ ],
+ "zoomTest": {
+  "before": {
+   "zoom": 19,
+   "min": 15,
+   "max": 19
+  },
+  "setZoomMinus1": 18,
+  "afterSetZoom": 18,
+  "zoomOut": 17,
+  "zoomIn": 18,
+  "wheelBefore": 18,
+  "wheelIn": 18.33,
+  "wheelOut": 18,
+  "hasZoomInBtn": true,
+  "btnBefore": 18,
+  "btnAfterIn": 19,
+  "btnAfterOut": 18,
+  "hit": {
+   "tag": "CANVAS",
+   "cls": "maplibregl-canvas",
+   "id": ""
+  }
+ }
+}

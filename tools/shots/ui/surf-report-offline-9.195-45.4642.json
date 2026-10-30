@@ -1,0 +1,59 @@
+{
+ "tag": "offline-9.195-45.4642",
+ "states": [
+  {
+   "asked": {
+    "z": 16,
+    "p": 62
+   },
+   "cache": "pmt",
+   "zoom": 16,
+   "pitch": 60,
+   "minZoom": 15,
+   "maxZoom": 19,
+   "n": 14,
+   "byZ": {
+    "15": 14
+   },
+   "st": {
+    "loaded": 14
+   },
+   "stByZ": {
+    "15:loaded": 14
+   },
+   "srcZ": {
+    "minzoom": 15,
+    "maxzoom": 15
+   },
+   "bad": []
+  }
+ ],
+ "zoomTest": {
+  "before": {
+   "zoom": 16,
+   "min": 15,
+   "max": 19
+  },
+  "setZoomMinus1": 15,
+  "afterSetZoom": 15,
+  "zoomOut": 15,
+  "zoomIn": 16,
+  "wheelBefore": 16,
+  "wheelIn": 16.33,
+  "wheelOut": 16,
+  "hasZoomInBtn": true,
+  "btnBefore": 16,
+  "btnAfterIn": 17,
+  "btnAfterOut": 16,
+  "hit": {
+   "tag": "CANVAS",
+   "cls": "maplibregl-canvas",
+   "id": ""
+  }
+ },
+ "diag": {
+  "active": true,
+  "bounds": true,
+  "badge": "offline · zoom 16.0 · 瓦片 14 块 (z15×14) · loaded:14"
+ }
+}

@@ -5,8 +5,8 @@
   "type": "module",
   "description": "山川与天宫 —— 地形观察与空间站轨道科普沙盒（CesiumJS，纯 Flask 无构建）",
   "scripts": {
-    "vendor": "node tools/vendor-cesium.mjs",
-    "check-net": "node tools/check-net.mjs"
+    "vendor": "node tools/build/vendor-cesium.mjs",
+    "check-net": "node tools/build/check-net.mjs"
   },
   "dependencies": {
     "cesium": "^1.125.0",

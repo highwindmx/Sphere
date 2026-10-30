@@ -1,0 +1,642 @@
+{
+ "_doc": "补充城市：①中国 34 个省级行政中心（含港澳台）+ 5 个计划单列市；②全球人口前列大城中本地 pbf 可覆盖的部分。layer=megacities → 走 T1 大框（±0.5°）。坐标为城市中心，精度 ~0.05°，对 ±0.24°~±0.5° 的抽取框足够。",
+ "_skip_no_pbf": "墨西哥城/瓜达拉哈拉/蒙特雷(缺 mexico)、多伦多/蒙特利尔/温哥华(缺 canada)、华沙/布拉格/布达佩斯/阿姆斯特丹等(缺欧洲小国) —— 本地无 pbf，暂不纳入",
+ "cities": [
+  {
+   "name": "天津",
+   "lon": 117.2,
+   "lat": 39.13,
+   "layer": "cncapital"
+  },
+  {
+   "name": "石家庄",
+   "lon": 114.51,
+   "lat": 38.04,
+   "layer": "cncapital"
+  },
+  {
+   "name": "太原",
+   "lon": 112.55,
+   "lat": 37.87,
+   "layer": "cncapital"
+  },
+  {
+   "name": "呼和浩特",
+   "lon": 111.75,
+   "lat": 40.84,
+   "layer": "cncapital"
+  },
+  {
+   "name": "沈阳",
+   "lon": 123.43,
+   "lat": 41.8,
+   "layer": "cncapital"
+  },
+  {
+   "name": "大连",
+   "lon": 121.62,
+   "lat": 38.92,
+   "layer": "cncapital"
+  },
+  {
+   "name": "长春",
+   "lon": 125.32,
+   "lat": 43.9,
+   "layer": "cncapital"
+  },
+  {
+   "name": "哈尔滨",
+   "lon": 126.53,
+   "lat": 45.8,
+   "layer": "cncapital"
+  },
+  {
+   "name": "南京",
+   "lon": 118.78,
+   "lat": 32.06,
+   "layer": "cncapital"
+  },
+  {
+   "name": "杭州",
+   "lon": 120.16,
+   "lat": 30.27,
+   "layer": "cncapital"
+  },
+  {
+   "name": "宁波",
+   "lon": 121.55,
+   "lat": 29.87,
+   "layer": "cncapital"
+  },
+  {
+   "name": "合肥",
+   "lon": 117.28,
+   "lat": 31.86,
+   "layer": "cncapital"
+  },
+  {
+   "name": "福州",
+   "lon": 119.3,
+   "lat": 26.08,
+   "layer": "cncapital"
+  },
+  {
+   "name": "厦门",
+   "lon": 118.09,
+   "lat": 24.48,
+   "layer": "cncapital"
+  },
+  {
+   "name": "南昌",
+   "lon": 115.89,
+   "lat": 28.68,
+   "layer": "cncapital"
+  },
+  {
+   "name": "济南",
+   "lon": 117.0,
+   "lat": 36.65,
+   "layer": "cncapital"
+  },
+  {
+   "name": "青岛",
+   "lon": 120.38,
+   "lat": 36.07,
+   "layer": "cncapital"
+  },
+  {
+   "name": "郑州",
+   "lon": 113.63,
+   "lat": 34.75,
+   "layer": "cncapital"
+  },
+  {
+   "name": "长沙",
+   "lon": 112.94,
+   "lat": 28.23,
+   "layer": "cncapital"
+  },
+  {
+   "name": "深圳",
+   "lon": 114.06,
+   "lat": 22.54,
+   "layer": "cncapital"
+  },
+  {
+   "name": "南宁",
+   "lon": 108.37,
+   "lat": 22.82,
+   "layer": "cncapital"
+  },
+  {
+   "name": "海口",
+   "lon": 110.2,
+   "lat": 20.04,
+   "layer": "cncapital"
+  },
+  {
+   "name": "贵阳",
+   "lon": 106.63,
+   "lat": 26.65,
+   "layer": "cncapital"
+  },
+  {
+   "name": "昆明",
+   "lon": 102.83,
+   "lat": 24.88,
+   "layer": "cncapital"
+  },
+  {
+   "name": "西安",
+   "lon": 108.94,
+   "lat": 34.34,
+   "layer": "cncapital"
+  },
+  {
+   "name": "西宁",
+   "lon": 101.78,
+   "lat": 36.62,
+   "layer": "cncapital"
+  },
+  {
+   "name": "银川",
+   "lon": 106.23,
+   "lat": 38.49,
+   "layer": "cncapital"
+  },
+  {
+   "name": "乌鲁木齐",
+   "lon": 87.62,
+   "lat": 43.82,
+   "layer": "cncapital"
+  },
+  {
+   "name": "德里",
+   "lon": 77.21,
+   "lat": 28.61,
+   "layer": "megacities"
+  },
+  {
+   "name": "孟买",
+   "lon": 72.88,
+   "lat": 19.08,
+   "layer": "megacities"
+  },
+  {
+   "name": "加尔各答",
+   "lon": 88.36,
+   "lat": 22.57,
+   "layer": "megacities"
+  },
+  {
+   "name": "班加罗尔",
+   "lon": 77.59,
+   "lat": 12.97,
+   "layer": "megacities"
+  },
+  {
+   "name": "金奈",
+   "lon": 80.27,
+   "lat": 13.08,
+   "layer": "megacities"
+  },
+  {
+   "name": "海得拉巴",
+   "lon": 78.47,
+   "lat": 17.38,
+   "layer": "megacities"
+  },
+  {
+   "name": "艾哈迈达巴德",
+   "lon": 72.57,
+   "lat": 23.02,
+   "layer": "megacities"
+  },
+  {
+   "name": "浦那",
+   "lon": 73.86,
+   "lat": 18.52,
+   "layer": "megacities"
+  },
+  {
+   "name": "苏拉特",
+   "lon": 72.83,
+   "lat": 21.17,
+   "layer": "megacities"
+  },
+  {
+   "name": "卡拉奇",
+   "lon": 67.01,
+   "lat": 24.86,
+   "layer": "megacities"
+  },
+  {
+   "name": "拉合尔",
+   "lon": 74.34,
+   "lat": 31.55,
+   "layer": "megacities"
+  },
+  {
+   "name": "达卡",
+   "lon": 90.41,
+   "lat": 23.81,
+   "layer": "megacities"
+  },
+  {
+   "name": "喀布尔",
+   "lon": 69.21,
+   "lat": 34.56,
+   "layer": "megacities"
+  },
+  {
+   "name": "塔什干",
+   "lon": 69.24,
+   "lat": 41.3,
+   "layer": "megacities"
+  },
+  {
+   "name": "阿拉木图",
+   "lon": 76.89,
+   "lat": 43.24,
+   "layer": "megacities"
+  },
+  {
+   "name": "莫斯科",
+   "lon": 37.62,
+   "lat": 55.75,
+   "layer": "megacities"
+  },
+  {
+   "name": "圣彼得堡",
+   "lon": 30.34,
+   "lat": 59.93,
+   "layer": "megacities"
+  },
+  {
+   "name": "雅加达",
+   "lon": 106.85,
+   "lat": -6.21,
+   "layer": "megacities"
+  },
+  {
+   "name": "曼谷",
+   "lon": 100.5,
+   "lat": 13.75,
+   "layer": "megacities"
+  },
+  {
+   "name": "吉隆坡",
+   "lon": 101.69,
+   "lat": 3.14,
+   "layer": "megacities"
+  },
+  {
+   "name": "新加坡",
+   "lon": 103.82,
+   "lat": 1.35,
+   "layer": "megacities"
+  },
+  {
+   "name": "河内",
+   "lon": 105.83,
+   "lat": 21.03,
+   "layer": "megacities"
+  },
+  {
+   "name": "胡志明市",
+   "lon": 106.66,
+   "lat": 10.76,
+   "layer": "megacities"
+  },
+  {
+   "name": "仰光",
+   "lon": 96.16,
+   "lat": 16.87,
+   "layer": "megacities"
+  },
+  {
+   "name": "马尼拉",
+   "lon": 120.98,
+   "lat": 14.6,
+   "layer": "megacities"
+  },
+  {
+   "name": "开罗",
+   "lon": 31.24,
+   "lat": 30.04,
+   "layer": "megacities"
+  },
+  {
+   "name": "拉各斯",
+   "lon": 3.38,
+   "lat": 6.52,
+   "layer": "megacities"
+  },
+  {
+   "name": "金沙萨",
+   "lon": 15.27,
+   "lat": -4.44,
+   "layer": "megacities"
+  },
+  {
+   "name": "约翰内斯堡",
+   "lon": 28.05,
+   "lat": -26.2,
+   "layer": "megacities"
+  },
+  {
+   "name": "内罗毕",
+   "lon": 36.82,
+   "lat": -1.29,
+   "layer": "megacities"
+  },
+  {
+   "name": "亚的斯亚贝巴",
+   "lon": 38.75,
+   "lat": 9.03,
+   "layer": "megacities"
+  },
+  {
+   "name": "达累斯萨拉姆",
+   "lon": 39.28,
+   "lat": -6.79,
+   "layer": "megacities"
+  },
+  {
+   "name": "喀土穆",
+   "lon": 32.53,
+   "lat": 15.5,
+   "layer": "megacities"
+  },
+  {
+   "name": "卡诺",
+   "lon": 8.52,
+   "lat": 12.0,
+   "layer": "megacities"
+  },
+  {
+   "name": "阿比让",
+   "lon": -4.02,
+   "lat": 5.35,
+   "layer": "megacities"
+  },
+  {
+   "name": "罗安达",
+   "lon": 13.23,
+   "lat": -8.84,
+   "layer": "megacities"
+  },
+  {
+   "name": "亚历山大",
+   "lon": 29.92,
+   "lat": 31.2,
+   "layer": "megacities"
+  },
+  {
+   "name": "利马",
+   "lon": -77.04,
+   "lat": -12.05,
+   "layer": "megacities"
+  },
+  {
+   "name": "波哥大",
+   "lon": -74.07,
+   "lat": 4.71,
+   "layer": "megacities"
+  },
+  {
+   "name": "麦德林",
+   "lon": -75.56,
+   "lat": 6.24,
+   "layer": "megacities"
+  },
+  {
+   "name": "瓜亚基尔",
+   "lon": -79.89,
+   "lat": -2.19,
+   "layer": "megacities"
+  },
+  {
+   "name": "福塔莱萨",
+   "lon": -38.54,
+   "lat": -3.73,
+   "layer": "megacities"
+  },
+  {
+   "name": "萨尔瓦多",
+   "lon": -38.51,
+   "lat": -12.97,
+   "layer": "megacities"
+  },
+  {
+   "name": "库里提巴",
+   "lon": -49.27,
+   "lat": -25.43,
+   "layer": "megacities"
+  },
+  {
+   "name": "芝加哥",
+   "lon": -87.63,
+   "lat": 41.88,
+   "layer": "megacities"
+  },
+  {
+   "name": "休斯顿",
+   "lon": -95.37,
+   "lat": 29.76,
+   "layer": "megacities"
+  },
+  {
+   "name": "费城",
+   "lon": -75.17,
+   "lat": 39.95,
+   "layer": "megacities"
+  },
+  {
+   "name": "亚特兰大",
+   "lon": -84.39,
+   "lat": 33.75,
+   "layer": "megacities"
+  },
+  {
+   "name": "迈阿密",
+   "lon": -80.19,
+   "lat": 25.76,
+   "layer": "megacities"
+  },
+  {
+   "name": "华盛顿",
+   "lon": -77.04,
+   "lat": 38.91,
+   "layer": "megacities"
+  },
+  {
+   "name": "名古屋",
+   "lon": 136.91,
+   "lat": 35.18,
+   "layer": "megacities"
+  },
+  {
+   "name": "福冈",
+   "lon": 130.4,
+   "lat": 33.59,
+   "layer": "megacities"
+  },
+  {
+   "name": "悉尼",
+   "lon": 151.21,
+   "lat": -33.87,
+   "layer": "megacities"
+  },
+  {
+   "name": "墨尔本",
+   "lon": 144.96,
+   "lat": -37.81,
+   "layer": "megacities"
+  },
+  {
+   "name": "罗马",
+   "lon": 12.5,
+   "lat": 41.9,
+   "layer": "megacities"
+  },
+  {
+   "name": "柏林",
+   "lon": 13.4,
+   "lat": 52.52,
+   "layer": "megacities"
+  },
+  {
+   "name": "马德里",
+   "lon": -3.7,
+   "lat": 40.42,
+   "layer": "megacities"
+  },
+  {
+   "name": "巴塞罗那",
+   "lon": 2.17,
+   "lat": 41.39,
+   "layer": "megacities"
+  },
+  {
+   "name": "伦敦",
+   "lon": -0.13,
+   "lat": 51.51,
+   "layer": "megacities"
+  },
+  {
+   "name": "巴黎",
+   "lon": 2.35,
+   "lat": 48.86,
+   "layer": "megacities"
+  },
+  {
+   "name": "利雅得",
+   "lon": 46.72,
+   "lat": 24.69,
+   "layer": "megacities"
+  },
+  {
+   "name": "迪拜",
+   "lon": 55.27,
+   "lat": 25.2,
+   "layer": "megacities"
+  },
+  {
+   "name": "巴格达",
+   "lon": 44.36,
+   "lat": 33.31,
+   "layer": "megacities"
+  },
+  {
+   "name": "德黑兰",
+   "lon": 51.39,
+   "lat": 35.69,
+   "layer": "megacities"
+  },
+  {
+   "name": "伊斯坦布尔",
+   "lon": 28.98,
+   "lat": 41.01,
+   "layer": "megacities"
+  },
+  {
+   "name": "首尔",
+   "lon": 126.98,
+   "lat": 37.57,
+   "layer": "megacities"
+  },
+  {
+   "name": "东京",
+   "lon": 139.69,
+   "lat": 35.69,
+   "layer": "megacities"
+  },
+  {
+   "name": "大阪",
+   "lon": 135.5,
+   "lat": 34.69,
+   "layer": "megacities"
+  },
+  {
+   "name": "广州",
+   "lon": 113.27,
+   "lat": 23.13,
+   "layer": "cncapital"
+  },
+  {
+   "name": "上海",
+   "lon": 121.47,
+   "lat": 31.23,
+   "layer": "cncapital"
+  },
+  {
+   "name": "成都",
+   "lon": 104.07,
+   "lat": 30.57,
+   "layer": "cncapital"
+  },
+  {
+   "name": "武汉",
+   "lon": 114.31,
+   "lat": 30.59,
+   "layer": "cncapital"
+  },
+  {
+   "name": "重庆",
+   "lon": 106.55,
+   "lat": 29.56,
+   "layer": "cncapital"
+  },
+  {
+   "name": "兰州",
+   "lon": 103.83,
+   "lat": 36.06,
+   "layer": "cncapital"
+  },
+  {
+   "name": "拉萨",
+   "lon": 91.13,
+   "lat": 29.65,
+   "layer": "cncapital"
+  },
+  {
+   "name": "休斯敦",
+   "lon": -95.3698,
+   "lat": 29.7604,
+   "layer": "megacities"
+  },
+  {
+   "name": "苏州",
+   "lon": 120.5853,
+   "lat": 31.2989,
+   "layer": "megacities"
+  },
+  {
+   "name": "瓦莱塔",
+   "lon": 14.5146,
+   "lat": 35.8989,
+   "layer": "megacities"
+  }
+ ]
+}

@@ -1,0 +1,2385 @@
+{
+ "name": "jiangshan-map (china)",
+ "source": "https://github.com/DeanChensj/jiangshan-map",
+ "license": "GPL-3.0；府州级边界与战国疆域派生自 CHGIS V6 与 Hartwell 数据集，保留学术、非商业使用条款",
+ "note": "历史疆域与政区边界为示意级近似，非测绘级国界。年份为负 = 公元前（无公元 0 年）",
+ "crs": "EPSG:4326 (lon, lat)",
+ "coverage": "-403 .. 1948",
+ "files": {
+  "dynasties": "map_data.js",
+  "snapshots": "atlas_snapshots.js",
+  "hydro": "china_geo_data.js",
+  "i18n": "i18n_dict.js"
+ },
+ "layers": {
+  "polity": "政权（王朝 / 并立政权）",
+  "region": "高层政区（道 / 路 / 省）",
+  "prefecture": "府州",
+  "settlements": "历代城邑点 1753 个（古今名对照 + 都城标记）",
+  "milestones": "历史事件点 471 个",
+  "corridors": "长城 / 运河 / 道路 / 海路 16 条"
+ },
+ "dynasties": [
+  {
+   "key": "zhanguo",
+   "title": "战国",
+   "from": -403,
+   "to": -222,
+   "tint": "#7c5338",
+   "phases": [
+    {
+     "from": -403,
+     "to": -341,
+     "snap": "s_zhanguo_a",
+     "overview": "前 403 — 前 341 · 三家分晋、田氏代齐与魏霸中原：七雄并立，宋、巴、蜀、越、中山尚存"
+    },
+    {
+     "from": -340,
+     "to": -317,
+     "snap": "s_zhanguo_a2",
+     "overview": "前 340 — 前 317 · 商鞅收河西、魏迁大梁与五国相王：宋、巴、蜀、越、中山、义渠尚存"
+    },
+    {
+     "from": -316,
+     "to": -307,
+     "snap": "s_zhanguo_b0",
+     "overview": "前 316 — 前 307 · 秦司马错灭巴蜀、丹阳之战取汉中：宋、越、中山、义渠尚存"
+    },
+    {
+     "from": -306,
+     "to": -301,
+     "snap": "s_zhanguo_b1",
+     "overview": "前 306 — 前 301 · 楚怀王灭越尽取旧吴之地：宋、中山、义渠尚存，燕尚未东辟辽东"
+    },
+    {
+     "from": -300,
+     "to": -297,
+     "snap": "s_zhanguo_b",
+     "overview": "前 300 — 前 297 · 燕将秦开辟燕北五郡、赵武灵王辟云中：劲宋尚存"
+    },
+    {
+     "from": -296,
+     "to": -279,
+     "snap": "s_zhanguo_b2",
+     "overview": "前 296 — 前 279 · 赵灭中山、齐湣王灭宋与五国伐齐：齐楚魏三分宋地，乐毅破齐"
+    },
+    {
+     "from": -278,
+     "to": -250,
+     "snap": "s_zhanguo_c",
+     "overview": "前 278 — 前 250 · 白起拔郢、秦灭义渠与长平之战：秦取南郡上党北地，鲁周尚存"
+    },
+    {
+     "from": -249,
+     "to": -239,
+     "snap": "s_zhanguo_c2",
+     "overview": "前 249 — 前 239 · 楚考烈王灭鲁与秦灭两周：鲁国并入楚境，秦置三川郡"
+    },
+    {
+     "from": -238,
+     "to": -231,
+     "snap": "s_zhanguo_d",
+     "overview": "前 238 — 前 231 · 秦王政亲政与灭六国前夕：秦增置太原、东郡，腰斩六国合纵"
+    },
+    {
+     "from": -230,
+     "to": -229,
+     "snap": "s_zhanguo_e1",
+     "overview": "前 230 — 前 229 · 秦王扫六合之首灭韩国：内史腾俘韩王安，置颍川郡"
+    },
+    {
+     "from": -228,
+     "to": -227,
+     "snap": "s_zhanguo_e2",
+     "overview": "前 228 — 前 227 · 秦王扫六合之攻克邯郸灭赵：王翦破赵俘赵王迁，公子嘉北奔代郡"
+    },
+    {
+     "from": -226,
+     "to": -226,
+     "snap": "s_zhanguo_e3",
+     "overview": "前 226 · 秦王扫六合之易水破燕：荆轲刺秦后王翦攻拔燕都蓟城，燕王喜东退辽东"
+    },
+    {
+     "from": -225,
+     "to": -224,
+     "snap": "s_zhanguo_e4",
+     "overview": "前 225 — 前 224 · 秦王扫六合之水灌大梁灭魏：王贲引河沟灌城，魏王假出降，三晋尽入秦"
+    },
+    {
+     "from": -223,
+     "to": -222,
+     "snap": "s_zhanguo_e5",
+     "overview": "前 223 — 前 222 · 秦王扫六合之王翦六十万灭楚、王贲灭燕代：六国唯余齐国孤悬东海"
+    }
+   ],
+   "title_en": "Warring States",
+   "seat": "咸阳（秦）· 洛阳（周）· 七雄都城"
+  },
+  {
+   "key": "qin",
+   "title": "秦",
+   "from": -221,
+   "to": -203,
+   "tint": "#5a554f",
+   "phases": [
+    {
+     "from": -221,
+     "to": -216,
+     "snap": "s_qin_a"
+    },
+    {
+     "from": -215,
+     "to": -215,
+     "snap": "s_qin_b"
+    },
+    {
+     "from": -214,
+     "to": -207,
+     "snap": "s_qin"
+    },
+    {
+     "from": -206,
+     "to": -203,
+     "snap": "s_qin_chuhan"
+    }
+   ],
+   "title_en": "Qin",
+   "seat": "咸阳"
+  },
+  {
+   "key": "xihan",
+   "title": "西汉",
+   "from": -202,
+   "to": 24,
+   "tint": "#b5452f",
+   "phases": [
+    {
+     "from": -202,
+     "to": -128,
+     "snap": "s_xihan_a"
+    },
+    {
+     "from": -127,
+     "to": -122,
+     "snap": "s_xihan_b1"
+    },
+    {
+     "from": -121,
+     "to": -112,
+     "snap": "s_xihan_b2"
+    },
+    {
+     "from": -111,
+     "to": -109,
+     "snap": "s_xihan_b3"
+    },
+    {
+     "from": -108,
+     "to": -61,
+     "snap": "s_xihan_b"
+    },
+    {
+     "from": -60,
+     "to": 7,
+     "snap": "s_xihan_c"
+    },
+    {
+     "from": 8,
+     "to": 22,
+     "snap": "s_xihan_d"
+    },
+    {
+     "from": 23,
+     "to": 24,
+     "snap": "s_xihan_e"
+    }
+   ],
+   "title_en": "Western Han",
+   "seat": "长安"
+  },
+  {
+   "key": "donghan",
+   "title": "东汉",
+   "from": 25,
+   "to": 219,
+   "tint": "#a4432c",
+   "phases": [
+    {
+     "from": 25,
+     "to": 35,
+     "snap": "s_donghan_a"
+    },
+    {
+     "from": 36,
+     "to": 42,
+     "snap": "s_donghan_b0"
+    },
+    {
+     "from": 43,
+     "to": 47,
+     "snap": "s_donghan_b"
+    },
+    {
+     "from": 48,
+     "to": 72,
+     "snap": "s_donghan_b2"
+    },
+    {
+     "from": 73,
+     "to": 90,
+     "snap": "s_donghan_c"
+    },
+    {
+     "from": 91,
+     "to": 188,
+     "snap": "s_donghan"
+    },
+    {
+     "from": 189,
+     "to": 195,
+     "snap": "s_donghan_d1"
+    },
+    {
+     "from": 196,
+     "to": 199,
+     "snap": "s_donghan_d2"
+    },
+    {
+     "from": 200,
+     "to": 207,
+     "snap": "s_donghan_d"
+    },
+    {
+     "from": 208,
+     "to": 210,
+     "snap": "s_donghan_e0"
+    },
+    {
+     "from": 211,
+     "to": 213,
+     "snap": "s_donghan_e1"
+    },
+    {
+     "from": 214,
+     "to": 214,
+     "snap": "s_donghan_e"
+    },
+    {
+     "from": 215,
+     "to": 218,
+     "snap": "s_donghan_e2"
+    },
+    {
+     "from": 219,
+     "to": 219,
+     "snap": "s_donghan_f"
+    }
+   ],
+   "title_en": "Eastern Han",
+   "seat": "洛阳"
+  },
+  {
+   "key": "sanguo",
+   "title": "三国",
+   "from": 220,
+   "to": 279,
+   "tint": "#4a6fa5",
+   "phases": [
+    {
+     "from": 220,
+     "to": 237,
+     "snap": "s_sanguo_a"
+    },
+    {
+     "from": 238,
+     "to": 262,
+     "snap": "s_sanguo"
+    },
+    {
+     "from": 263,
+     "to": 264,
+     "snap": "s_sanguo_b"
+    },
+    {
+     "from": 265,
+     "to": 279,
+     "snap": "s_sanguo_c"
+    }
+   ],
+   "title_en": "Three Kingdoms",
+   "seat": "洛阳 / 成都 / 建业"
+  },
+  {
+   "key": "xijin",
+   "title": "西晋",
+   "from": 280,
+   "to": 316,
+   "tint": "#a0683f",
+   "phases": [
+    {
+     "from": 280,
+     "to": 303,
+     "snap": "s_xijin_a"
+    },
+    {
+     "from": 304,
+     "to": 305,
+     "snap": "s_xijin"
+    },
+    {
+     "from": 306,
+     "to": 310,
+     "snap": "s_xijin_a2"
+    },
+    {
+     "from": 311,
+     "to": 316,
+     "snap": "s_xijin_b"
+    }
+   ],
+   "title_en": "Western Jin",
+   "seat": "洛阳"
+  },
+  {
+   "key": "dongjin",
+   "title": "东晋十六国",
+   "from": 317,
+   "to": 419,
+   "tint": "#4f8a78",
+   "phases": [
+    {
+     "from": 317,
+     "to": 318,
+     "snap": "s_dongjin_317"
+    },
+    {
+     "from": 319,
+     "to": 328,
+     "snap": "s_dongjin_a0"
+    },
+    {
+     "from": 329,
+     "to": 346,
+     "snap": "s_dongjin_a"
+    },
+    {
+     "from": 347,
+     "to": 349,
+     "snap": "s_dongjin_a2"
+    },
+    {
+     "from": 350,
+     "to": 350,
+     "snap": "s_dongjin_350"
+    },
+    {
+     "from": 351,
+     "to": 351,
+     "snap": "s_dongjin_351"
+    },
+    {
+     "from": 352,
+     "to": 369,
+     "snap": "s_dongjin_b"
+    },
+    {
+     "from": 370,
+     "to": 375,
+     "snap": "s_dongjin_b2"
+    },
+    {
+     "from": 376,
+     "to": 383,
+     "snap": "s_dongjin_c"
+    },
+    {
+     "from": 384,
+     "to": 384,
+     "snap": "s_dongjin_384"
+    },
+    {
+     "from": 385,
+     "to": 385,
+     "snap": "s_dongjin_385"
+    },
+    {
+     "from": 386,
+     "to": 396,
+     "snap": "s_dongjin_d0"
+    },
+    {
+     "from": 397,
+     "to": 397,
+     "snap": "s_dongjin_397"
+    },
+    {
+     "from": 398,
+     "to": 398,
+     "snap": "s_dongjin_d1"
+    },
+    {
+     "from": 399,
+     "to": 403,
+     "snap": "s_dongjin_399"
+    },
+    {
+     "from": 404,
+     "to": 406,
+     "snap": "s_dongjin_404"
+    },
+    {
+     "from": 407,
+     "to": 409,
+     "snap": "s_dongjin_d"
+    },
+    {
+     "from": 410,
+     "to": 412,
+     "snap": "s_dongjin_410"
+    },
+    {
+     "from": 413,
+     "to": 416,
+     "snap": "s_dongjin_e"
+    },
+    {
+     "from": 417,
+     "to": 419,
+     "snap": "s_dongjin_f"
+    }
+   ],
+   "title_en": "Eastern Jin & Sixteen Kingdoms",
+   "seat": "建康（东晋）"
+  },
+  {
+   "key": "nanbei",
+   "title": "南北朝",
+   "from": 420,
+   "to": 580,
+   "tint": "#6b5b95",
+   "phases": [
+    {
+     "from": 420,
+     "to": 426,
+     "snap": "s_nanbei_0"
+    },
+    {
+     "from": 427,
+     "to": 430,
+     "snap": "s_nanbei_427"
+    },
+    {
+     "from": 431,
+     "to": 435,
+     "snap": "s_nanbei_0b"
+    },
+    {
+     "from": 436,
+     "to": 438,
+     "snap": "s_nanbei_0c"
+    },
+    {
+     "from": 439,
+     "to": 468,
+     "snap": "s_nanbei_a"
+    },
+    {
+     "from": 469,
+     "to": 478,
+     "snap": "s_nanbei_a2"
+    },
+    {
+     "from": 479,
+     "to": 501,
+     "snap": "s_nanbei_b"
+    },
+    {
+     "from": 502,
+     "to": 533,
+     "snap": "s_nanbei_c"
+    },
+    {
+     "from": 534,
+     "to": 549,
+     "snap": "s_nanbei_d"
+    },
+    {
+     "from": 550,
+     "to": 552,
+     "snap": "s_nanbei_d1"
+    },
+    {
+     "from": 553,
+     "to": 553,
+     "snap": "s_nanbei_d2"
+    },
+    {
+     "from": 554,
+     "to": 556,
+     "snap": "s_nanbei_d3"
+    },
+    {
+     "from": 557,
+     "to": 572,
+     "snap": "s_nanbei_e"
+    },
+    {
+     "from": 573,
+     "to": 576,
+     "snap": "s_nanbei_e2"
+    },
+    {
+     "from": 577,
+     "to": 580,
+     "snap": "s_nanbei_f"
+    }
+   ],
+   "title_en": "Northern & Southern Dynasties",
+   "seat": "平城→洛阳（北朝）/ 建康（南朝）"
+  },
+  {
+   "key": "sui",
+   "title": "隋",
+   "from": 581,
+   "to": 617,
+   "tint": "#8a6d3b",
+   "phases": [
+    {
+     "from": 581,
+     "to": 586,
+     "snap": "s_sui_a"
+    },
+    {
+     "from": 587,
+     "to": 588,
+     "snap": "s_sui_a2"
+    },
+    {
+     "from": 589,
+     "to": 608,
+     "snap": "s_sui"
+    },
+    {
+     "from": 609,
+     "to": 613,
+     "snap": "s_sui_c"
+    },
+    {
+     "from": 614,
+     "to": 617,
+     "snap": "s_sui_d"
+    }
+   ],
+   "title_en": "Sui",
+   "seat": "大兴（长安）"
+  },
+  {
+   "key": "tang",
+   "title": "唐",
+   "from": 618,
+   "to": 906,
+   "tint": "#c6952b",
+   "phases": [
+    {
+     "from": 618,
+     "to": 620,
+     "snap": "s_tang_0"
+    },
+    {
+     "from": 621,
+     "to": 629,
+     "snap": "s_tang_a0"
+    },
+    {
+     "from": 630,
+     "to": 634,
+     "snap": "s_tang_a1"
+    },
+    {
+     "from": 635,
+     "to": 639,
+     "snap": "s_tang_a1b"
+    },
+    {
+     "from": 640,
+     "to": 647,
+     "snap": "s_tang_a2"
+    },
+    {
+     "from": 648,
+     "to": 656,
+     "snap": "s_tang_a2b"
+    },
+    {
+     "from": 657,
+     "to": 667,
+     "snap": "s_tang_a3"
+    },
+    {
+     "from": 668,
+     "to": 675,
+     "snap": "s_tang_a4"
+    },
+    {
+     "from": 676,
+     "to": 701,
+     "snap": "s_tang_a"
+    },
+    {
+     "from": 702,
+     "to": 754,
+     "snap": "s_tang_a5"
+    },
+    {
+     "from": 755,
+     "to": 756,
+     "snap": "s_tang_b0a"
+    },
+    {
+     "from": 757,
+     "to": 762,
+     "snap": "s_tang_b0b"
+    },
+    {
+     "from": 763,
+     "to": 763,
+     "snap": "s_tang_b0"
+    },
+    {
+     "from": 764,
+     "to": 789,
+     "snap": "s_tang_b1"
+    },
+    {
+     "from": 790,
+     "to": 847,
+     "snap": "s_tang_b"
+    },
+    {
+     "from": 848,
+     "to": 879,
+     "snap": "s_tang_c"
+    },
+    {
+     "from": 880,
+     "to": 884,
+     "snap": "s_tang_d1"
+    },
+    {
+     "from": 885,
+     "to": 906,
+     "snap": "s_tang_d2"
+    }
+   ],
+   "title_en": "Tang",
+   "seat": "长安"
+  },
+  {
+   "key": "wudai",
+   "title": "五代十国",
+   "from": 907,
+   "to": 959,
+   "tint": "#a8763a",
+   "phases": [
+    {
+     "from": 907,
+     "to": 922,
+     "snap": "s_wudai_a"
+    },
+    {
+     "from": 923,
+     "to": 924,
+     "snap": "s_wudai_b1"
+    },
+    {
+     "from": 925,
+     "to": 933,
+     "snap": "s_wudai_b"
+    },
+    {
+     "from": 934,
+     "to": 935,
+     "snap": "s_wudai_b2"
+    },
+    {
+     "from": 936,
+     "to": 936,
+     "snap": "s_wudai_c0"
+    },
+    {
+     "from": 937,
+     "to": 944,
+     "snap": "s_wudai_c"
+    },
+    {
+     "from": 945,
+     "to": 946,
+     "snap": "s_wudai_c2"
+    },
+    {
+     "from": 947,
+     "to": 950,
+     "snap": "s_wudai_d"
+    },
+    {
+     "from": 951,
+     "to": 957,
+     "snap": "s_wudai_e"
+    },
+    {
+     "from": 958,
+     "to": 958,
+     "snap": "s_wudai_e1"
+    },
+    {
+     "from": 959,
+     "to": 959,
+     "snap": "s_wudai_e2"
+    }
+   ],
+   "title_en": "Five Dynasties & Ten Kingdoms",
+   "seat": "开封"
+  },
+  {
+   "key": "beisong",
+   "title": "北宋",
+   "from": 960,
+   "to": 1126,
+   "tint": "#5f8a4e",
+   "phases": [
+    {
+     "from": 960,
+     "to": 962,
+     "snap": "s_beisong_a0",
+     "overview": "960 — 963 · 陈桥兵变立宋与杯酒释兵权：十国割据尚存，北宋先取荆湖"
+    },
+    {
+     "from": 963,
+     "to": 964,
+     "snap": "s_beisong_a",
+     "overview": "963 — 965 · 假道灭虢平荆湖：荆南、武平入宋，继发兵伐后蜀"
+    },
+    {
+     "from": 965,
+     "to": 970,
+     "snap": "s_beisong_a2",
+     "overview": "965 — 971 · 王全斌灭后蜀与潘美平南汉：巴蜀、岭南次第归宋"
+    },
+    {
+     "from": 971,
+     "to": 974,
+     "snap": "s_beisong_a3",
+     "overview": "971 — 975 · 曹彬浮桥渡江攻灭南唐：江南、江西、闽北入宋"
+    },
+    {
+     "from": 975,
+     "to": 977,
+     "snap": "s_beisong_a4",
+     "overview": "975 — 978 · 泉漳清源军陈洪进与吴越王钱俶纳土归宋前夕"
+    },
+    {
+     "from": 978,
+     "to": 978,
+     "snap": "s_beisong_a5",
+     "overview": "978 — 979 · 吴越与清源军纳土、太宗灭北汉：中原江南复归统一"
+    },
+    {
+     "from": 979,
+     "to": 1037,
+     "snap": "s_beisong_b0",
+     "overview": "979 — 1038 · 高梁河与雍熙北伐、1002 李继迁陷灵州与 1004 澶渊之盟"
+    },
+    {
+     "from": 1038,
+     "to": 1071,
+     "snap": "s_beisong_b",
+     "overview": "1038 — 1072 · 元昊建西夏、宋夏三川口与好水川之战及庆历和议：宋辽夏三足鼎立"
+    },
+    {
+     "from": 1072,
+     "to": 1103,
+     "snap": "s_beisong_b1",
+     "overview": "1072 — 1104 · 王安石变法与王韶熙河开边：收复熙河洮岷兰，新置熙河路"
+    },
+    {
+     "from": 1104,
+     "to": 1114,
+     "snap": "s_beisong_b2",
+     "overview": "1104 — 1115 · 崇宁河湟开边：王厚、童贯收复青唐吐蕃，置西宁州、廓州"
+    },
+    {
+     "from": 1115,
+     "to": 1124,
+     "snap": "s_beisong_c",
+     "overview": "1115 — 1125 · 阿骨打建金与海上之盟：金军席卷辽土，北宋宣和伐辽"
+    },
+    {
+     "from": 1125,
+     "to": 1126,
+     "snap": "s_beisong_d",
+     "overview": "1125 — 1127 · 金灭辽、耶律大石西征建西辽与靖康之变：金军两度南下围汴京"
+    }
+   ],
+   "title_en": "Northern Song",
+   "seat": "东京开封府"
+  },
+  {
+   "key": "nansong",
+   "title": "南宋",
+   "from": 1127,
+   "to": 1278,
+   "tint": "#3f8f6a",
+   "phases": [
+    {
+     "from": 1127,
+     "to": 1140,
+     "snap": "s_nansong_a0",
+     "overview": "1127 — 1141 · 康王赵构南渡、岳飞收复襄阳六郡与北伐中原、吴玠和尚原抗金"
+    },
+    {
+     "from": 1141,
+     "to": 1205,
+     "snap": "s_nansong_a",
+     "overview": "1141 — 1206 · 绍兴和议划淮河—大散关为界、1153 金迁都中都与隆兴和议南北对峙"
+    },
+    {
+     "from": 1206,
+     "to": 1214,
+     "snap": "s_nansong_b0",
+     "overview": "1206 — 1215 · 铁木真统一蒙古建大蒙古国、韩侂胄开禧北伐与嘉定和议"
+    },
+    {
+     "from": 1215,
+     "to": 1226,
+     "snap": "s_nansong_c",
+     "overview": "1215 — 1227 · 蒙古攻陷金中都、金宣宗南迁汴京与成吉思汗西征灭西辽"
+    },
+    {
+     "from": 1227,
+     "to": 1233,
+     "snap": "s_nansong_d",
+     "overview": "1227 — 1234 · 蒙古灭西夏、三峰山之战与宋蒙联军蔡州灭金：金亡于蔡州"
+    },
+    {
+     "from": 1234,
+     "to": 1252,
+     "snap": "s_nansong_e",
+     "overview": "1234 — 1253 · 端平入洛、1235 宋蒙全面战争爆发与 1247 凉州会盟吐蕃归附"
+    },
+    {
+     "from": 1253,
+     "to": 1275,
+     "snap": "s_nansong_b",
+     "overview": "1253 — 1276 · 忽必烈灭大理、1259 钓鱼城蒙哥战死、1273 襄阳陷落与伯颜入临安"
+    },
+    {
+     "from": 1276,
+     "to": 1278,
+     "snap": "s_nansong_g",
+     "overview": "1276 — 1279 · 文天祥陆秀夫张世杰拥二王闽粤抗元与 1279 崖山海战南宋覆亡"
+    }
+   ],
+   "title_en": "Southern Song",
+   "seat": "临安"
+  },
+  {
+   "key": "yuan",
+   "title": "元",
+   "from": 1279,
+   "to": 1367,
+   "tint": "#4b6587",
+   "phases": [
+    {
+     "from": 1279,
+     "to": 1287,
+     "snap": "s_yuan_a",
+     "overview": "1279 — 1287 · 崖山灭宋统一全国、置北庭都护府与征东行省，设总制院辖吐蕃"
+    },
+    {
+     "from": 1288,
+     "to": 1350,
+     "snap": "s_yuan",
+     "overview": "1288 — 1350 · 改总制院为宣政院、置和林（岭北）行省：中书省与诸行省大一统盛世"
+    },
+    {
+     "from": 1351,
+     "to": 1362,
+     "snap": "s_yuan_b",
+     "overview": "1351 — 1362 · 红巾大起义与群雄并起：龙凤大宋、徐寿辉（陈友谅）、朱元璋、张士诚、方国珍、明玉珍割据"
+    },
+    {
+     "from": 1363,
+     "to": 1367,
+     "snap": "s_yuan_c",
+     "overview": "1363 — 1368 · 鄱阳湖决战后群雄兼并：朱元璋灭陈友谅与张士诚、方国珍，陈友定据福建、梁王守云南"
+    }
+   ],
+   "title_en": "Yuan",
+   "seat": "大都"
+  },
+  {
+   "key": "ming",
+   "title": "明",
+   "from": 1368,
+   "to": 1643,
+   "tint": "#b23a3a",
+   "phases": [
+    {
+     "from": 1368,
+     "to": 1368,
+     "snap": "s_ming_0a"
+    },
+    {
+     "from": 1369,
+     "to": 1370,
+     "snap": "s_ming_0b"
+    },
+    {
+     "from": 1371,
+     "to": 1381,
+     "snap": "s_ming_0c"
+    },
+    {
+     "from": 1382,
+     "to": 1387,
+     "snap": "s_ming_0d"
+    },
+    {
+     "from": 1388,
+     "to": 1406,
+     "snap": "s_ming_a0"
+    },
+    {
+     "from": 1407,
+     "to": 1426,
+     "snap": "s_ming_a"
+    },
+    {
+     "from": 1427,
+     "to": 1448,
+     "snap": "s_ming_a2"
+    },
+    {
+     "from": 1449,
+     "to": 1512,
+     "snap": "s_ming_b0"
+    },
+    {
+     "from": 1513,
+     "to": 1615,
+     "snap": "s_ming_b"
+    },
+    {
+     "from": 1616,
+     "to": 1635,
+     "snap": "s_ming_c0"
+    },
+    {
+     "from": 1636,
+     "to": 1642,
+     "snap": "s_ming_c"
+    },
+    {
+     "from": 1643,
+     "to": 1643,
+     "snap": "s_ming_c2"
+    }
+   ],
+   "title_en": "Ming",
+   "seat": "顺天府（北京）"
+  },
+  {
+   "key": "qing",
+   "title": "清",
+   "from": 1644,
+   "to": 1911,
+   "tint": "#d4a017",
+   "phases": [
+    {
+     "from": 1644,
+     "to": 1644,
+     "snap": "s_qing_a00"
+    },
+    {
+     "from": 1645,
+     "to": 1660,
+     "snap": "s_qing_a0"
+    },
+    {
+     "from": 1661,
+     "to": 1661,
+     "snap": "s_qing_a0b"
+    },
+    {
+     "from": 1662,
+     "to": 1672,
+     "snap": "s_qing_a1"
+    },
+    {
+     "from": 1673,
+     "to": 1680,
+     "snap": "s_qing_a"
+    },
+    {
+     "from": 1681,
+     "to": 1682,
+     "snap": "s_qing_a2"
+    },
+    {
+     "from": 1683,
+     "to": 1690,
+     "snap": "s_qing_b1"
+    },
+    {
+     "from": 1691,
+     "to": 1719,
+     "snap": "s_qing_b"
+    },
+    {
+     "from": 1720,
+     "to": 1758,
+     "snap": "s_qing_c"
+    },
+    {
+     "from": 1759,
+     "to": 1795,
+     "snap": "s_qing_d"
+    },
+    {
+     "from": 1796,
+     "to": 1850,
+     "snap": "s_qing_e"
+    },
+    {
+     "from": 1851,
+     "to": 1857,
+     "snap": "s_qing_e2"
+    },
+    {
+     "from": 1858,
+     "to": 1859,
+     "snap": "s_qing_e3"
+    },
+    {
+     "from": 1860,
+     "to": 1863,
+     "snap": "s_qing_e4"
+    },
+    {
+     "from": 1864,
+     "to": 1880,
+     "snap": "s_qing_f0"
+    },
+    {
+     "from": 1881,
+     "to": 1894,
+     "snap": "s_qing_f"
+    },
+    {
+     "from": 1895,
+     "to": 1897,
+     "snap": "s_qing_g0"
+    },
+    {
+     "from": 1898,
+     "to": 1911,
+     "snap": "s_qing_g"
+    }
+   ],
+   "title_en": "Qing",
+   "seat": "京师（北京）"
+  },
+  {
+   "key": "roc",
+   "title": "中华民国",
+   "from": 1912,
+   "to": 1948,
+   "tint": "#4f6d8f",
+   "phases": [
+    {
+     "from": 1912,
+     "to": 1915,
+     "snap": "s_roc_a0"
+    },
+    {
+     "from": 1916,
+     "to": 1919,
+     "snap": "s_roc_w1"
+    },
+    {
+     "from": 1920,
+     "to": 1923,
+     "snap": "s_roc_w2"
+    },
+    {
+     "from": 1924,
+     "to": 1925,
+     "snap": "s_roc_w3"
+    },
+    {
+     "from": 1926,
+     "to": 1927,
+     "snap": "s_roc_w4"
+    },
+    {
+     "from": 1928,
+     "to": 1930,
+     "snap": "s_roc_a"
+    },
+    {
+     "from": 1931,
+     "to": 1931,
+     "snap": "s_roc_b0"
+    },
+    {
+     "from": 1932,
+     "to": 1944,
+     "snap": "s_roc"
+    },
+    {
+     "from": 1945,
+     "to": 1945,
+     "snap": "s_roc_c"
+    },
+    {
+     "from": 1946,
+     "to": 1948,
+     "snap": "s_roc_d"
+    }
+   ],
+   "title_en": "Republic of China",
+   "seat": "南京"
+  }
+ ],
+ "snapshots": {
+  "s_zhanguo_a": {
+   "polities": 37,
+   "regions": 11,
+   "prefectures": 11,
+   "caption": "战国初期（前403—前341年 · 三家分晋、田氏代齐与魏霸中原）"
+  },
+  "s_qin_a": {
+   "polities": 23,
+   "regions": 33,
+   "prefectures": 36,
+   "prefRef": "s_qin",
+   "caption": "前 221 — 前 215 · 秦灭六国初年：北未收河套，南未平百越"
+  },
+  "s_zhanguo_b": {
+   "polities": 34,
+   "regions": 15,
+   "prefectures": 18,
+   "regionRef": "s_qin_a",
+   "caption": "战国中期后叶（前300 — 前297 · 燕将秦开辟燕北五郡与赵略中山）"
+  },
+  "s_zhanguo_c": {
+   "polities": 31,
+   "regions": 18,
+   "prefectures": 21,
+   "caption": "战国后期（前260年 · 白起拔郢与长平之战）"
+  },
+  "s_zhanguo_d": {
+   "polities": 29,
+   "regions": 20,
+   "prefectures": 23,
+   "caption": "秦王政亲政前夕（前238年 · 灭周置三川、东郡与六国合纵终结）"
+  },
+  "s_zhanguo_e1": {
+   "polities": 28,
+   "regions": 21,
+   "prefectures": 24,
+   "caption": "秦王扫六合 · 首灭韩国（前230年 · 内史腾俘韩王安，置颍川郡）"
+  },
+  "s_zhanguo_e2": {
+   "polities": 28,
+   "regions": 23,
+   "prefectures": 26,
+   "caption": "秦王扫六合 · 攻克邯郸灭赵（前228年 · 王翦破赵，公子嘉奔代）"
+  },
+  "s_zhanguo_e3": {
+   "polities": 28,
+   "regions": 23,
+   "prefectures": 26,
+   "caption": "秦王扫六合 · 易水破燕拔蓟城（前226年 · 燕王喜东保辽东）"
+  },
+  "s_zhanguo_e4": {
+   "polities": 27,
+   "regions": 24,
+   "prefectures": 27,
+   "caption": "秦王扫六合 · 水灌大梁灭魏（前225年 · 三晋尽入于秦）"
+  },
+  "s_zhanguo_e5": {
+   "polities": 24,
+   "regions": 31,
+   "prefectures": 34,
+   "caption": "秦王扫六合 · 灭楚平燕代，唯余齐国（前223—前222年）"
+  },
+  "s_beisong_a": {
+   "polities": 35,
+   "regions": 15,
+   "prefectures": 138,
+   "caption": "963 — 965 · 平定荆湖：宋军假途灭虢平荆南与湖南"
+  },
+  "s_beisong_b": {
+   "polities": 26,
+   "regions": 25,
+   "prefectures": 272,
+   "regionRef": "s_beisong_b0",
+   "caption": "1038 — 1071 · 宋、辽、西夏三足并立：1038 年李元昊称帝建大夏"
+  },
+  "s_donghan": {
+   "polities": 19,
+   "regions": 13,
+   "prefectures": 49,
+   "caption": "91 — 189 · 燕然勒石与西域重归：窦宪破北匈奴，班超定西域五十余国任都护"
+  },
+  "s_dongjin_a": {
+   "polities": 21,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "329 — 347 · 后赵统一北方大部：石勒灭前赵尽有中原关陇，与东晋、成汉、前凉、前燕并立"
+  },
+  "s_dongjin_b": {
+   "polities": 20,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "352 — 370 · 前燕灭冉魏入据中原：前秦与前燕东西对峙，东晋北伐争衡"
+  },
+  "s_dongjin_c": {
+   "polities": 17,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "376 — 384 · 苻坚统一北方并取巴蜀：前秦尽兼北方与巴蜀，与东晋沿淮水—淝水对峙（383 淝水之战）"
+  },
+  "s_dongjin_d": {
+   "polities": 25,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "407 — 410 · 赫连勃勃建胡夏、冯跋建北燕：胡夏据朔方、北燕代后燕，与北魏、后秦、西秦、南燕、南凉、北凉、谯蜀并立"
+  },
+  "s_ming_a": {
+   "polities": 26,
+   "regions": 16,
+   "prefectures": 246,
+   "caption": "1407—1427 年 · 永乐极盛疆域（设交趾布政司与奴儿干都司）"
+  },
+  "s_ming_b0": {
+   "polities": 27,
+   "regions": 16,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1449 — 1513 · 土木堡之变后：九边防线成形，哈密卫仍为关西七卫之首"
+  },
+  "s_ming_b": {
+   "polities": 26,
+   "regions": 16,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1513 — 1616 · 吐鲁番据哈密，关西诸卫内迁，北边收缩至长城、辽东"
+  },
+  "s_ming_c": {
+   "polities": 26,
+   "regions": 15,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1636 — 1643 · 皇太极改国号大清：清并漠南蒙古频入塞，中原流民起义烽起"
+  },
+  "s_nanbei_0": {
+   "polities": 25,
+   "regions": 63,
+   "prefectures": 137,
+   "caption": "420 — 427 · 刘裕代晋建宋：南朝刘宋立国，北方北魏、胡夏、西秦、北燕、北凉并立"
+  },
+  "s_nanbei_a": {
+   "polities": 21,
+   "regions": 63,
+   "prefectures": 137,
+   "caption": "439 — 469 · 北魏统一北方，与刘宋隔黄河对峙（元嘉北伐与饮马长江）"
+  },
+  "s_nanbei_b": {
+   "polities": 21,
+   "regions": 63,
+   "prefectures": 137,
+   "caption": "479 — 502 · 北魏 / 南齐"
+  },
+  "s_nanbei_c": {
+   "polities": 21,
+   "regions": 68,
+   "prefectures": 137,
+   "caption": "502 — 534 · 北魏 / 梁"
+  },
+  "s_nanbei_d": {
+   "polities": 22,
+   "regions": 72,
+   "prefectures": 137,
+   "caption": "534 — 550 · 东魏 / 西魏 / 梁"
+  },
+  "s_nanbei_e": {
+   "polities": 23,
+   "regions": 74,
+   "prefectures": 137,
+   "caption": "557 — 573 · 北齐 / 北周 / 陈（陈初划江而守）"
+  },
+  "s_nansong_a": {
+   "polities": 30,
+   "regions": 26,
+   "prefectures": 356,
+   "caption": "1141 — 1206 · 绍兴和议定界：宋金东以淮水、西以大散关为界，南北对峙"
+  },
+  "s_nansong_b": {
+   "polities": 25,
+   "regions": 29,
+   "prefectures": 356,
+   "prefRef": "s_nansong_a",
+   "caption": "1253 — 1276 · 忽必烈灭大理：蒙古跨金沙江平大理，对南宋形成三面包围"
+  },
+  "s_qin": {
+   "polities": 21,
+   "regions": 38,
+   "prefectures": 41,
+   "caption": "前 214 — 前 206 · 秦平百越与大一统鼎盛：设桂林、象、南海三郡，北筑万里长城"
+  },
+  "s_qing_a": {
+   "polities": 31,
+   "regions": 22,
+   "prefectures": 281,
+   "caption": "1673 — 1681 · 三藩之乱与明郑抗清：吴三桂起兵建立吴周据西南，耿精忠、尚之信及郑经响应"
+  },
+  "s_qing_b": {
+   "polities": 28,
+   "regions": 23,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1691 — 1720 · 多伦会盟定漠北：喀尔喀蒙古正式内附纳入清朝版图"
+  },
+  "s_qing_c": {
+   "polities": 28,
+   "regions": 23,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1720 — 1759 · 驱准入藏与平定青海：设驻藏大臣、西宁办事大臣，《恰克图条约》"
+  },
+  "s_qing_d": {
+   "polities": 26,
+   "regions": 26,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1759 — 1796 · 乾隆极盛疆域：平定准噶尔与回部，设伊犁将军统辖天山南北"
+  },
+  "s_qing_e": {
+   "polities": 24,
+   "regions": 26,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1796 — 1851 · 嘉道时期：白莲教起义与 1840 年鸦片战争爆发"
+  },
+  "s_qing_f": {
+   "polities": 19,
+   "regions": 26,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1881 — 1895 · 曾纪泽改订条约收复伊犁与新疆建省：1881 签约收回伊犁九城，1884 新疆建省"
+  },
+  "s_roc": {
+   "polities": 20,
+   "regions": 29,
+   "prefectures": 347,
+   "caption": "1932 — 1944 · 伪满洲国建立与抗日战争：日本扶植溥仪在长春建伪“满洲国”，东北四省沦陷"
+  },
+  "s_sanguo": {
+   "polities": 19,
+   "regions": 16,
+   "prefectures": 25,
+   "caption": "238 — 263 · 司马懿平辽东与三国鼎立：曹魏灭公孙渊收复辽东乐浪，与蜀吴三分天下"
+  },
+  "s_sui": {
+   "polities": 20,
+   "regions": 12,
+   "prefectures": 78,
+   "caption": "589 — 609 · 隋灭陈一统全国：结束三百年分裂，开凿南北大运河"
+  },
+  "s_tang_a": {
+   "polities": 26,
+   "regions": 13,
+   "prefectures": 115,
+   "caption": "676 — 702 · 安东内迁与设安南都护府：安东都护府移驻辽东，调露元年设安南都护府"
+  },
+  "s_tang_b": {
+   "polities": 25,
+   "regions": 12,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "790 — 848 · 河西与西域失陷：沙州、北庭相继陷落，陇右河西尽入吐蕃"
+  },
+  "s_xihan_a": {
+   "polities": 25,
+   "regions": 12,
+   "prefectures": 51,
+   "caption": "前 202 — 前 127 · 汉初：郡国并行与文景之治，匈奴据河套河西，南越自立"
+  },
+  "s_xihan_b": {
+   "polities": 15,
+   "regions": 13,
+   "prefectures": 51,
+   "prefRef": "s_xihan_a",
+   "caption": "前 108 — 前 60 · 灭卫氏朝鲜：置乐浪、玄菟、真番、临屯四郡"
+  },
+  "s_xihan_c": {
+   "polities": 15,
+   "regions": 13,
+   "prefectures": 51,
+   "prefRef": "s_xihan_a",
+   "caption": "前 60 — 公元 8 · 设西域都护府：西域三十六国正式纳入版图"
+  },
+  "s_xijin": {
+   "polities": 18,
+   "regions": 21,
+   "prefectures": 38,
+   "caption": "304 — 306 · 十六国之始：匈奴刘渊在并州起兵建汉赵"
+  },
+  "s_yuan": {
+   "polities": 19,
+   "regions": 14,
+   "prefectures": 246,
+   "caption": "1288 — 1351 · 大元大一统：1288 年改总制院为宣政院，西藏正式纳入中央宣政院直辖"
+  },
+  "s_qin_b": {
+   "polities": 23,
+   "regions": 34,
+   "prefectures": 37,
+   "prefRef": "s_qin",
+   "caption": "前 215 — 前 214 · 蒙恬北击匈奴：收复河套设九原郡，修筑长城"
+  },
+  "s_xihan_b1": {
+   "polities": 25,
+   "regions": 12,
+   "prefectures": 51,
+   "prefRef": "s_xihan_a",
+   "caption": "前 127 — 前 121 · 武帝北击匈奴：卫青收复河套，置朔方、五原郡"
+  },
+  "s_xihan_b2": {
+   "polities": 25,
+   "regions": 12,
+   "prefectures": 51,
+   "prefRef": "s_xihan_a",
+   "caption": "前 121 — 前 111 · 河西之战：霍去病受降浑邪王，开河西走廊设武威、酒泉郡"
+  },
+  "s_xihan_b3": {
+   "polities": 15,
+   "regions": 13,
+   "prefectures": 51,
+   "prefRef": "s_xihan_a",
+   "caption": "前 111 — 前 108 · 平定南越与西南夷：设南海、交趾等九郡，分置张掖、敦煌郡"
+  },
+  "s_xihan_d": {
+   "polities": 15,
+   "regions": 13,
+   "prefectures": 51,
+   "prefRef": "s_xihan_a",
+   "caption": "8 — 23 · 王莽代汉建新：托古改制与西域断绝，北疆匈奴复叛，绿林赤眉起兵"
+  },
+  "s_donghan_a": {
+   "polities": 20,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "caption": "25 — 36 · 光武建武初年：刘秀定都洛阳，削平陇蜀公孙述割据"
+  },
+  "s_donghan_b": {
+   "polities": 19,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "caption": "43 — 48 · 马援南征交趾：平定二征之乱，立铜柱定东汉极南疆界"
+  },
+  "s_donghan_b2": {
+   "polities": 20,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "caption": "48 — 73 · 南匈奴内附：匈奴南北分裂，南单于居河套美稷"
+  },
+  "s_donghan_c": {
+   "polities": 20,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "caption": "73 — 91 · 三通西域：窦固取伊吾卢，班超出使西域经略南道"
+  },
+  "s_donghan_e": {
+   "polities": 21,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan",
+   "caption": "214—218 年 · 刘备入成都，跨有荆、益二州"
+  },
+  "s_sanguo_b": {
+   "polities": 18,
+   "regions": 16,
+   "prefectures": 25,
+   "prefRef": "s_sanguo",
+   "caption": "263 — 265 · 魏灭蜀汉：曹魏兼并巴蜀，与孙吴南北对峙"
+  },
+  "s_sanguo_c": {
+   "polities": 18,
+   "regions": 16,
+   "prefectures": 25,
+   "prefRef": "s_sanguo",
+   "caption": "265 — 280 · 西晋代魏：司马炎建晋，与江东孙吴对峙"
+  },
+  "s_xijin_a": {
+   "polities": 16,
+   "regions": 21,
+   "prefectures": 38,
+   "prefRef": "s_xijin",
+   "caption": "280 — 304 · 西晋太康一统：灭吴后全国重归一统"
+  },
+  "s_xijin_b": {
+   "polities": 18,
+   "regions": 21,
+   "prefectures": 38,
+   "prefRef": "s_xijin",
+   "caption": "311 — 316 · 永嘉之乱：匈奴汉赵攻陷洛阳与长安，西晋名存实亡"
+  },
+  "s_dongjin_a2": {
+   "polities": 20,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "347 — 350 · 桓温灭成汉：东晋收复巴蜀，北方后赵、前凉、代、前燕并立"
+  },
+  "s_dongjin_e": {
+   "polities": 22,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "413 — 417 · 朱龄石平谯蜀收复巴蜀：东晋尽复四川，北方北魏、后秦、西秦、胡夏、北燕、北凉并立"
+  },
+  "s_dongjin_f": {
+   "polities": 21,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "417 — 420 · 刘裕北伐灭后秦：收复洛阳、长安，东晋疆域北抵黄河"
+  },
+  "s_nanbei_0b": {
+   "polities": 23,
+   "regions": 63,
+   "prefectures": 137,
+   "caption": "431 — 436 · 西秦与胡夏相继败亡：北魏尽取关中陇右，与刘宋、北燕、北凉并立"
+  },
+  "s_nanbei_0c": {
+   "polities": 22,
+   "regions": 63,
+   "prefectures": 137,
+   "caption": "436 — 439 · 北魏灭北燕：辽西并入北魏，唯余河西北凉"
+  },
+  "s_nanbei_d2": {
+   "polities": 22,
+   "regions": 74,
+   "prefectures": 137,
+   "caption": "553 — 554 · 西魏尉迟迥平蜀：巴蜀汉中并入西魏，梁元帝萧绎都江陵"
+  },
+  "s_nanbei_f": {
+   "polities": 22,
+   "regions": 74,
+   "prefectures": 137,
+   "caption": "577 — 581 · 北周灭北齐：周武帝宇文邕统一北方，与江南陈朝南北对峙"
+  },
+  "s_sui_a": {
+   "polities": 22,
+   "regions": 12,
+   "prefectures": 78,
+   "prefRef": "s_sui",
+   "caption": "581 — 587 · 隋初南北对峙：杨坚代周建隋，江陵西梁存续，与江南陈朝隔江并立"
+  },
+  "s_sui_c": {
+   "polities": 21,
+   "regions": 12,
+   "prefectures": 78,
+   "prefRef": "s_sui",
+   "caption": "609 — 618 · 隋炀帝西巡开边：破吐谷浑，置西海、河源、鄯善、且末四郡"
+  },
+  "s_tang_a0": {
+   "polities": 29,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "621—630 年 · 虎牢决战与武德一统"
+  },
+  "s_tang_a1": {
+   "polities": 29,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "630 — 634 · 李靖灭东突厥：尊太宗为“天可汗”，囊括阴山漠南并置羁縻府州"
+  },
+  "s_tang_a2": {
+   "polities": 30,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "640 — 647 · 侯君集平高昌与薛延陀之役：置西州与初设安西都护府（治交河城）"
+  },
+  "s_tang_a3": {
+   "polities": 29,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "657 — 668 · 苏定方灭西突厥：置昆陵、濛池都护府，唐朝西疆极于咸海"
+  },
+  "s_tang_a4": {
+   "polities": 27,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "668 — 676 · 李勣灭高句丽：于平壤置安东都护府，盛唐六大都护府极盛疆域"
+  },
+  "s_tang_a5": {
+   "polities": 27,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "702 — 755 · 开元盛世：武则天设北庭都护府，与安西都护府分辖天山南北"
+  },
+  "s_tang_b1": {
+   "polities": 27,
+   "regions": 12,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "764 — 790 · 吐蕃陷河陇与孤悬西域：凉州失守河西走廊被截断，安西、北庭孤悬绝域坚守"
+  },
+  "s_tang_c": {
+   "polities": 26,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "848 — 880 · 张议潮归义军收复河西：沙州起义驱逐吐蕃，收复瓜沙等十一州归唐"
+  },
+  "s_wudai_a": {
+   "polities": 38,
+   "regions": 13,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "907 — 923 · 后梁：朱温代唐，与河东李氏晋国（含燕云）争衡，十国分立"
+  },
+  "s_wudai_b1": {
+   "polities": 37,
+   "regions": 13,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "923 — 925 · 后唐灭后梁：李存勖定都洛阳统一北方，前蜀、渤海尚存"
+  },
+  "s_wudai_b": {
+   "polities": 35,
+   "regions": 13,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "925 — 934 · 后唐灭前蜀：巴蜀并入后唐版图；926 年契丹灭渤海国"
+  },
+  "s_wudai_b2": {
+   "polities": 36,
+   "regions": 13,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "934 — 936 · 后蜀自立：孟知祥在成都称帝建后蜀，燕云仍属后唐"
+  },
+  "s_wudai_c": {
+   "polities": 37,
+   "regions": 12,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "937 — 945 · 李昪代吴建南唐：北方后晋与契丹并立，南方南唐、闽、吴越争衡"
+  },
+  "s_wudai_d": {
+   "polities": 36,
+   "regions": 12,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "947 — 951 · 后汉：契丹改国号辽，刘知远建后汉，闽入南唐与吴越"
+  },
+  "s_wudai_e": {
+   "polities": 37,
+   "regions": 12,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "951 — 958 · 后周太祖与世宗初期：郭威建周，北汉据太原依附辽国，南唐仍据江北淮南"
+  },
+  "s_beisong_a0": {
+   "polities": 37,
+   "regions": 14,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "960 — 963 · 北宋立国初年：陈桥兵变建宋，南方诸国与北汉尚未平定"
+  },
+  "s_beisong_a2": {
+   "polities": 34,
+   "regions": 19,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "965 — 971 · 宋灭后蜀：王全斌平蜀，巴蜀并入北宋版图"
+  },
+  "s_beisong_a3": {
+   "polities": 33,
+   "regions": 21,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "971 — 975 · 宋灭南汉：潘美平岭南，两广并入北宋版图"
+  },
+  "s_beisong_a4": {
+   "polities": 32,
+   "regions": 24,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "975 — 978 · 宋灭南唐：曹彬克金陵，江南并入北宋版图"
+  },
+  "s_beisong_a5": {
+   "polities": 30,
+   "regions": 25,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "978 — 979 · 吴越纳土：钱俶与陈洪进纳土归宋，唯余河东北汉"
+  },
+  "s_beisong_b0": {
+   "polities": 26,
+   "regions": 25,
+   "prefectures": 270,
+   "prefRef": "s_beisong_b",
+   "caption": "979 — 1038 · 宋辽并立：宋太宗灭北汉结束五代十国，澶渊之盟定宋辽边界"
+  },
+  "s_beisong_c": {
+   "polities": 27,
+   "regions": 26,
+   "prefectures": 273,
+   "prefRef": "s_beisong_b",
+   "caption": "1115 — 1125 · 女真崛起：完颜阿骨打建金，攻克辽上京、东京与辽东"
+  },
+  "s_beisong_d": {
+   "polities": 27,
+   "regions": 26,
+   "prefectures": 273,
+   "prefRef": "s_beisong_b",
+   "caption": "1125 — 1127 · 金灭辽：金军尽占北方，耶律大石西迁建西辽"
+  },
+  "s_nansong_b0": {
+   "polities": 30,
+   "regions": 26,
+   "prefectures": 356,
+   "prefRef": "s_nansong_a",
+   "caption": "1206 — 1215 · 大蒙古国崛起：铁木真统一漠北诸部称成吉思汗"
+  },
+  "s_nansong_c": {
+   "polities": 29,
+   "regions": 27,
+   "prefectures": 356,
+   "prefRef": "s_nansong_a",
+   "caption": "1215 — 1227 · 蒙古吞并金国北方：1215 攻陷金中都，金迁都汴京，黄河以北与辽东入蒙古；1218 灭西辽"
+  },
+  "s_nansong_d": {
+   "polities": 28,
+   "regions": 27,
+   "prefectures": 356,
+   "prefRef": "s_nansong_a",
+   "caption": "1227 — 1234 · 蒙古灭西夏：西夏并入蒙古，金朝孤守河南蔡州"
+  },
+  "s_nansong_e": {
+   "polities": 26,
+   "regions": 28,
+   "prefectures": 356,
+   "prefRef": "s_nansong_a",
+   "caption": "1234 — 1253 · 宋蒙联军灭金：金亡于蔡州，宋蒙直接对峙；1247 凉州会盟吐蕃归附"
+  },
+  "s_nansong_g": {
+   "polities": 25,
+   "regions": 15,
+   "prefectures": 356,
+   "prefRef": "s_nansong_a",
+   "caption": "1276 — 1279 · 临安陷落与闽广行朝：元军入临安，宋室退保福州、广州至崖山"
+  },
+  "s_yuan_b": {
+   "polities": 25,
+   "regions": 14,
+   "prefectures": 246,
+   "prefRef": "s_yuan",
+   "regionRef": "s_yuan",
+   "caption": "1351—1363 年 · 元末红巾大起义与群雄逐鹿"
+  },
+  "s_ming_a0": {
+   "polities": 25,
+   "regions": 16,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1388—1407 年 · 洪武一统版图与北元（鞑靼·瓦剌）并立"
+  },
+  "s_qing_a2": {
+   "polities": 30,
+   "regions": 22,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1681 — 1683 · 平定三藩：西南全境入清，施琅攻台前夕"
+  },
+  "s_qing_b1": {
+   "polities": 29,
+   "regions": 22,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1683 — 1691 · 施琅收台湾与尼布楚条约：置台湾府，划定中俄东段边界"
+  },
+  "s_qing_e2": {
+   "polities": 25,
+   "regions": 26,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1851 — 1858 · 太平天国运动：洪秀全定都天京（南京），与清廷沿江对峙"
+  },
+  "s_qing_g": {
+   "polities": 24,
+   "regions": 25,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1898 — 1912 · 戊戌瓜分狂潮与晚清危局：德租胶州湾、俄租旅大、英租威海卫与九龙新界"
+  },
+  "s_roc_a": {
+   "polities": 19,
+   "regions": 29,
+   "prefectures": 347,
+   "prefRef": "s_roc",
+   "caption": "1928 — 1930 · 东北易帜与北伐完成：张学良通电易帜，南京国民政府完成形式统一"
+  },
+  "s_roc_c": {
+   "polities": 19,
+   "regions": 30,
+   "prefectures": 347,
+   "prefRef": "s_roc",
+   "caption": "1945 · 抗战胜利台湾光复：中国收回台湾、澎湖与东北四省，“秋海棠”版图重光"
+  },
+  "s_beisong_b1": {
+   "polities": 26,
+   "regions": 26,
+   "prefectures": 272,
+   "caption": "1072 — 1103 · 王韶熙河开边：收复熙、河、洮、岷、叠、宕六州，新置熙河路"
+  },
+  "s_nansong_a0": {
+   "polities": 30,
+   "regions": 26,
+   "prefectures": 356,
+   "caption": "1127 — 1141 · 宋金中原拉锯与岳飞北伐：南宋收复襄阳六郡，前线推进至洛阳、商州与颍昌"
+  },
+  "s_wudai_c2": {
+   "polities": 36,
+   "regions": 12,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "945 — 947 · 南唐灭闽：南唐攻灭闽国，与吴越瓜分福建之地"
+  },
+  "s_wudai_e2": {
+   "polities": 37,
+   "regions": 12,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "959 — 960 · 周世宗北伐幽燕：收复瀛、莫、易三州与瓦桥三关"
+  },
+  "s_dongjin_a0": {
+   "polities": 22,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "317 — 329 · 东晋初立与两赵并立：司马睿建晋于建康，北方前赵（汉赵）与石勒后赵分据关陇河北"
+  },
+  "s_dongjin_b2": {
+   "polities": 19,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "370 — 376 · 前秦灭前燕：苻坚、王猛攻灭前燕尽吞华北，河西前凉与塞北代国尚存"
+  },
+  "s_tang_b0a": {
+   "polities": 28,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "755 — 757 · 安史之乱爆发：安禄山据河北、河南称帝大燕，两京相继陷落，玄宗幸蜀、肃宗灵武即位"
+  },
+  "s_tang_b0b": {
+   "polities": 28,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "757 — 763 · 两京光复与史思明再起：郭子仪借回纥兵收复长安、洛阳，史思明据河北再叛并一度复陷洛阳"
+  },
+  "s_tang_b0": {
+   "polities": 27,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "763 — 764 · 安史之乱平定：史朝义败亡，降将田承嗣、李怀仙、李宝臣分领魏博、幽州、成德，藩镇割据肇端"
+  },
+  "s_qing_a0": {
+   "polities": 31,
+   "regions": 22,
+   "prefectures": 281,
+   "caption": "1645 — 1661 · 清军下江南与南明抗清：清军平定陕川江南，南明隆武、永历政权与李定国、郑成功据南方抗清"
+  },
+  "s_qing_a1": {
+   "polities": 30,
+   "regions": 22,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "regionRef": "s_qing_a",
+   "caption": "1662 — 1673 · 永历蒙难与康熙亲政：南明大陆抗清终结，台湾明郑奉永历正朔，三藩起兵前夕"
+  },
+  "s_qing_e3": {
+   "polities": 25,
+   "regions": 26,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1858 — 1860 · 《瑷珲条约》失黑龙江以北：沙俄割占黑龙江以北、外兴安岭以南，乌苏里江以东尚属清廷"
+  },
+  "s_donghan_d": {
+   "polities": 24,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan",
+   "caption": "200—207 年 · 官渡之战与曹操统一北方"
+  },
+  "s_donghan_f": {
+   "polities": 20,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan",
+   "caption": "219—220 年 · 刘备取汉中与吕蒙白衣渡江袭荆州"
+  },
+  "s_sui_d": {
+   "polities": 27,
+   "regions": 12,
+   "prefectures": 78,
+   "prefRef": "s_sui",
+   "regionRef": "s_sui",
+   "caption": "614—618 年 · 隋末民变与群雄割据"
+  },
+  "s_tang_0": {
+   "polities": 32,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "caption": "618—621 年 · 武德建唐与统一战争初期"
+  },
+  "s_yuan_c": {
+   "polities": 25,
+   "regions": 14,
+   "prefectures": 246,
+   "prefRef": "s_yuan",
+   "regionRef": "s_yuan",
+   "caption": "1363—1368 年 · 鄱阳湖决战后朱元璋一统江南"
+  },
+  "s_ming_0a": {
+   "polities": 27,
+   "regions": 11,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1368—1369 年 · 朱元璋建明与徐达北伐克大都"
+  },
+  "s_ming_0b": {
+   "polities": 27,
+   "regions": 12,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1369—1371 年 · 徐达克定晋陕与北元南北对峙"
+  },
+  "s_ming_0c": {
+   "polities": 26,
+   "regions": 14,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1371—1382 年 · 平定四川明夏与经营西番"
+  },
+  "s_ming_0d": {
+   "polities": 25,
+   "regions": 15,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1382—1388 年 · 平定云南与北征金山前夕"
+  },
+  "s_ming_a2": {
+   "polities": 26,
+   "regions": 16,
+   "prefectures": 246,
+   "caption": "1427—1449 年 · 仁宣之治与罢交趾布政使司"
+  },
+  "s_beisong_b2": {
+   "polities": 26,
+   "regions": 26,
+   "prefectures": 273,
+   "caption": "1104 — 1114 · 河湟开边：王厚、童贯收复青唐吐蕃故地，置西宁州与陇右都护府"
+  },
+  "s_qing_e4": {
+   "polities": 25,
+   "regions": 26,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "caption": "1860 — 1864 · 《北京条约》失乌苏里江以东；太平天国与湘淮军决战江南（安庆、天京之战）"
+  },
+  "s_xijin_a2": {
+   "polities": 18,
+   "regions": 21,
+   "prefectures": 38,
+   "prefRef": "s_xijin",
+   "caption": "306 — 311 · 八王之乱终局与成汉称帝：李雄在蜀称帝建大成（成汉），刘渊汉赵据并州"
+  },
+  "s_dongjin_d0": {
+   "polities": 21,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "386 — 397 · 拓跋珪复代建北魏：北魏据代北崛起，与后燕、后秦、西秦、后凉并立"
+  },
+  "s_dongjin_d1": {
+   "polities": 22,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "398 — 399 · 北魏迁都平城称帝：拓跋珪入据中原迁都平城，后燕截为南北两部，河西南凉、北凉并立"
+  },
+  "s_nanbei_a2": {
+   "polities": 21,
+   "regions": 63,
+   "prefectures": 137,
+   "caption": "469 — 479 · 北魏攻取淮北四州：慕容白曜克青齐，刘宋北界自黄河退至淮水"
+  },
+  "s_nanbei_d1": {
+   "polities": 22,
+   "regions": 72,
+   "prefectures": 137,
+   "caption": "550 — 553 · 高洋代东魏建北齐与侯景之乱：北齐、西魏与萧梁鼎立，巴蜀尚属萧梁"
+  },
+  "s_nanbei_e2": {
+   "polities": 23,
+   "regions": 74,
+   "prefectures": 137,
+   "caption": "573 — 577 · 陈宣帝太建北伐：吴明彻大破北齐军尽复淮南，陈疆北抵淮水"
+  },
+  "s_wudai_c0": {
+   "polities": 37,
+   "regions": 12,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "936 — 937 · 石敬瑭建后晋：割燕云十六州予契丹，江淮尚为杨吴"
+  },
+  "s_wudai_e1": {
+   "polities": 37,
+   "regions": 12,
+   "prefectures": 138,
+   "prefRef": "s_beisong_a",
+   "caption": "958 — 959 · 周世宗平淮南：南唐献江北淮南十四州，后周与南唐以长江为界"
+  },
+  "s_donghan_d1": {
+   "polities": 26,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan",
+   "caption": "189—195 年 · 董卓入京与关东诸侯并起"
+  },
+  "s_donghan_d2": {
+   "polities": 25,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan",
+   "caption": "196—199 年 · 曹操迎献帝迁许与袁绍南北争衡"
+  },
+  "s_donghan_e0": {
+   "polities": 24,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan",
+   "caption": "208—213 年 · 赤壁之战：孙刘破曹与刘备据荆州"
+  },
+  "s_zhanguo_b0": {
+   "polities": 35,
+   "regions": 13,
+   "prefectures": 13,
+   "regionRef": "s_qin_a",
+   "caption": "战国中期前叶（前316 — 前307 · 秦灭巴蜀与丹阳之战取汉中）"
+  },
+  "s_donghan_b0": {
+   "polities": 20,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan_a",
+   "caption": "36 — 42 · 光武平蜀后：卢芳降附与交趾二征起兵（40—42）"
+  },
+  "s_sanguo_a": {
+   "polities": 20,
+   "regions": 16,
+   "prefectures": 25,
+   "caption": "220 — 237 · 三国鼎立初局：曹魏、蜀汉、孙吴三分天下，辽东公孙氏割据"
+  },
+  "s_tang_a1b": {
+   "polities": 29,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "regionRef": "s_tang_a1",
+   "caption": "635 — 639 · 李靖平吐谷浑：六总管远征青海，慕容顺归降、册封诺曷钵为河源郡王"
+  },
+  "s_tang_a2b": {
+   "polities": 30,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "regionRef": "s_tang_a2",
+   "caption": "648 — 656 · 阿史那社尔平龟兹置安西四镇与王玄策破中天竺：西域尽入安西都护府，天竺震动"
+  },
+  "s_yuan_a": {
+   "polities": 20,
+   "regions": 14,
+   "prefectures": 246,
+   "caption": "1279 — 1287 · 崖山灭宋与元初创制：灭南宋统一全国，置总制院统辖吐蕃军政"
+  },
+  "s_qing_f0": {
+   "polities": 20,
+   "regions": 26,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "regionRef": "s_qing_f",
+   "caption": "1864 — 1881 · 同治平乱与左宗棠西征：1871 沙俄强占伊犁，1876 左宗棠收复新疆南北路"
+  },
+  "s_qing_g0": {
+   "polities": 20,
+   "regions": 25,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "regionRef": "s_qing_g",
+   "caption": "1895 — 1898 · 甲午战败与马关条约：割让台湾、澎湖予日本，列强瓜分狂潮前夕"
+  },
+  "s_roc_b0": {
+   "polities": 20,
+   "regions": 29,
+   "prefectures": 347,
+   "prefRef": "s_roc_a",
+   "regionRef": "s_roc_a",
+   "caption": "1931 · 九一八事变：日军关东军突袭沈阳北大营，侵占辽宁、吉林两省"
+  },
+  "s_roc_d": {
+   "polities": 19,
+   "regions": 29,
+   "prefectures": 347,
+   "prefRef": "s_roc_a",
+   "regionRef": "s_roc_a",
+   "caption": "1946 — 1949 · 承认外蒙古独立与解放战争：外蒙古正式脱离中国，版图由“秋海棠”变为“雄鸡”"
+  },
+  "s_qin_chuhan": {
+   "polities": 27,
+   "regions": 38,
+   "prefectures": 41,
+   "prefRef": "s_qin",
+   "regionRef": "s_qin",
+   "caption": "前 206 — 前 202 · 秦亡与楚汉相争：项羽分封十八诸侯称霸西楚，刘邦自汉中还定三秦，楚汉相争于荥阳成皋"
+  },
+  "s_xihan_e": {
+   "polities": 19,
+   "regions": 13,
+   "prefectures": 51,
+   "prefRef": "s_xihan_a",
+   "regionRef": "s_xihan_d",
+   "caption": "23 — 25 · 绿林赤眉起义与更始政权：昆阳大捷诛王莽，更始帝入洛阳长安，赤眉军、河北刘秀与陇蜀群雄并起"
+  },
+  "s_tang_d1": {
+   "polities": 27,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "regionRef": "s_tang_c",
+   "caption": "880 — 884 · 黄巢攻入长安称帝大齐：黄巢大军渡江破洛阳、入长安建国号大齐，唐僖宗奔蜀，李克用等会诸镇收复长安"
+  },
+  "s_tang_d2": {
+   "polities": 34,
+   "regions": 13,
+   "prefectures": 115,
+   "prefRef": "s_tang_a",
+   "regionRef": "s_tang_c",
+   "caption": "885 — 907 · 唐末藩镇彻底裂解：朱温据宣武河南、李克用据河东、王建据西川、杨行密据淮南、钱镠据两浙，唐室仅存关中一隅"
+  },
+  "s_nanbei_d3": {
+   "polities": 23,
+   "regions": 74,
+   "prefectures": 137,
+   "caption": "554 — 557 · 西魏于谨克江陵立萧詧为西梁主，北齐南拓江淮"
+  },
+  "s_sui_a2": {
+   "polities": 21,
+   "regions": 12,
+   "prefectures": 78,
+   "prefRef": "s_sui",
+   "caption": "587 — 589 · 隋文帝废西梁并入隋境，大军临江蓄势灭陈"
+  },
+  "s_zhanguo_a2": {
+   "polities": 37,
+   "regions": 11,
+   "prefectures": 11,
+   "regionRef": "s_qin_a",
+   "caption": "战国中期之初（前340 — 前317 · 商鞅收河西与五国相王）"
+  },
+  "s_zhanguo_b1": {
+   "polities": 34,
+   "regions": 13,
+   "prefectures": 13,
+   "regionRef": "s_qin_a",
+   "caption": "战国中期（前306 — 前301 · 楚怀王灭越与胡服骑射）"
+  },
+  "s_zhanguo_b2": {
+   "polities": 32,
+   "regions": 15,
+   "prefectures": 18,
+   "regionRef": "s_qin_a",
+   "caption": "战国中后期（前296 — 前279 · 赵灭中山与乐毅破齐）"
+  },
+  "s_roc_a0": {
+   "polities": 19,
+   "regions": 29,
+   "prefectures": 347,
+   "prefRef": "s_roc",
+   "regionRef": "s_roc_a",
+   "caption": "1912 — 1915 · 民初共和与北京临时政府：清帝退位南北议和，中华民国建立"
+  },
+  "s_roc_w1": {
+   "polities": 25,
+   "regions": 29,
+   "prefectures": 347,
+   "prefRef": "s_roc",
+   "regionRef": "s_roc_a",
+   "caption": "1916 — 1919 · 袁世凯病逝与北洋军阀割据：皖系段祺瑞掌北京中枢，直系、奉系兴起，孙中山于广州护法南北对峙"
+  },
+  "s_roc_w2": {
+   "polities": 26,
+   "regions": 29,
+   "prefectures": 347,
+   "prefRef": "s_roc",
+   "regionRef": "s_roc_a",
+   "caption": "1920 — 1923 · 直皖与第一次直奉战争：曹锟、吴佩孚直系独霸北京与长江，张作霖退守关外，孙中山重建广州大元帅府"
+  },
+  "s_roc_w3": {
+   "polities": 26,
+   "regions": 29,
+   "prefectures": 347,
+   "prefRef": "s_roc",
+   "regionRef": "s_roc_a",
+   "caption": "1924 — 1925 · 北伐前夕六大派系：奉系张作霖入关、孙传芳五省联军、直系吴佩孚、冯玉祥国民军与两广国民政府对峙"
+  },
+  "s_roc_w4": {
+   "polities": 21,
+   "regions": 29,
+   "prefectures": 347,
+   "prefRef": "s_roc",
+   "regionRef": "s_roc_a",
+   "caption": "1926 — 1927 · 国民革命军北伐：攻克武昌、定都南京，冯玉祥与阎锡山响应，与奉系张作霖安国军隔河对峙"
+  },
+  "s_zhanguo_c2": {
+   "polities": 29,
+   "regions": 19,
+   "prefectures": 22,
+   "caption": "战国晚期（前249年 · 楚考烈王灭鲁与秦灭两周置三川郡）"
+  },
+  "s_donghan_e1": {
+   "polities": 22,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan"
+  },
+  "s_donghan_e2": {
+   "polities": 20,
+   "regions": 13,
+   "prefectures": 49,
+   "prefRef": "s_donghan",
+   "regionRef": "s_donghan"
+  },
+  "s_ming_c0": {
+   "polities": 26,
+   "regions": 15,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1616 — 1636 · 明末后金崛起：努尔哈赤称汗建后金，萨尔浒之战后明失辽东"
+  },
+  "s_ming_c2": {
+   "polities": 28,
+   "regions": 15,
+   "prefectures": 246,
+   "prefRef": "s_ming_a",
+   "caption": "1643 — 1644 · 李自成破潼关入秦与张献忠据湖广：大顺据秦豫、大西据湘鄂"
+  },
+  "s_qing_a00": {
+   "polities": 33,
+   "regions": 22,
+   "prefectures": 281,
+   "caption": "1644 — 1645 · 清军入关与南明、大顺、大西并立：清廷定都北京控制北方，弘光立于南京，李自成据陕甘、张献忠据四川"
+  },
+  "s_qing_a0b": {
+   "polities": 31,
+   "regions": 22,
+   "prefectures": 281,
+   "prefRef": "s_qing_a",
+   "regionRef": "s_qing_a",
+   "caption": "1661 — 1662 · 郑成功收复台湾与南明永历终局：明郑设承天府奉永历正朔，李定国于滇西抗清"
+  },
+  "s_dongjin_317": {
+   "polities": 21,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "317 — 319 · 东晋初立与汉赵、成汉、前凉、代、前燕并立：司马睿建晋于建康，北方汉赵尚未分裂"
+  },
+  "s_dongjin_350": {
+   "polities": 20,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "350 — 351 · 冉闵代赵建冉魏：冉闵于邺城灭后赵建冉魏，与东晋、前凉、代、辽东前燕并立"
+  },
+  "s_dongjin_351": {
+   "polities": 21,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "351 — 352 · 苻健建前秦：苻健据长安称天王建前秦，与中原冉魏、辽东前燕、河西前凉、代北代国并立"
+  },
+  "s_dongjin_384": {
+   "polities": 19,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "384 — 385 · 慕容垂建后燕、姚苌建后秦：淝水战后东晋收复巴蜀荆襄，北方再度分裂"
+  },
+  "s_dongjin_385": {
+   "polities": 21,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "385 — 386 · 乞伏国仁建西秦、吕光建后凉：关中后秦与陇西西秦分立，吕光据姑臧建后凉"
+  },
+  "s_dongjin_397": {
+   "polities": 22,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "397 — 398 · 秃发乌孤建南凉、段业与沮渠蒙逊建北凉：河西裂为南凉与北凉，北魏南下中原"
+  },
+  "s_dongjin_399": {
+   "polities": 23,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "399 — 404 · 慕容德据广固建南燕：南燕割据青齐兖，与北魏、后秦、西秦、南凉、北凉、后燕并立"
+  },
+  "s_dongjin_404": {
+   "polities": 24,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "404 — 407 · 刘裕平桓玄与谯纵建谯蜀：刘裕起兵复晋，谯纵据巴蜀建谯蜀"
+  },
+  "s_dongjin_410": {
+   "polities": 24,
+   "regions": 34,
+   "prefectures": 101,
+   "caption": "410 — 413 · 刘裕北伐灭南燕：攻克广固收复山东青齐，巴蜀谯蜀尚存"
+  },
+  "s_nanbei_427": {
+   "polities": 25,
+   "regions": 63,
+   "prefectures": 137,
+   "caption": "427 — 431 · 北魏攻克统万城并取关中河南：胡夏退保陇东，与北魏、刘宋、西秦、北燕、北凉并立"
+  }
+ }
+}

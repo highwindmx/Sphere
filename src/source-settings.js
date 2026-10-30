@@ -24,7 +24,7 @@ import {
   getTiandituKey,
 } from './imagery-sources.js';
 
-/** 下载脚本 --source 名（tools/download-tiles.mjs；注意 aws-s2 的目录是 eox） */
+/** 下载脚本 --source 名（tools/build/download-tiles.mjs；注意 aws-s2 的目录是 eox） */
 const DL_SOURCE = { esri: 'esri', 'aws-s2': 'eox', gibs: 'gibs', tianditu: 'tianditu', terrain: 'terrain' };
 /** /api/downloader/scan 的统计字段 */
 const SCAN_KEY = { esri: 'esri', 'aws-s2': 'eox', gibs: 'gibs', tianditu: 'tianditu', terrain: 'terrain' };

@@ -23,7 +23,7 @@ __pycache__/
 # pyproject.toml 与 uv.lock 作为 uv 项目依赖清单纳入版本库（保证可复现，详见 pyproject.toml 头注释）
 
 # ============== 离线瓦片下载产物 (按需下载，不上传；随库的 21 个 terrain z0–z3 已跟踪不受影响) ==============
-public/tiles/*
+public/data/tiles/*
 
 # ============== 下载中间产物 ==============
 satellite-tiles-*.txt
@@ -45,3 +45,21 @@ archive/
 
 # ============== WorkBuddy 代理工作区（项目记忆/验证脚本，本地留存不入库） ==============
 .workbuddy/
+
+# ============== OSM PBF 源数据（tools/osmpbf.py 的输入档案，运行时只用转换后的 GeoJSON） ==============
+public/OSM/
+
+# OSM 生成的矢量瓦片树（运行时由 PBF/MVT 切片产生，非源码）
+public/data/osm/pmtiles/
+public/data/osm/vtiles/
+public/data/osm/mvt/
+public/OSM/*.osm.pbf
+
+# osmium-tool 预编译二进制（conda-forge 手动解包，非 pip 依赖）
+tools/osmium-bin/
+
+# PMTiles 生成的中间产物（裁剪小 pbf）
+tools/.work/
+
+# 冒烟脚本运行产物（每次覆盖，非源码）
+tools/.*-smoke.json

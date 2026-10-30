@@ -1,0 +1,175 @@
+{
+  "errors": [],
+  "consoleErrors": [],
+  "waitedMs": 2750,
+  "steps": {
+    "layout": {
+      "vw": 1250,
+      "vh": 705,
+      "panel": {
+        "w": 310,
+        "h": 293,
+        "bottom": 293
+      },
+      "canvas": {
+        "w": 1250,
+        "h": 705,
+        "left": 0
+      },
+      "panelRelative": "absolute",
+      "hasLayersSectionVisible": false,
+      "hasHistorySectionVisible": false,
+      "shownBlock": true,
+      "order": [
+        "panel-head",
+        "planet-switch",
+        "coordWidget",
+        "searchBar",
+        "shownSection"
+      ],
+      "searchAboveShown": true,
+      "panelScrolls": false,
+      "exagLabel": "⛰1.2×"
+    },
+    "catalog": {
+      "hidden": false,
+      "groups": [
+        "📁 航天探索",
+        "📁 自然地理",
+        "📁 中国史",
+        "📁 世界史",
+        "🌙 月面标注",
+        "🔴 火星标注"
+      ],
+      "items": 58,
+      "clipped": false,
+      "firstItems": [
+        "🛰️ 天宫空间站",
+        "🚀 探月任务",
+        "🚀 线上太空漫游"
+      ]
+    },
+    "lazikou": {
+      "clicked": true,
+      "label": "长征巡礼 · 腊子口",
+      "rows": [
+        {
+          "name": "长征巡礼 · 腊子口",
+          "on": true
+        }
+      ],
+      "title": "路线巡礼 · 中央红军长征主线",
+      "prog": "87% · 3201 km",
+      "clock": "1935年9月",
+      "card": "⇄ 背景 腊子口 突破腊子口 1935 年 9 月，红军在甘肃迭部腊子口与天险守敌激战，一举突破这道川甘咽喉要隘，为北上陕北打通最后一道天险。 继续 ▶",
+      "panelHidden": false
+    },
+    "switchToHistory": {
+      "clicked": true,
+      "label": "唐",
+      "rows": [
+        {
+          "name": "长征巡礼 · 腊子口",
+          "on": false
+        },
+        {
+          "name": "唐",
+          "on": true
+        }
+      ],
+      "title": "历史时间轴 · 唐",
+      "clock": "700 年",
+      "prog": "700 年 · 10/22",
+      "panelHidden": false,
+      "tourStillActive": false,
+      "clock2": "700 年"
+    },
+    "reEnable": {
+      "found": true,
+      "rows": [
+        {
+          "name": "长征巡礼 · 腊子口",
+          "on": true
+        },
+        {
+          "name": "唐",
+          "on": false
+        }
+      ],
+      "title": "路线巡礼 · 中央红军长征主线",
+      "prog": "87% · 3201 km"
+    },
+    "tiangong": {
+      "clicked": true,
+      "label": "天宫空间站",
+      "rows": [
+        "-长征巡礼 · 腊子口",
+        "-唐",
+        "+天宫空间站"
+      ],
+      "title": "天宫空间站轨道",
+      "panelHidden": false,
+      "tourProg": "8% · 星下点 18.0°N 116.5°E"
+    },
+    "removeRow": {
+      "before": 3,
+      "after": 2
+    },
+    "bodyJump": {
+      "moonItems": [
+        "静海 · 月海跳月面"
+      ],
+      "moon": {
+        "active": true,
+        "navBodyHomeGone": true,
+        "navMoonHiRes": true,
+        "navMarsHill": true,
+        "groupChecked": [
+          "maria"
+        ],
+        "cam": {
+          "lon": 31.4,
+          "lat": 8.5,
+          "h": 434350
+        },
+        "rows": [
+          "-唐",
+          "-天宫空间站",
+          "+静海 · 月海"
+        ]
+      },
+      "marsItems": [
+        "奥林匹斯山 · 巨型地貌跳火面",
+        "塔尔西斯 · 巨型地貌跳火面"
+      ],
+      "mars": {
+        "active": true,
+        "groupChecked": [
+          "landforms"
+        ],
+        "cam": {
+          "lon": -133.8,
+          "lat": 18.65,
+          "h": 849047
+        },
+        "rows": [
+          "-唐",
+          "-天宫空间站",
+          "-静海 · 月海",
+          "+奥林匹斯山 · 巨型地貌"
+        ]
+      },
+      "backToEarth": {
+        "earthActive": true,
+        "canvasVisible": true,
+        "rows": [
+          "-唐",
+          "-天宫空间站",
+          "-静海 · 月海",
+          "-奥林匹斯山 · 巨型地貌",
+          "+北京"
+        ]
+      }
+    }
+  }
+}

@@ -9,10 +9,38 @@ description = "山川与天宫 —— Flask pure web server"
 requires-python = ">=3.10"
 dependencies = [
     "flask>=3.0",
+    "mapbox-vector-tile>=2.2.0",
+    "osmium>=4.3.2",
 ]
 
+# --- 离线地图工具链依赖（tools/osm-pmtiles-pipeline/*.py 离线跑批用，Web 服务本身不需要）---
+#   ⚠️ 2026-10-26 发现：这些装过但 dist-info 的 METADATA 丢失 → uv 无法解析依赖，
+#      必须用 `uv pip install --no-deps <pkg>` 安装（不加 --no-deps 会报
+#      "Failed to read numpy==2.5.4 ... METADATA 找不到"）。
+#   osmium / shapely / protobuf / pyclipper / numpy / requests / zstandard 已有；
+#   缺的只有 mapbox-vector-tile（pbf-to-pmtiles.py 第 41 行裸 import，MVT 编码核心）：
+#     uv pip install --no-deps --python .venv/Scripts/python.exe mapbox-vector-tile
+
+[tool.uv]
+# 部分工具链包的 dist-info 曾破损（缺 METADATA / RECORD），所以不把它们全部塞进
+# [project] dependencies —— 但 osmium 已声明（见上），其依赖树随之进 lock。
+#
+# ⚠️ 2026-10-27 事件记录（别再踩）：
+#   1) 08:17 跑 app.bat 时，无条件 `uv sync` 按「精确同步」把未声明的
+#      requests / urllib3 / zstandard 卸掉了；pyosmium 只因 dist-info 缺 RECORD
+#      卸载失败才侥幸幸存（元数据至今残破：只剩 licenses/）。
+#   2) 08:20 补上 `osmium>=4.3.2` 后，pyosmium 的依赖树
+#      （requests / urllib3 / certifi / charset-normalizer / idna）随之写回
+#      uv.lock 并重装。现在 `uv sync --dry-run` = "Would make no changes"，已幂等。
+#   3) 仍缺 zstandard（未声明），但 tools/osm-pmtiles-pipeline/pbf-to-pmtiles.py 用的是标准库
+#      gzip，全仓库零 `import zstandard` → 无影响。
+#   4) app.bat 已改为「仅当 .venv 缺失或 flask 无法 import 时」才 sync，
+#      正常启动完全不碰环境，启动也更快。
+#   以后动 dependencies 前，先跑 `uv sync --dry-run` 确认不会删掉东西。
+
 # --- 命令 ---
-#   uv sync              创建 venv + 安装 flask（不 build 项目自身）
-#   uv run python app.py    启动服务
-#   uv pip install flask   手动加依赖（会回写此文件）
-#   uv lock               生成 uv.lock（可选）
+#   uv sync                  同步 venv（精确同步！先 --dry-run 看看）
+#   .venv\Scripts\python.exe app.py   直接启动服务（app.bat 现在就这么做，不碰环境）
+#   uv run python app.py     经 uv 启动（会先校验环境一致性）
+#   uv pip install flask     手动加依赖（会回写此文件）
+#   uv lock                  生成 uv.lock（可选）

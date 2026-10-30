@@ -1,0 +1,2936 @@
+[
+ {
+  "layer": "silkroad",
+  "name": "长安",
+  "lon": 108.94,
+  "lat": 34.34
+ },
+ {
+  "layer": "silkroad",
+  "name": "兰州",
+  "lon": 103.83,
+  "lat": 36.06
+ },
+ {
+  "layer": "silkroad",
+  "name": "凉州（武威）",
+  "lon": 102.64,
+  "lat": 37.93
+ },
+ {
+  "layer": "silkroad",
+  "name": "甘州（张掖）",
+  "lon": 100.45,
+  "lat": 38.93
+ },
+ {
+  "layer": "silkroad",
+  "name": "肃州（酒泉）",
+  "lon": 98.5,
+  "lat": 39.73
+ },
+ {
+  "layer": "silkroad",
+  "name": "沙州（敦煌）",
+  "lon": 93.87,
+  "lat": 40.36
+ },
+ {
+  "layer": "silkroad",
+  "name": "伊州（哈密）",
+  "lon": 92.59,
+  "lat": 39.88
+ },
+ {
+  "layer": "silkroad",
+  "name": "焉耆（库尔勒）",
+  "lon": 86.18,
+  "lat": 41.78
+ },
+ {
+  "layer": "silkroad",
+  "name": "龟兹（库车）",
+  "lon": 83.7,
+  "lat": 41.4
+ },
+ {
+  "layer": "silkroad",
+  "name": "疏勒（喀什）",
+  "lon": 75.94,
+  "lat": 39.45
+ },
+ {
+  "layer": "silkroad",
+  "name": "葱岭（帕米尔）",
+  "lon": 73.5,
+  "lat": 39
+ },
+ {
+  "layer": "silkroad",
+  "name": "粟特（河中）",
+  "lon": 69,
+  "lat": 40.5
+ },
+ {
+  "layer": "silkroad",
+  "name": "布哈拉",
+  "lon": 65,
+  "lat": 39.5
+ },
+ {
+  "layer": "silkroad",
+  "name": "木鹿（马雷）",
+  "lon": 62,
+  "lat": 36.5
+ },
+ {
+  "layer": "silkroad",
+  "name": "波斯（伊朗高原）",
+  "lon": 54,
+  "lat": 32
+ },
+ {
+  "layer": "silkroad",
+  "name": "两河下游（泰西封）",
+  "lon": 47.5,
+  "lat": 30.5
+ },
+ {
+  "layer": "silkroad",
+  "name": "大马士革",
+  "lon": 35.3,
+  "lat": 33.3
+ },
+ {
+  "layer": "silkroad",
+  "name": "广州",
+  "lon": 113.27,
+  "lat": 23.13
+ },
+ {
+  "layer": "silkroad",
+  "name": "泉州",
+  "lon": 118.59,
+  "lat": 24.87
+ },
+ {
+  "layer": "silkroad",
+  "name": "合浦（北海）",
+  "lon": 109.6,
+  "lat": 21.6
+ },
+ {
+  "layer": "silkroad",
+  "name": "占婆（越南中部）",
+  "lon": 106.7,
+  "lat": 16
+ },
+ {
+  "layer": "silkroad",
+  "name": "扶南（湄公河口）",
+  "lon": 108.3,
+  "lat": 11.9
+ },
+ {
+  "layer": "silkroad",
+  "name": "马六甲海峡东口",
+  "lon": 101.3,
+  "lat": 1.3
+ },
+ {
+  "layer": "silkroad",
+  "name": "马六甲西岸（槟城）",
+  "lon": 100.3,
+  "lat": 5.4
+ },
+ {
+  "layer": "silkroad",
+  "name": "爪哇",
+  "lon": 110.4,
+  "lat": -7.5
+ },
+ {
+  "layer": "silkroad",
+  "name": "雅加达",
+  "lon": 105.3,
+  "lat": -6.2
+ },
+ {
+  "layer": "silkroad",
+  "name": "南印度（建志）",
+  "lon": 80.3,
+  "lat": 13
+ },
+ {
+  "layer": "silkroad",
+  "name": "科摩林角",
+  "lon": 77.2,
+  "lat": 8.5
+ },
+ {
+  "layer": "silkroad",
+  "name": "波斯湾（巴林）",
+  "lon": 50.5,
+  "lat": 26.2
+ },
+ {
+  "layer": "silkroad",
+  "name": "红海（吉达）",
+  "lon": 39.2,
+  "lat": 21.5
+ },
+ {
+  "layer": "zhenghe",
+  "name": "南京（宝船厂）",
+  "lon": 118.8,
+  "lat": 32
+ },
+ {
+  "layer": "zhenghe",
+  "name": "长江口",
+  "lon": 121.1,
+  "lat": 31.5
+ },
+ {
+  "layer": "zhenghe",
+  "name": "长乐太平港",
+  "lon": 117.5,
+  "lat": 24
+ },
+ {
+  "layer": "zhenghe",
+  "name": "占城（新州）",
+  "lon": 109,
+  "lat": 13.8
+ },
+ {
+  "layer": "zhenghe",
+  "name": "新加坡海峡",
+  "lon": 104.2,
+  "lat": 1.5
+ },
+ {
+  "layer": "zhenghe",
+  "name": "满剌加（马六甲）",
+  "lon": 102.3,
+  "lat": 2.2
+ },
+ {
+  "layer": "zhenghe",
+  "name": "苏门答腊（亚齐）",
+  "lon": 95.3,
+  "lat": 5.5
+ },
+ {
+  "layer": "zhenghe",
+  "name": "锡兰（别罗里）",
+  "lon": 79.8,
+  "lat": 6.9
+ },
+ {
+  "layer": "zhenghe",
+  "name": "古里（卡利卡特）",
+  "lon": 75.8,
+  "lat": 11.3
+ },
+ {
+  "layer": "zhenghe",
+  "name": "阿曼湾",
+  "lon": 57.8,
+  "lat": 24.8
+ },
+ {
+  "layer": "zhenghe",
+  "name": "忽鲁谟斯",
+  "lon": 56.3,
+  "lat": 26.6
+ },
+ {
+  "layer": "zhenghe",
+  "name": "古里",
+  "lon": 75.8,
+  "lat": 11.3
+ },
+ {
+  "layer": "zhenghe",
+  "name": "麻林地（马林迪）",
+  "lon": 40.1,
+  "lat": -3.1
+ },
+ {
+  "layer": "xuanzang",
+  "name": "长安",
+  "lon": 108.9,
+  "lat": 34.3
+ },
+ {
+  "layer": "xuanzang",
+  "name": "秦州（天水）",
+  "lon": 105.7,
+  "lat": 34.6
+ },
+ {
+  "layer": "xuanzang",
+  "name": "兰州",
+  "lon": 103.8,
+  "lat": 36.1
+ },
+ {
+  "layer": "xuanzang",
+  "name": "凉州（武威）",
+  "lon": 102.6,
+  "lat": 38
+ },
+ {
+  "layer": "xuanzang",
+  "name": "瓜州",
+  "lon": 95,
+  "lat": 40.5
+ },
+ {
+  "layer": "xuanzang",
+  "name": "伊吾（哈密）",
+  "lon": 93.9,
+  "lat": 40.4
+ },
+ {
+  "layer": "xuanzang",
+  "name": "高昌（吐鲁番）",
+  "lon": 89.5,
+  "lat": 42.9
+ },
+ {
+  "layer": "xuanzang",
+  "name": "焉耆",
+  "lon": 86.2,
+  "lat": 42.5
+ },
+ {
+  "layer": "xuanzang",
+  "name": "龟兹（库车）",
+  "lon": 82.9,
+  "lat": 41.7
+ },
+ {
+  "layer": "xuanzang",
+  "name": "跋禄迦（阿克苏）",
+  "lon": 80.2,
+  "lat": 41.2
+ },
+ {
+  "layer": "xuanzang",
+  "name": "凌山（天山隘口）",
+  "lon": 75.7,
+  "lat": 42.8
+ },
+ {
+  "layer": "xuanzang",
+  "name": "怛罗斯",
+  "lon": 71.3,
+  "lat": 42.5
+ },
+ {
+  "layer": "xuanzang",
+  "name": "撒马尔罕",
+  "lon": 66.9,
+  "lat": 39.7
+ },
+ {
+  "layer": "xuanzang",
+  "name": "巴米扬",
+  "lon": 67.8,
+  "lat": 34.8
+ },
+ {
+  "layer": "xuanzang",
+  "name": "犍陀罗（白沙瓦）",
+  "lon": 71.5,
+  "lat": 34
+ },
+ {
+  "layer": "xuanzang",
+  "name": "迦湿弥罗（克什米尔）",
+  "lon": 74.5,
+  "lat": 34.1
+ },
+ {
+  "layer": "xuanzang",
+  "name": "那烂陀寺",
+  "lon": 85.4,
+  "lat": 25.1
+ },
+ {
+  "layer": "rome",
+  "name": "罗马",
+  "lon": 12.5,
+  "lat": 41.9
+ },
+ {
+  "layer": "rome",
+  "name": "梅迪奥拉努姆（米兰）",
+  "lon": 9.2,
+  "lat": 45.5
+ },
+ {
+  "layer": "rome",
+  "name": "卢格杜努姆（里昂）",
+  "lon": 4.8,
+  "lat": 45.8
+ },
+ {
+  "layer": "rome",
+  "name": "热马皮港（布洛涅）",
+  "lon": 1.6,
+  "lat": 50.9
+ },
+ {
+  "layer": "rome",
+  "name": "多佛尔海峡",
+  "lon": 0.1,
+  "lat": 51.5
+ },
+ {
+  "layer": "rome",
+  "name": "埃伯拉库姆（约克）",
+  "lon": -1.1,
+  "lat": 53.9
+ },
+ {
+  "layer": "rome",
+  "name": "布林迪西",
+  "lon": 17.9,
+  "lat": 40.6
+ },
+ {
+  "layer": "rome",
+  "name": "都拉基乌姆（都拉斯）",
+  "lon": 19.8,
+  "lat": 41.3
+ },
+ {
+  "layer": "rome",
+  "name": "塞萨洛尼基",
+  "lon": 22.9,
+  "lat": 40.6
+ },
+ {
+  "layer": "rome",
+  "name": "拜占庭（君士坦丁堡）",
+  "lon": 29,
+  "lat": 41
+ },
+ {
+  "layer": "rome",
+  "name": "安奇拉（安卡拉）",
+  "lon": 32.9,
+  "lat": 39.9
+ },
+ {
+  "layer": "rome",
+  "name": "安条克",
+  "lon": 36.2,
+  "lat": 36.2
+ },
+ {
+  "layer": "rome",
+  "name": "大马士革",
+  "lon": 36.3,
+  "lat": 33.5
+ },
+ {
+  "layer": "rome",
+  "name": "耶路撒冷",
+  "lon": 35.2,
+  "lat": 31.8
+ },
+ {
+  "layer": "rome",
+  "name": "亚历山大",
+  "lon": 29.9,
+  "lat": 31.2
+ },
+ {
+  "layer": "ageofsail",
+  "name": "帕洛斯港",
+  "lon": -6.8,
+  "lat": 37.1
+ },
+ {
+  "layer": "ageofsail",
+  "name": "加那利群岛",
+  "lon": -15.5,
+  "lat": 28.1
+ },
+ {
+  "layer": "ageofsail",
+  "name": "圣萨尔瓦多",
+  "lon": -74.4,
+  "lat": 24.1
+ },
+ {
+  "layer": "ageofsail",
+  "name": "古巴北岸",
+  "lon": -77.7,
+  "lat": 21.9
+ },
+ {
+  "layer": "ageofsail",
+  "name": "伊斯帕尼奥拉",
+  "lon": -70.7,
+  "lat": 19.8
+ },
+ {
+  "layer": "ageofsail",
+  "name": "塞维利亚",
+  "lon": -6,
+  "lat": 37.4
+ },
+ {
+  "layer": "ageofsail",
+  "name": "里约热内卢",
+  "lon": -43.2,
+  "lat": -22.9
+ },
+ {
+  "layer": "ageofsail",
+  "name": "麦哲伦海峡",
+  "lon": -68.5,
+  "lat": -53.5
+ },
+ {
+  "layer": "ageofsail",
+  "name": "关岛",
+  "lon": 144.8,
+  "lat": 13.5
+ },
+ {
+  "layer": "ageofsail",
+  "name": "宿务",
+  "lon": 124,
+  "lat": 10.3
+ },
+ {
+  "layer": "ageofsail",
+  "name": "帝汶岛",
+  "lon": 123.6,
+  "lat": -10.2
+ },
+ {
+  "layer": "ageofsail",
+  "name": "好望角外海",
+  "lon": 18.4,
+  "lat": -34.4
+ },
+ {
+  "layer": "ageofsail",
+  "name": "佛得角",
+  "lon": -23.5,
+  "lat": 14.9
+ },
+ {
+  "layer": "ageofsail",
+  "name": "里斯本",
+  "lon": -9.1,
+  "lat": 38.7
+ },
+ {
+  "layer": "ageofsail",
+  "name": "佛得角群岛",
+  "lon": -23.5,
+  "lat": 16
+ },
+ {
+  "layer": "ageofsail",
+  "name": "好望角",
+  "lon": 18.5,
+  "lat": -34.4
+ },
+ {
+  "layer": "ageofsail",
+  "name": "莫桑比克岛",
+  "lon": 40.7,
+  "lat": -15
+ },
+ {
+  "layer": "ageofsail",
+  "name": "蒙巴萨·马林迪",
+  "lon": 39.7,
+  "lat": -4
+ },
+ {
+  "layer": "ageofsail",
+  "name": "卡利卡特",
+  "lon": 75.8,
+  "lat": 11.3
+ },
+ {
+  "layer": "ageofsail",
+  "name": "普利茅斯",
+  "lon": -4.1,
+  "lat": 50.4
+ },
+ {
+  "layer": "ageofsail",
+  "name": "合恩角",
+  "lon": -67.3,
+  "lat": -55.9
+ },
+ {
+  "layer": "ageofsail",
+  "name": "塔希提",
+  "lon": -149.4,
+  "lat": -17.7
+ },
+ {
+  "layer": "ageofsail",
+  "name": "新西兰",
+  "lon": 175,
+  "lat": -41
+ },
+ {
+  "layer": "ageofsail",
+  "name": "博特尼湾",
+  "lon": 151.2,
+  "lat": -34
+ },
+ {
+  "layer": "ageofsail",
+  "name": "托雷斯海峡",
+  "lon": 142.5,
+  "lat": -10.5
+ },
+ {
+  "layer": "ageofsail",
+  "name": "夏威夷",
+  "lon": -155.9,
+  "lat": 19.5
+ },
+ {
+  "layer": "g318",
+  "name": "上海",
+  "lon": 121.47,
+  "lat": 31.23
+ },
+ {
+  "layer": "g318",
+  "name": "苏州",
+  "lon": 120.62,
+  "lat": 31.32
+ },
+ {
+  "layer": "g318",
+  "name": "湖州",
+  "lon": 120.1,
+  "lat": 30.87
+ },
+ {
+  "layer": "g318",
+  "name": "宣城",
+  "lon": 118.76,
+  "lat": 30.95
+ },
+ {
+  "layer": "g318",
+  "name": "池州",
+  "lon": 117.49,
+  "lat": 30.66
+ },
+ {
+  "layer": "g318",
+  "name": "安庆",
+  "lon": 117.06,
+  "lat": 30.54
+ },
+ {
+  "layer": "g318",
+  "name": "黄冈",
+  "lon": 114.87,
+  "lat": 30.45
+ },
+ {
+  "layer": "g318",
+  "name": "武汉",
+  "lon": 114.31,
+  "lat": 30.59
+ },
+ {
+  "layer": "g318",
+  "name": "荆州",
+  "lon": 112.24,
+  "lat": 30.33
+ },
+ {
+  "layer": "g318",
+  "name": "宜昌",
+  "lon": 111.29,
+  "lat": 30.7
+ },
+ {
+  "layer": "g318",
+  "name": "恩施",
+  "lon": 109.49,
+  "lat": 30.27
+ },
+ {
+  "layer": "g318",
+  "name": "利川",
+  "lon": 108.57,
+  "lat": 30.3
+ },
+ {
+  "layer": "g318",
+  "name": "黔江",
+  "lon": 108.78,
+  "lat": 29.53
+ },
+ {
+  "layer": "g318",
+  "name": "武隆",
+  "lon": 107.76,
+  "lat": 29.33
+ },
+ {
+  "layer": "g318",
+  "name": "重庆",
+  "lon": 106.55,
+  "lat": 29.56
+ },
+ {
+  "layer": "g318",
+  "name": "遂宁",
+  "lon": 105.59,
+  "lat": 30.53
+ },
+ {
+  "layer": "g318",
+  "name": "成都",
+  "lon": 104.07,
+  "lat": 30.57
+ },
+ {
+  "layer": "g318",
+  "name": "雅安",
+  "lon": 103.04,
+  "lat": 29.98
+ },
+ {
+  "layer": "g318",
+  "name": "康定",
+  "lon": 102.03,
+  "lat": 30.05
+ },
+ {
+  "layer": "g318",
+  "name": "理塘",
+  "lon": 100.27,
+  "lat": 30
+ },
+ {
+  "layer": "g318",
+  "name": "巴塘",
+  "lon": 99.11,
+  "lat": 30.86
+ },
+ {
+  "layer": "g318",
+  "name": "芒康",
+  "lon": 98.6,
+  "lat": 29.68
+ },
+ {
+  "layer": "g318",
+  "name": "左贡",
+  "lon": 97.84,
+  "lat": 29.67
+ },
+ {
+  "layer": "g318",
+  "name": "八宿",
+  "lon": 96.17,
+  "lat": 29.8
+ },
+ {
+  "layer": "g318",
+  "name": "波密",
+  "lon": 95.77,
+  "lat": 29.86
+ },
+ {
+  "layer": "g318",
+  "name": "林芝",
+  "lon": 94.36,
+  "lat": 29.65
+ },
+ {
+  "layer": "g318",
+  "name": "拉萨",
+  "lon": 91.13,
+  "lat": 29.65
+ },
+ {
+  "layer": "g318",
+  "name": "日喀则",
+  "lon": 88.88,
+  "lat": 29.27
+ },
+ {
+  "layer": "g318",
+  "name": "定日",
+  "lon": 87.08,
+  "lat": 28.64
+ },
+ {
+  "layer": "g318",
+  "name": "聂拉木",
+  "lon": 85.98,
+  "lat": 28.16
+ },
+ {
+  "layer": "g318",
+  "name": "樟木口岸",
+  "lon": 85.98,
+  "lat": 28.02
+ },
+ {
+  "layer": "longmarch",
+  "name": "瑞金",
+  "lon": 116.03,
+  "lat": 25.89
+ },
+ {
+  "layer": "longmarch",
+  "name": "遵义",
+  "lon": 106.93,
+  "lat": 27.73
+ },
+ {
+  "layer": "longmarch",
+  "name": "皎平渡",
+  "lon": 102.24,
+  "lat": 26.2
+ },
+ {
+  "layer": "longmarch",
+  "name": "泸定桥",
+  "lon": 102.23,
+  "lat": 29.91
+ },
+ {
+  "layer": "longmarch",
+  "name": "腊子口",
+  "lon": 104.05,
+  "lat": 34.3
+ },
+ {
+  "layer": "longmarch",
+  "name": "吴起镇",
+  "lon": 108.22,
+  "lat": 36.92
+ },
+ {
+  "layer": "passes",
+  "name": "山海关",
+  "lon": 119.75,
+  "lat": 40.04
+ },
+ {
+  "layer": "passes",
+  "name": "居庸关",
+  "lon": 116.07,
+  "lat": 40.29
+ },
+ {
+  "layer": "passes",
+  "name": "紫荆关",
+  "lon": 115.17,
+  "lat": 39.43
+ },
+ {
+  "layer": "passes",
+  "name": "倒马关",
+  "lon": 114.7,
+  "lat": 38.93
+ },
+ {
+  "layer": "passes",
+  "name": "娘子关",
+  "lon": 113.87,
+  "lat": 38.06
+ },
+ {
+  "layer": "passes",
+  "name": "井陉关",
+  "lon": 114.02,
+  "lat": 38.1
+ },
+ {
+  "layer": "passes",
+  "name": "雁门关",
+  "lon": 112.83,
+  "lat": 39.19
+ },
+ {
+  "layer": "passes",
+  "name": "平型关",
+  "lon": 114.16,
+  "lat": 39.32
+ },
+ {
+  "layer": "passes",
+  "name": "偏头关",
+  "lon": 111.21,
+  "lat": 39.67
+ },
+ {
+  "layer": "passes",
+  "name": "嘉峪关",
+  "lon": 98.28,
+  "lat": 39.8
+ },
+ {
+  "layer": "passes",
+  "name": "玉门关",
+  "lon": 93.87,
+  "lat": 40.36
+ },
+ {
+  "layer": "passes",
+  "name": "阳关",
+  "lon": 92.59,
+  "lat": 39.88
+ },
+ {
+  "layer": "passes",
+  "name": "居延关",
+  "lon": 101.07,
+  "lat": 42.01
+ },
+ {
+  "layer": "passes",
+  "name": "铁门关",
+  "lon": 86.17,
+  "lat": 41.78
+ },
+ {
+  "layer": "passes",
+  "name": "函谷关",
+  "lon": 110.86,
+  "lat": 34.66
+ },
+ {
+  "layer": "passes",
+  "name": "虎牢关",
+  "lon": 113.39,
+  "lat": 34.76
+ },
+ {
+  "layer": "passes",
+  "name": "潼关",
+  "lon": 110.21,
+  "lat": 34.55
+ },
+ {
+  "layer": "passes",
+  "name": "大散关",
+  "lon": 106.85,
+  "lat": 34.36
+ },
+ {
+  "layer": "passes",
+  "name": "武关",
+  "lon": 110.34,
+  "lat": 33.62
+ },
+ {
+  "layer": "passes",
+  "name": "萧关",
+  "lon": 106.24,
+  "lat": 36.28
+ },
+ {
+  "layer": "passes",
+  "name": "剑门关",
+  "lon": 105.37,
+  "lat": 32.18
+ },
+ {
+  "layer": "passes",
+  "name": "瞿塘关",
+  "lon": 109.46,
+  "lat": 31.05
+ },
+ {
+  "layer": "passes",
+  "name": "江油关",
+  "lon": 104.78,
+  "lat": 31.78
+ },
+ {
+  "layer": "passes",
+  "name": "白马关",
+  "lon": 117.16,
+  "lat": 40.55
+ },
+ {
+  "layer": "passes",
+  "name": "独松关",
+  "lon": 119.69,
+  "lat": 30.73
+ },
+ {
+  "layer": "passes",
+  "name": "仙霞关",
+  "lon": 118.49,
+  "lat": 28.42
+ },
+ {
+  "layer": "passes",
+  "name": "梅关",
+  "lon": 114.39,
+  "lat": 25.1
+ },
+ {
+  "layer": "passes",
+  "name": "昆仑关",
+  "lon": 108.65,
+  "lat": 22.93
+ },
+ {
+  "layer": "passes",
+  "name": "友谊关",
+  "lon": 106.66,
+  "lat": 22
+ },
+ {
+  "layer": "passes",
+  "name": "马关",
+  "lon": 104.4,
+  "lat": 23.01
+ },
+ {
+  "layer": "passes",
+  "name": "韶关",
+  "lon": 113.6,
+  "lat": 24.81
+ },
+ {
+  "layer": "worldcities",
+  "name": "纽约",
+  "lon": -74.01,
+  "lat": 40.71
+ },
+ {
+  "layer": "worldcities",
+  "name": "洛杉矶",
+  "lon": -118.24,
+  "lat": 34.05
+ },
+ {
+  "layer": "worldcities",
+  "name": "芝加哥",
+  "lon": -87.63,
+  "lat": 41.88
+ },
+ {
+  "layer": "worldcities",
+  "name": "休斯敦",
+  "lon": -95.37,
+  "lat": 29.76
+ },
+ {
+  "layer": "worldcities",
+  "name": "旧金山",
+  "lon": -122.42,
+  "lat": 37.77
+ },
+ {
+  "layer": "worldcities",
+  "name": "圣何塞",
+  "lon": -121.89,
+  "lat": 37.34
+ },
+ {
+  "layer": "worldcities",
+  "name": "西雅图",
+  "lon": -122.33,
+  "lat": 47.61
+ },
+ {
+  "layer": "worldcities",
+  "name": "波士顿",
+  "lon": -71.06,
+  "lat": 42.36
+ },
+ {
+  "layer": "worldcities",
+  "name": "费城",
+  "lon": -75.17,
+  "lat": 39.95
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "华盛顿",
+  "lon": -77.04,
+  "lat": 38.91
+ },
+ {
+  "layer": "worldcities",
+  "name": "迈阿密",
+  "lon": -80.19,
+  "lat": 25.76
+ },
+ {
+  "layer": "worldcities",
+  "name": "亚特兰大",
+  "lon": -84.39,
+  "lat": 33.75
+ },
+ {
+  "layer": "worldcities",
+  "name": "达拉斯",
+  "lon": -96.8,
+  "lat": 32.78
+ },
+ {
+  "layer": "worldcities",
+  "name": "奥斯汀",
+  "lon": -97.74,
+  "lat": 30.27
+ },
+ {
+  "layer": "worldcities",
+  "name": "圣安东尼奥",
+  "lon": -98.49,
+  "lat": 29.42
+ },
+ {
+  "layer": "worldcities",
+  "name": "凤凰城",
+  "lon": -112.07,
+  "lat": 33.45
+ },
+ {
+  "layer": "worldcities",
+  "name": "丹佛",
+  "lon": -104.99,
+  "lat": 39.74
+ },
+ {
+  "layer": "worldcities",
+  "name": "拉斯维加斯",
+  "lon": -115.14,
+  "lat": 36.17
+ },
+ {
+  "layer": "worldcities",
+  "name": "圣迭戈",
+  "lon": -117.16,
+  "lat": 32.72
+ },
+ {
+  "layer": "worldcities",
+  "name": "波特兰",
+  "lon": -122.68,
+  "lat": 45.52
+ },
+ {
+  "layer": "worldcities",
+  "name": "明尼阿波利斯",
+  "lon": -93.27,
+  "lat": 44.98
+ },
+ {
+  "layer": "worldcities",
+  "name": "底特律",
+  "lon": -83.05,
+  "lat": 42.33
+ },
+ {
+  "layer": "worldcities",
+  "name": "克利夫兰",
+  "lon": -81.69,
+  "lat": 41.5
+ },
+ {
+  "layer": "worldcities",
+  "name": "辛辛那提",
+  "lon": -84.51,
+  "lat": 39.1
+ },
+ {
+  "layer": "worldcities",
+  "name": "圣路易斯",
+  "lon": -90.2,
+  "lat": 38.63
+ },
+ {
+  "layer": "worldcities",
+  "name": "堪萨斯城",
+  "lon": -94.58,
+  "lat": 39.1
+ },
+ {
+  "layer": "worldcities",
+  "name": "新奥尔良",
+  "lon": -90.07,
+  "lat": 29.95
+ },
+ {
+  "layer": "worldcities",
+  "name": "纳什维尔",
+  "lon": -86.78,
+  "lat": 36.16
+ },
+ {
+  "layer": "worldcities",
+  "name": "夏洛特",
+  "lon": -80.84,
+  "lat": 35.23
+ },
+ {
+  "layer": "worldcities",
+  "name": "奥兰多",
+  "lon": -81.38,
+  "lat": 28.54
+ },
+ {
+  "layer": "worldcities",
+  "name": "盐湖城",
+  "lon": -111.89,
+  "lat": 40.76
+ },
+ {
+  "layer": "worldcities",
+  "name": "匹兹堡",
+  "lon": -79.996,
+  "lat": 40.44
+ },
+ {
+  "layer": "worldcities",
+  "name": "布法罗",
+  "lon": -78.88,
+  "lat": 42.89
+ },
+ {
+  "layer": "worldcities",
+  "name": "里士满",
+  "lon": -77.44,
+  "lat": 37.54
+ },
+ {
+  "layer": "worldcities",
+  "name": "杰克逊维尔",
+  "lon": -81.66,
+  "lat": 30.33
+ },
+ {
+  "layer": "worldcities",
+  "name": "檀香山",
+  "lon": -157.86,
+  "lat": 21.31
+ },
+ {
+  "layer": "worldcities",
+  "name": "安克雷奇",
+  "lon": -149.9,
+  "lat": 61.22
+ },
+ {
+  "layer": "worldcities",
+  "name": "多伦多",
+  "lon": -79.38,
+  "lat": 43.65
+ },
+ {
+  "layer": "worldcities",
+  "name": "蒙特利尔",
+  "lon": -73.57,
+  "lat": 45.5
+ },
+ {
+  "layer": "worldcities",
+  "name": "温哥华",
+  "lon": -123.12,
+  "lat": 49.28
+ },
+ {
+  "layer": "worldcities",
+  "name": "卡尔加里",
+  "lon": -114.07,
+  "lat": 51.05
+ },
+ {
+  "layer": "worldcities",
+  "name": "魁北克城",
+  "lon": -71.21,
+  "lat": 46.81
+ },
+ {
+  "layer": "worldcities",
+  "name": "瓜达拉哈拉",
+  "lon": -103.35,
+  "lat": 20.66
+ },
+ {
+  "layer": "worldcities",
+  "name": "蒙特雷",
+  "lon": -100.32,
+  "lat": 25.69
+ },
+ {
+  "layer": "worldcities",
+  "name": "坎昆",
+  "lon": -86.85,
+  "lat": 21.16
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "东京",
+  "lon": 139.69,
+  "lat": 35.69
+ },
+ {
+  "layer": "worldcities",
+  "name": "横滨",
+  "lon": 139.64,
+  "lat": 35.44
+ },
+ {
+  "layer": "worldcities",
+  "name": "川崎",
+  "lon": 139.7,
+  "lat": 35.53
+ },
+ {
+  "layer": "worldcities",
+  "name": "千叶",
+  "lon": 140.12,
+  "lat": 35.61
+ },
+ {
+  "layer": "worldcities",
+  "name": "埼玉",
+  "lon": 139.65,
+  "lat": 35.86
+ },
+ {
+  "layer": "worldcities",
+  "name": "筑波",
+  "lon": 140.11,
+  "lat": 36.08
+ },
+ {
+  "layer": "worldcities",
+  "name": "横须贺",
+  "lon": 139.67,
+  "lat": 35.28
+ },
+ {
+  "layer": "worldcities",
+  "name": "名古屋",
+  "lon": 136.91,
+  "lat": 35.18
+ },
+ {
+  "layer": "worldcities",
+  "name": "丰田",
+  "lon": 137.15,
+  "lat": 35.08
+ },
+ {
+  "layer": "worldcities",
+  "name": "静冈",
+  "lon": 138.38,
+  "lat": 34.98
+ },
+ {
+  "layer": "worldcities",
+  "name": "滨松",
+  "lon": 137.73,
+  "lat": 34.71
+ },
+ {
+  "layer": "worldcities",
+  "name": "京都",
+  "lon": 135.77,
+  "lat": 35.01
+ },
+ {
+  "layer": "worldcities",
+  "name": "大阪",
+  "lon": 135.5,
+  "lat": 34.69
+ },
+ {
+  "layer": "worldcities",
+  "name": "神户",
+  "lon": 135.2,
+  "lat": 34.69
+ },
+ {
+  "layer": "worldcities",
+  "name": "奈良",
+  "lon": 135.83,
+  "lat": 34.69
+ },
+ {
+  "layer": "worldcities",
+  "name": "金泽",
+  "lon": 136.63,
+  "lat": 36.59
+ },
+ {
+  "layer": "worldcities",
+  "name": "富山",
+  "lon": 137.21,
+  "lat": 36.7
+ },
+ {
+  "layer": "worldcities",
+  "name": "长野",
+  "lon": 138.18,
+  "lat": 36.65
+ },
+ {
+  "layer": "worldcities",
+  "name": "松本",
+  "lon": 137.97,
+  "lat": 36.24
+ },
+ {
+  "layer": "worldcities",
+  "name": "新潟",
+  "lon": 139.02,
+  "lat": 37.92
+ },
+ {
+  "layer": "worldcities",
+  "name": "仙台",
+  "lon": 140.87,
+  "lat": 38.27
+ },
+ {
+  "layer": "worldcities",
+  "name": "福岛",
+  "lon": 140.46,
+  "lat": 37.76
+ },
+ {
+  "layer": "worldcities",
+  "name": "广岛",
+  "lon": 132.46,
+  "lat": 34.39
+ },
+ {
+  "layer": "worldcities",
+  "name": "冈山",
+  "lon": 133.93,
+  "lat": 34.66
+ },
+ {
+  "layer": "worldcities",
+  "name": "高松",
+  "lon": 134.05,
+  "lat": 34.34
+ },
+ {
+  "layer": "worldcities",
+  "name": "松山",
+  "lon": 132.71,
+  "lat": 33.84
+ },
+ {
+  "layer": "worldcities",
+  "name": "北九州",
+  "lon": 130.88,
+  "lat": 33.88
+ },
+ {
+  "layer": "worldcities",
+  "name": "福冈",
+  "lon": 130.4,
+  "lat": 33.59
+ },
+ {
+  "layer": "worldcities",
+  "name": "长崎",
+  "lon": 129.87,
+  "lat": 32.75
+ },
+ {
+  "layer": "worldcities",
+  "name": "熊本",
+  "lon": 130.74,
+  "lat": 32.79
+ },
+ {
+  "layer": "worldcities",
+  "name": "大分",
+  "lon": 131.61,
+  "lat": 33.24
+ },
+ {
+  "layer": "worldcities",
+  "name": "鹿儿岛",
+  "lon": 130.55,
+  "lat": 31.6
+ },
+ {
+  "layer": "worldcities",
+  "name": "那霸",
+  "lon": 127.68,
+  "lat": 26.21
+ },
+ {
+  "layer": "worldcities",
+  "name": "札幌",
+  "lon": 141.35,
+  "lat": 43.06
+ },
+ {
+  "layer": "worldcities",
+  "name": "函馆",
+  "lon": 140.73,
+  "lat": 41.77
+ },
+ {
+  "layer": "worldcities",
+  "name": "钏路",
+  "lon": 144.38,
+  "lat": 42.98
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "首尔",
+  "lon": 126.98,
+  "lat": 37.57
+ },
+ {
+  "layer": "worldcities",
+  "name": "仁川",
+  "lon": 126.71,
+  "lat": 37.46
+ },
+ {
+  "layer": "worldcities",
+  "name": "釜山",
+  "lon": 129.08,
+  "lat": 35.18
+ },
+ {
+  "layer": "worldcities",
+  "name": "大邱",
+  "lon": 128.6,
+  "lat": 35.87
+ },
+ {
+  "layer": "worldcities",
+  "name": "大田",
+  "lon": 127.38,
+  "lat": 36.35
+ },
+ {
+  "layer": "worldcities",
+  "name": "光州",
+  "lon": 126.85,
+  "lat": 35.16
+ },
+ {
+  "layer": "worldcities",
+  "name": "蔚山",
+  "lon": 129.31,
+  "lat": 35.54
+ },
+ {
+  "layer": "worldcities",
+  "name": "济州",
+  "lon": 126.53,
+  "lat": 33.5
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "平壤",
+  "lon": 125.76,
+  "lat": 39.04
+ },
+ {
+  "layer": "worldcities",
+  "name": "开城",
+  "lon": 126.55,
+  "lat": 37.97
+ },
+ {
+  "layer": "worldcities",
+  "name": "元山",
+  "lon": 127.36,
+  "lat": 39.16
+ },
+ {
+  "layer": "worldcities",
+  "name": "罗先",
+  "lon": 130.65,
+  "lat": 42.43
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "伦敦",
+  "lon": -0.13,
+  "lat": 51.51
+ },
+ {
+  "layer": "worldcities",
+  "name": "曼彻斯特",
+  "lon": -2.24,
+  "lat": 53.48
+ },
+ {
+  "layer": "worldcities",
+  "name": "伯明翰",
+  "lon": -1.89,
+  "lat": 52.48
+ },
+ {
+  "layer": "worldcities",
+  "name": "利物浦",
+  "lon": -2.99,
+  "lat": 53.41
+ },
+ {
+  "layer": "worldcities",
+  "name": "爱丁堡",
+  "lon": -3.19,
+  "lat": 55.95
+ },
+ {
+  "layer": "worldcities",
+  "name": "格拉斯哥",
+  "lon": -4.25,
+  "lat": 55.86
+ },
+ {
+  "layer": "worldcities",
+  "name": "都柏林",
+  "lon": -6.26,
+  "lat": 53.35
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "巴黎",
+  "lon": 2.35,
+  "lat": 48.86
+ },
+ {
+  "layer": "worldcities",
+  "name": "马赛",
+  "lon": 5.37,
+  "lat": 43.3
+ },
+ {
+  "layer": "worldcities",
+  "name": "里昂",
+  "lon": 4.84,
+  "lat": 45.76
+ },
+ {
+  "layer": "worldcities",
+  "name": "图卢兹",
+  "lon": 1.44,
+  "lat": 43.6
+ },
+ {
+  "layer": "worldcities",
+  "name": "波尔多",
+  "lon": -0.58,
+  "lat": 44.84
+ },
+ {
+  "layer": "worldcities",
+  "name": "斯特拉斯堡",
+  "lon": 7.75,
+  "lat": 48.58
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "柏林",
+  "lon": 13.4,
+  "lat": 52.52
+ },
+ {
+  "layer": "worldcities",
+  "name": "汉堡",
+  "lon": 9.99,
+  "lat": 53.55
+ },
+ {
+  "layer": "worldcities",
+  "name": "慕尼黑",
+  "lon": 11.58,
+  "lat": 48.14
+ },
+ {
+  "layer": "worldcities",
+  "name": "法兰克福",
+  "lon": 8.68,
+  "lat": 50.11
+ },
+ {
+  "layer": "worldcities",
+  "name": "科隆",
+  "lon": 6.96,
+  "lat": 50.94
+ },
+ {
+  "layer": "worldcities",
+  "name": "杜塞尔多夫",
+  "lon": 6.78,
+  "lat": 51.23
+ },
+ {
+  "layer": "worldcities",
+  "name": "斯图加特",
+  "lon": 9.18,
+  "lat": 48.78
+ },
+ {
+  "layer": "worldcities",
+  "name": "纽伦堡",
+  "lon": 11.08,
+  "lat": 49.45
+ },
+ {
+  "layer": "worldcities",
+  "name": "德累斯顿",
+  "lon": 13.74,
+  "lat": 51.05
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "阿姆斯特丹",
+  "lon": 4.9,
+  "lat": 52.37
+ },
+ {
+  "layer": "worldcities",
+  "name": "鹿特丹",
+  "lon": 4.48,
+  "lat": 51.92
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "布鲁塞尔",
+  "lon": 4.35,
+  "lat": 50.85
+ },
+ {
+  "layer": "worldcities",
+  "name": "苏黎世",
+  "lon": 8.54,
+  "lat": 47.38
+ },
+ {
+  "layer": "worldcities",
+  "name": "日内瓦",
+  "lon": 6.14,
+  "lat": 46.2
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "维也纳",
+  "lon": 16.37,
+  "lat": 48.21
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "布拉格",
+  "lon": 14.42,
+  "lat": 50.09
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "布达佩斯",
+  "lon": 19.04,
+  "lat": 47.5
+ },
+ {
+  "layer": "worldcities",
+  "name": "布拉迪斯拉发",
+  "lon": 17.11,
+  "lat": 48.15
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "华沙",
+  "lon": 21.01,
+  "lat": 52.23
+ },
+ {
+  "layer": "worldcities",
+  "name": "克拉科夫",
+  "lon": 19.94,
+  "lat": 50.06
+ },
+ {
+  "layer": "worldcities",
+  "name": "格但斯克",
+  "lon": 18.65,
+  "lat": 54.35
+ },
+ {
+  "layer": "worldcities",
+  "name": "哥本哈根",
+  "lon": 12.57,
+  "lat": 55.68
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "斯德哥尔摩",
+  "lon": 18.07,
+  "lat": 59.33
+ },
+ {
+  "layer": "worldcities",
+  "name": "哥德堡",
+  "lon": 11.97,
+  "lat": 57.71
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "奥斯陆",
+  "lon": 10.75,
+  "lat": 59.91
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "赫尔辛基",
+  "lon": 24.94,
+  "lat": 60.17
+ },
+ {
+  "layer": "worldcities",
+  "name": "塔林",
+  "lon": 24.75,
+  "lat": 59.44
+ },
+ {
+  "layer": "worldcities",
+  "name": "里加",
+  "lon": 24.11,
+  "lat": 56.95
+ },
+ {
+  "layer": "worldcities",
+  "name": "维尔纽斯",
+  "lon": 25.28,
+  "lat": 54.69
+ },
+ {
+  "layer": "worldcities",
+  "name": "明斯克",
+  "lon": 27.57,
+  "lat": 53.9
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "基辅",
+  "lon": 30.52,
+  "lat": 50.45
+ },
+ {
+  "layer": "worldcities",
+  "name": "敖德萨",
+  "lon": 30.73,
+  "lat": 46.48
+ },
+ {
+  "layer": "worldcities",
+  "name": "圣彼得堡",
+  "lon": 30.34,
+  "lat": 59.93
+ },
+ {
+  "layer": "worldcities",
+  "name": "摩尔曼斯克",
+  "lon": 33.08,
+  "lat": 68.97
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "雅典",
+  "lon": 23.73,
+  "lat": 37.98
+ },
+ {
+  "layer": "worldcities",
+  "name": "塞萨洛尼基",
+  "lon": 22.94,
+  "lat": 40.64
+ },
+ {
+  "layer": "worldcities",
+  "name": "米兰",
+  "lon": 9.19,
+  "lat": 45.46
+ },
+ {
+  "layer": "worldcities",
+  "name": "那不勒斯",
+  "lon": 14.27,
+  "lat": 40.85
+ },
+ {
+  "layer": "worldcities",
+  "name": "都灵",
+  "lon": 7.69,
+  "lat": 45.07
+ },
+ {
+  "layer": "worldcities",
+  "name": "威尼斯",
+  "lon": 12.32,
+  "lat": 45.44
+ },
+ {
+  "layer": "worldcities",
+  "name": "佛罗伦萨",
+  "lon": 11.26,
+  "lat": 43.77
+ },
+ {
+  "layer": "worldcities",
+  "name": "热那亚",
+  "lon": 8.93,
+  "lat": 44.41
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "马德里",
+  "lon": -3.7,
+  "lat": 40.42
+ },
+ {
+  "layer": "worldcities",
+  "name": "巴塞罗那",
+  "lon": 2.17,
+  "lat": 41.39
+ },
+ {
+  "layer": "worldcities",
+  "name": "巴伦西亚",
+  "lon": -0.38,
+  "lat": 39.47
+ },
+ {
+  "layer": "worldcities",
+  "name": "塞维利亚",
+  "lon": -5.98,
+  "lat": 37.39
+ },
+ {
+  "layer": "worldcities",
+  "name": "毕尔巴鄂",
+  "lon": -2.93,
+  "lat": 43.26
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "里斯本",
+  "lon": -9.14,
+  "lat": 38.72
+ },
+ {
+  "layer": "worldcities",
+  "name": "波尔图",
+  "lon": -8.61,
+  "lat": 41.15
+ },
+ {
+  "layer": "worldcities",
+  "name": "萨格勒布",
+  "lon": 15.98,
+  "lat": 45.81
+ },
+ {
+  "layer": "worldcities",
+  "name": "贝尔格莱德",
+  "lon": 20.45,
+  "lat": 44.79
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "布加勒斯特",
+  "lon": 26.1,
+  "lat": 44.43
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "索菲亚",
+  "lon": 23.32,
+  "lat": 42.7
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "伊斯坦布尔",
+  "lon": 28.98,
+  "lat": 41.01
+ },
+ {
+  "layer": "worldcities",
+  "name": "香港",
+  "lon": 114.17,
+  "lat": 22.32
+ },
+ {
+  "layer": "worldcities",
+  "name": "澳门",
+  "lon": 113.54,
+  "lat": 22.2
+ },
+ {
+  "layer": "worldcities",
+  "name": "台北",
+  "lon": 121.56,
+  "lat": 25.03
+ },
+ {
+  "layer": "worldcities",
+  "name": "高雄",
+  "lon": 120.3,
+  "lat": 22.63
+ },
+ {
+  "layer": "worldcities",
+  "name": "台中",
+  "lon": 120.67,
+  "lat": 24.15
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "新加坡",
+  "lon": 103.82,
+  "lat": 1.35
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "吉隆坡",
+  "lon": 101.69,
+  "lat": 3.14
+ },
+ {
+  "layer": "worldcities",
+  "name": "槟城",
+  "lon": 100.33,
+  "lat": 5.41
+ },
+ {
+  "layer": "worldcities",
+  "name": "新山",
+  "lon": 103.74,
+  "lat": 1.49
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "曼谷",
+  "lon": 100.5,
+  "lat": 13.75
+ },
+ {
+  "layer": "worldcities",
+  "name": "清迈",
+  "lon": 98.98,
+  "lat": 18.79
+ },
+ {
+  "layer": "worldcities",
+  "name": "金边",
+  "lon": 104.92,
+  "lat": 11.56
+ },
+ {
+  "layer": "worldcities",
+  "name": "吴哥",
+  "lon": 103.87,
+  "lat": 13.41
+ },
+ {
+  "layer": "worldcities",
+  "name": "万象",
+  "lon": 102.63,
+  "lat": 17.97
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "河内",
+  "lon": 105.83,
+  "lat": 21.03
+ },
+ {
+  "layer": "worldcities",
+  "name": "胡志明市",
+  "lon": 106.7,
+  "lat": 10.82
+ },
+ {
+  "layer": "worldcities",
+  "name": "岘港",
+  "lon": 108.22,
+  "lat": 16.07
+ },
+ {
+  "layer": "worldcities",
+  "name": "仰光",
+  "lon": 96.16,
+  "lat": 16.87
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "雅加达",
+  "lon": 106.85,
+  "lat": -6.21
+ },
+ {
+  "layer": "worldcities",
+  "name": "万隆",
+  "lon": 107.62,
+  "lat": -6.92
+ },
+ {
+  "layer": "worldcities",
+  "name": "泗水",
+  "lon": 112.75,
+  "lat": -7.25
+ },
+ {
+  "layer": "worldcities",
+  "name": "登巴萨",
+  "lon": 115.22,
+  "lat": -8.65
+ },
+ {
+  "layer": "worldcities",
+  "name": "棉兰",
+  "lon": 98.67,
+  "lat": 3.59
+ },
+ {
+  "layer": "worldcities",
+  "name": "斯里巴加湾",
+  "lon": 114.94,
+  "lat": 4.9
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "马尼拉",
+  "lon": 120.98,
+  "lat": 14.6
+ },
+ {
+  "layer": "worldcities",
+  "name": "宿务",
+  "lon": 123.89,
+  "lat": 10.32
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "乌兰巴托",
+  "lon": 106.92,
+  "lat": 47.92
+ },
+ {
+  "layer": "worldcities",
+  "name": "阿拉木图",
+  "lon": 76.89,
+  "lat": 43.24
+ },
+ {
+  "layer": "worldcities",
+  "name": "阿斯塔纳",
+  "lon": 71.43,
+  "lat": 51.13
+ },
+ {
+  "layer": "worldcities",
+  "name": "塔什干",
+  "lon": 69.24,
+  "lat": 41.3
+ },
+ {
+  "layer": "worldcities",
+  "name": "撒马尔罕",
+  "lon": 66.97,
+  "lat": 39.65
+ },
+ {
+  "layer": "worldcities",
+  "name": "比什凯克",
+  "lon": 74.61,
+  "lat": 42.87
+ },
+ {
+  "layer": "worldcities",
+  "name": "海参崴",
+  "lon": 131.89,
+  "lat": 43.12
+ },
+ {
+  "layer": "worldcities",
+  "name": "哈巴罗夫斯克",
+  "lon": 135.06,
+  "lat": 48.48
+ },
+ {
+  "layer": "worldcities",
+  "name": "伊尔库茨克",
+  "lon": 104.28,
+  "lat": 52.29
+ },
+ {
+  "layer": "worldcities",
+  "name": "新西伯利亚",
+  "lon": 82.93,
+  "lat": 55.03
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "新德里",
+  "lon": 77.21,
+  "lat": 28.61
+ },
+ {
+  "layer": "worldcities",
+  "name": "孟买",
+  "lon": 72.88,
+  "lat": 19.08
+ },
+ {
+  "layer": "worldcities",
+  "name": "加尔各答",
+  "lon": 88.36,
+  "lat": 22.57
+ },
+ {
+  "layer": "worldcities",
+  "name": "班加罗尔",
+  "lon": 77.59,
+  "lat": 12.97
+ },
+ {
+  "layer": "worldcities",
+  "name": "金奈",
+  "lon": 80.27,
+  "lat": 13.08
+ },
+ {
+  "layer": "worldcities",
+  "name": "海得拉巴",
+  "lon": 78.49,
+  "lat": 17.39
+ },
+ {
+  "layer": "worldcities",
+  "name": "艾哈迈达巴德",
+  "lon": 72.57,
+  "lat": 23.02
+ },
+ {
+  "layer": "worldcities",
+  "name": "卡拉奇",
+  "lon": 67.01,
+  "lat": 24.86
+ },
+ {
+  "layer": "worldcities",
+  "name": "拉合尔",
+  "lon": 74.34,
+  "lat": 31.55
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "达卡",
+  "lon": 90.41,
+  "lat": 23.81
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "科伦坡",
+  "lon": 79.86,
+  "lat": 6.93
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "加德满都",
+  "lon": 85.32,
+  "lat": 27.72
+ },
+ {
+  "layer": "worldcities",
+  "name": "喀布尔",
+  "lon": 69.21,
+  "lat": 34.53
+ },
+ {
+  "layer": "worldcities",
+  "name": "迪拜",
+  "lon": 55.27,
+  "lat": 25.2
+ },
+ {
+  "layer": "worldcities",
+  "name": "吉达",
+  "lon": 39.19,
+  "lat": 21.49
+ },
+ {
+  "layer": "worldcities",
+  "name": "麦加",
+  "lon": 39.83,
+  "lat": 21.39
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "利雅得",
+  "lon": 46.72,
+  "lat": 24.71
+ },
+ {
+  "layer": "worldcities",
+  "name": "科威特城",
+  "lon": 47.98,
+  "lat": 29.38
+ },
+ {
+  "layer": "worldcities",
+  "name": "巴格达",
+  "lon": 44.36,
+  "lat": 33.31
+ },
+ {
+  "layer": "worldcities",
+  "name": "巴士拉",
+  "lon": 47.78,
+  "lat": 30.51
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "德黑兰",
+  "lon": 51.39,
+  "lat": 35.69
+ },
+ {
+  "layer": "worldcities",
+  "name": "伊斯法罕",
+  "lon": 51.68,
+  "lat": 32.65
+ },
+ {
+  "layer": "worldcities",
+  "name": "大马士革",
+  "lon": 36.29,
+  "lat": 33.51
+ },
+ {
+  "layer": "worldcities",
+  "name": "贝鲁特",
+  "lon": 35.5,
+  "lat": 33.89
+ },
+ {
+  "layer": "worldcities",
+  "name": "安曼",
+  "lon": 35.94,
+  "lat": 31.95
+ },
+ {
+  "layer": "worldcities",
+  "name": "特拉维夫",
+  "lon": 34.78,
+  "lat": 32.08
+ },
+ {
+  "layer": "worldcities",
+  "name": "圣保罗",
+  "lon": -46.63,
+  "lat": -23.55
+ },
+ {
+  "layer": "worldcities",
+  "name": "里约热内卢",
+  "lon": -43.17,
+  "lat": -22.91
+ },
+ {
+  "layer": "worldcities",
+  "name": "巴西利亚",
+  "lon": -47.88,
+  "lat": -15.79
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "布宜诺斯艾利斯",
+  "lon": -58.38,
+  "lat": -34.6
+ },
+ {
+  "layer": "worldcities",
+  "name": "圣地亚哥",
+  "lon": -70.67,
+  "lat": -33.45
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "利马",
+  "lon": -77.04,
+  "lat": -12.05
+ },
+ {
+  "layer": "worldcities",
+  "name": "库斯科",
+  "lon": -71.98,
+  "lat": -13.53
+ },
+ {
+  "layer": "worldcities",
+  "name": "波哥大",
+  "lon": -74.07,
+  "lat": 4.71
+ },
+ {
+  "layer": "worldcities",
+  "name": "加拉加斯",
+  "lon": -66.9,
+  "lat": 10.48
+ },
+ {
+  "layer": "worldcities",
+  "name": "基多",
+  "lon": -78.47,
+  "lat": -0.18
+ },
+ {
+  "layer": "worldcities",
+  "name": "拉巴斯",
+  "lon": -68.15,
+  "lat": -16.5
+ },
+ {
+  "layer": "worldcities",
+  "name": "蒙得维的亚",
+  "lon": -56.16,
+  "lat": -34.9
+ },
+ {
+  "layer": "worldcities",
+  "name": "亚松森",
+  "lon": -57.58,
+  "lat": -25.26
+ },
+ {
+  "layer": "worldcities",
+  "name": "哈瓦那",
+  "lon": -82.37,
+  "lat": 23.11
+ },
+ {
+  "layer": "worldcities",
+  "name": "巴拿马城",
+  "lon": -79.52,
+  "lat": 8.98
+ },
+ {
+  "layer": "worldcities",
+  "name": "圣何塞",
+  "lon": -84.08,
+  "lat": 9.93
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "开罗",
+  "lon": 31.24,
+  "lat": 30.04
+ },
+ {
+  "layer": "worldcities",
+  "name": "亚历山大",
+  "lon": 29.92,
+  "lat": 31.2
+ },
+ {
+  "layer": "worldcities",
+  "name": "卡萨布兰卡",
+  "lon": -7.59,
+  "lat": 33.57
+ },
+ {
+  "layer": "worldcities",
+  "name": "阿尔及尔",
+  "lon": 3.06,
+  "lat": 36.75
+ },
+ {
+  "layer": "worldcities",
+  "name": "突尼斯",
+  "lon": 10.18,
+  "lat": 36.81
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "拉各斯",
+  "lon": 3.38,
+  "lat": 6.52
+ },
+ {
+  "layer": "worldcities",
+  "name": "阿克拉",
+  "lon": -0.19,
+  "lat": 5.6
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "内罗毕",
+  "lon": 36.82,
+  "lat": -1.29
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "亚的斯亚贝巴",
+  "lon": 38.74,
+  "lat": 9.03
+ },
+ {
+  "layer": "worldcities",
+  "name": "达累斯萨拉姆",
+  "lon": 39.21,
+  "lat": -6.79
+ },
+ {
+  "layer": "worldcities",
+  "name": "金沙萨",
+  "lon": 15.27,
+  "lat": -4.44
+ },
+ {
+  "layer": "worldcities",
+  "name": "约翰内斯堡",
+  "lon": 28.05,
+  "lat": -26.2
+ },
+ {
+  "layer": "worldcities",
+  "name": "开普敦",
+  "lon": 18.42,
+  "lat": -33.92
+ },
+ {
+  "layer": "worldcities",
+  "name": "德班",
+  "lon": 31.02,
+  "lat": -29.86
+ },
+ {
+  "layer": "worldcities",
+  "name": "悉尼",
+  "lon": 151.21,
+  "lat": -33.87
+ },
+ {
+  "layer": "worldcities",
+  "name": "墨尔本",
+  "lon": 144.96,
+  "lat": -37.81
+ },
+ {
+  "layer": "worldcities",
+  "name": "布里斯班",
+  "lon": 153.03,
+  "lat": -27.47
+ },
+ {
+  "layer": "worldcities",
+  "name": "珀斯",
+  "lon": 115.86,
+  "lat": -31.95
+ },
+ {
+  "layer": "worldcities",
+  "name": "阿德莱德",
+  "lon": 138.6,
+  "lat": -34.93
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "堪培拉",
+  "lon": 149.13,
+  "lat": -35.28
+ },
+ {
+  "layer": "worldcities",
+  "name": "奥克兰",
+  "lon": 174.76,
+  "lat": -36.85
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "惠灵顿",
+  "lon": 174.78,
+  "lat": -41.29
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "北京",
+  "lon": 116.4,
+  "lat": 39.9
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "伊斯兰堡",
+  "lon": 73.05,
+  "lat": 33.69
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "莫斯科",
+  "lon": 37.62,
+  "lat": 55.75
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "伯尔尼",
+  "lon": 7.45,
+  "lat": 46.95
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "耶路撒冷",
+  "lon": 35.23,
+  "lat": 31.77
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "阿布扎比",
+  "lon": 54.37,
+  "lat": 24.48
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "多哈",
+  "lon": 51.53,
+  "lat": 25.29
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "比勒陀利亚",
+  "lon": 28.19,
+  "lat": -25.75
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "渥太华",
+  "lon": -75.7,
+  "lat": 45.42
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "墨西哥城",
+  "lon": -99.13,
+  "lat": 19.43
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "巴西利亚",
+  "lon": -47.93,
+  "lat": -15.78
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "波哥大",
+  "lon": -74.07,
+  "lat": 4.6
+ },
+ {
+  "layer": "worldcapitals",
+  "name": "圣地亚哥",
+  "lon": -70.65,
+  "lat": -33.45
+ },
+ {
+  "layer": "wonders",
+  "name": "吉萨大金字塔",
+  "lon": 31.1,
+  "lat": 29.9
+ },
+ {
+  "layer": "wonders",
+  "name": "巴比伦空中花园",
+  "lon": 44.4,
+  "lat": 32.5
+ },
+ {
+  "layer": "wonders",
+  "name": "阿尔忒弥斯神庙",
+  "lon": 27.4,
+  "lat": 37.9
+ },
+ {
+  "layer": "wonders",
+  "name": "宙斯巨像",
+  "lon": 21.6,
+  "lat": 37.6
+ },
+ {
+  "layer": "wonders",
+  "name": "摩索拉斯陵墓",
+  "lon": 27.4,
+  "lat": 37
+ },
+ {
+  "layer": "wonders",
+  "name": "罗德岛太阳神巨像",
+  "lon": 28.2,
+  "lat": 36.4
+ },
+ {
+  "layer": "wonders",
+  "name": "亚历山大灯塔",
+  "lon": 29.9,
+  "lat": 31.2
+ },
+ {
+  "layer": "wonders",
+  "name": "万里长城",
+  "lon": 116,
+  "lat": 40.4
+ },
+ {
+  "layer": "wonders",
+  "name": "佩特拉古城",
+  "lon": 35.4,
+  "lat": 30.3
+ },
+ {
+  "layer": "wonders",
+  "name": "里约基督像",
+  "lon": -43.2,
+  "lat": -22.9
+ },
+ {
+  "layer": "heritage",
+  "name": "马丘比丘",
+  "lon": -72.5,
+  "lat": -13.2
+ },
+ {
+  "layer": "wonders",
+  "name": "奇琴伊察",
+  "lon": -98,
+  "lat": 20.7
+ },
+ {
+  "layer": "heritage",
+  "name": "罗马斗兽场",
+  "lon": 12.5,
+  "lat": 41.9
+ },
+ {
+  "layer": "heritage",
+  "name": "泰姬陵",
+  "lon": 78,
+  "lat": 27.2
+ },
+ {
+  "layer": "heritage",
+  "name": "长城（八达岭）",
+  "lon": 116,
+  "lat": 40.4
+ },
+ {
+  "layer": "heritage",
+  "name": "故宫",
+  "lon": 116.4,
+  "lat": 39.9
+ },
+ {
+  "layer": "heritage",
+  "name": "秦始皇陵兵马俑",
+  "lon": 109.3,
+  "lat": 34.4
+ },
+ {
+  "layer": "heritage",
+  "name": "莫高窟",
+  "lon": 94.8,
+  "lat": 40
+ },
+ {
+  "layer": "heritage",
+  "name": "布达拉宫",
+  "lon": 91.1,
+  "lat": 29.65
+ },
+ {
+  "layer": "heritage",
+  "name": "丽江古城",
+  "lon": 100.2,
+  "lat": 26.9
+ },
+ {
+  "layer": "heritage",
+  "name": "苏州园林",
+  "lon": 120.6,
+  "lat": 31.3
+ },
+ {
+  "layer": "heritage",
+  "name": "杭州西湖",
+  "lon": 120.1,
+  "lat": 30.2
+ },
+ {
+  "layer": "heritage",
+  "name": "黄山",
+  "lon": 118.2,
+  "lat": 30.3
+ },
+ {
+  "layer": "heritage",
+  "name": "九寨沟",
+  "lon": 103.9,
+  "lat": 33.2
+ },
+ {
+  "layer": "heritage",
+  "name": "泰山",
+  "lon": 117.1,
+  "lat": 36.3
+ },
+ {
+  "layer": "heritage",
+  "name": "金字塔（吉萨）",
+  "lon": 31.1,
+  "lat": 29.9
+ },
+ {
+  "layer": "heritage",
+  "name": "卢克索",
+  "lon": 32.6,
+  "lat": 25.7
+ },
+ {
+  "layer": "heritage",
+  "name": "佩特拉",
+  "lon": 35.4,
+  "lat": 30.3
+ },
+ {
+  "layer": "heritage",
+  "name": "雅典卫城",
+  "lon": 23.7,
+  "lat": 38
+ },
+ {
+  "layer": "heritage",
+  "name": "吴哥窟",
+  "lon": 103.9,
+  "lat": 13.4
+ },
+ {
+  "layer": "heritage",
+  "name": "京都古都",
+  "lon": 135.8,
+  "lat": 35
+ },
+ {
+  "layer": "heritage",
+  "name": "自由女神像",
+  "lon": -74,
+  "lat": 40.7
+ },
+ {
+  "layer": "heritage",
+  "name": "威尼斯",
+  "lon": 12.3,
+  "lat": 45.4
+ },
+ {
+  "layer": "heritage",
+  "name": "巴黎塞纳河畔",
+  "lon": 2.35,
+  "lat": 48.85
+ },
+ {
+  "layer": "heritage",
+  "name": "大堡礁",
+  "lon": 147,
+  "lat": -18.3
+ },
+ {
+  "layer": "heritage",
+  "name": "巨石阵",
+  "lon": -1.8,
+  "lat": 51.2
+ },
+ {
+  "layer": "civilizations",
+  "name": "两河文明（巴比伦）",
+  "lon": 44.4,
+  "lat": 32.5
+ },
+ {
+  "layer": "civilizations",
+  "name": "尼罗文明（底比斯）",
+  "lon": 32.6,
+  "lat": 25.7
+ },
+ {
+  "layer": "civilizations",
+  "name": "印度河文明（摩亨佐达罗）",
+  "lon": 68.1,
+  "lat": 27.3
+ },
+ {
+  "layer": "civilizations",
+  "name": "黄河文明（二里头）",
+  "lon": 112.5,
+  "lat": 34.7
+ },
+ {
+  "layer": "civilizations",
+  "name": "爱琴文明（克诺索斯）",
+  "lon": 25.1,
+  "lat": 35.3
+ },
+ {
+  "layer": "civilizations",
+  "name": "玛雅文明（蒂卡尔）",
+  "lon": -89.6,
+  "lat": 17.2
+ },
+ {
+  "layer": "civilizations",
+  "name": "印加文明（库斯科）",
+  "lon": -71.1,
+  "lat": -13.5
+ },
+ {
+  "layer": "civilizations",
+  "name": "两河流域 · 标注",
+  "lon": 45.5,
+  "lat": 33
+ },
+ {
+  "layer": "civilizations",
+  "name": "尼罗河流域 · 标注",
+  "lon": 32,
+  "lat": 27.5
+ },
+ {
+  "layer": "civilizations",
+  "name": "印度河流域 · 标注",
+  "lon": 70.5,
+  "lat": 26
+ },
+ {
+  "layer": "civilizations",
+  "name": "黄河流域 · 标注",
+  "lon": 110,
+  "lat": 36
+ }
+]

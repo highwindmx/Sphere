@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PMTiles Studio · OSM 离线瓦片工作台</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --ink: #1f2933; --muted: #6b7280;
+    --line: #e3e8ef; --accent: #2f6fed; --accent2: #16a34a; --warn: #d97706;
+    --bad: #dc2626; --chip: #eef2ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; font-size: 14px; }
+  header { background: var(--panel); border-bottom: 1px solid var(--line); padding: 14px 22px;
+           display: flex; align-items: center; gap: 14px; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 650; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  .badge { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--chip); color: var(--accent); }
+  .badge.on { background: #e7f6ec; color: var(--accent2); }
+  .badge.off { background: #fdecec; color: var(--bad); }
+  main { padding: 18px 22px; max-width: 1180px; margin: 0 auto; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+          padding: 16px 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 14px; margin: 0 0 12px; font-weight: 650; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+  input[type=text], input[type=number], textarea {
+    border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; font-size: 13px;
+    background: #fff; color: var(--ink); width: 100%;
+  }
+  input:focus, textarea:focus { outline: 2px solid #cdddff; border-color: var(--accent); }
+  .grow { flex: 1 1 320px; }
+  button { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 7px;
+           padding: 7px 12px; font-size: 13px; cursor: pointer; }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { background: #2559c9; color: #fff; }
+  button.danger { background: #fff; color: var(--bad); border-color: #f1c4c4; }
+  button.danger:hover { background: #fdecec; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { border: 1px solid var(--line); padding: 5px 6px; text-align: center; }
+  th { background: #f8fafc; color: var(--muted); font-weight: 600; }
+  td input { border: none; background: transparent; padding: 4px 3px; text-align: center; }
+  td input:focus { outline: 1px solid var(--accent); border-radius: 4px; background: #fff; }
+  .tbl-wrap { overflow-x: auto; }
+  .fname { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--muted); }
+  .link-del { color: var(--bad); cursor: pointer; border: none; background: none; padding: 2px 6px; }
+  .drop { border: 1.5px dashed var(--line); border-radius: 8px; padding: 10px; text-align: center;
+          color: var(--muted); font-size: 12px; }
+  .drop.over { border-color: var(--accent); color: var(--accent); background: #f4f8ff; }
+  .hidden { display: none; }
+  .progress-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+  .bar { height: 10px; background: #eef1f5; border-radius: 999px; overflow: hidden; flex: 1 1 240px; }
+  .bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#2f6fed,#16a34a); transition: width .3s; }
+  .stat { font-size: 12px; color: var(--muted); }
+  .stat b { color: var(--ink); }
+  .log { background: #0f172a; color: #d6e2f0; font-family: ui-monospace, Consolas, monospace; font-size: 12px;
+         border-radius: 8px; padding: 10px; height: 280px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+  .log .ok { color: #6ee7a8; } .log .bad { color: #ff9a9a; } .log .warn { color: #ffd479; }
+  .res-tbl td.ok { color: var(--accent2); } .res-tbl td.empty { color: var(--warn); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .toast { position: fixed; right: 18px; bottom: 18px; background: #1f2933; color: #fff; padding: 10px 14px;
+           border-radius: 8px; font-size: 13px; opacity: 0; transform: translateY(8px); transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PMTiles Studio</h1>
+  <span class="sub">OSM 离线瓦片可视化提取工作台</span>
+  <span id="osmiumBadge" class="badge">osmium: 检测中…</span>
+</header>
+
+<main>
+  <!-- 源 PBF -->
+  <div class="card">
+    <h2>① 源 PBF 路径</h2>
+    <div class="row">
+      <div class="grow">
+        <label>本地 .osm.pbf 完整路径</label>
+        <input id="pbf" type="text" placeholder="例如 D:/Share/Scripts/Explore/sphere/public/OSM/china-latest.osm.pbf" />
+      </div>
+      <button id="checkPbf">检查文件</button>
+    </div>
+    <div class="hint" id="pbfHint">提示：此工具只读取你指定的 pbf，按城市四至裁出街道级矢量瓦片。</div>
+  </div>
+
+  <!-- 城市表 -->
+  <div class="card">
+    <h2>② 城市 / 区域定义</h2>
+    <div class="row" style="margin-bottom:10px">
+      <button id="addRow">+ 添加一行</button>
+      <button id="fillDemo">填充示例</button>
+      <button id="importJson">导入 JSON</button>
+      <button id="exportJson">导出 JSON</button>
+      <label class="drop" id="dropZone" style="flex:1 1 200px; margin:0">把 .json 拖到这里 / 点击选择</label>
+      <input id="fileInput" type="file" accept=".json,application/json" class="hidden" />
+    </div>
+    <div class="tbl-wrap">
+      <table id="cityTbl">
+        <thead>
+          <tr>
+            <th>名称</th><th>大洲</th><th>国家</th>
+            <th>最小经度</th><th>最小纬度</th><th>最大经度</th><th>最大纬度</th>
+            <th>最小层级</th><th>最大层级</th><th>文件名预览</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="cityBody"></tbody>
+      </table>
+    </div>
+    <div class="hint">文件名规则：填了大洲+国家 → <code>大洲_国家_名称.pmtiles</code>；否则 → <code>名称.pmtiles</code>。（空格/括号/点/连字符统一转下划线）</div>
+  </div>
+
+  <!-- 输出 + 运行 -->
+  <div class="card">
+    <h2>③ 输出与运行</h2>
+    <div class="row">
+      <div class="grow">
+        <label>输出目录（瓦片写入此目录）</label>
+        <input id="outdir" type="text" />
+      </div>
+      <div style="width:120px">
+        <label>并发 chunk</label>
+        <input id="chunk" type="number" value="16" min="1" max="64" />
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="runBtn" class="primary">▶ 开始提取</button>
+      <button id="stopBtn" class="danger" disabled>■ 停止</button>
+      <button id="clearLog">清空日志</button>
+      <span class="stat" id="runStat"></span>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:0">
+        <input id="autoMerge" type="checkbox" style="width:auto" /> 完成后自动并入前端 manifest
+      </label>
+      <button id="mergeBtn">🔀 并入前端 manifest</button>
+      <span class="stat" id="mergeStat"></span>
+    </div>
+    <div class="hint">说明：抽取完成后后台已<b>直接</b>把成功条目写进 <code>public/data/osm/pmtiles/manifest.json</code>，并把新文件登记进 y-flip 进度（后台翻转不会把它们翻回镜像）。上面的「并入」是<b>可选</b>的全表重建（merge-manifests.py），用于清理孤儿条目。</div>
+  </div>
+
+  <!-- y 镜像翻转修复 -->
+  <div class="card">
+    <h2>④ y 镜像翻转修复</h2>
+    <div class="row">
+      <button id="yflipDry">🔍 预览待修复</button>
+      <div style="width:130px">
+        <label>并行进程</label>
+        <input id="yflipWorkers" type="number" value="1" min="1" max="8" />
+      </div>
+      <button id="yflipRun" class="danger">🔧 执行修复</button>
+      <span class="stat" id="yflipStat"></span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="grow">
+        <label>登记为「已正确」（单个文件名，新生成的文件会自动登记，一般不用手填）</label>
+        <input id="yflipSeed" type="text" placeholder="例如 亚洲_中国_上海.pmtiles" />
+      </div>
+      <button id="yflipSeedBtn">登记</button>
+    </div>
+    <div class="hint">历史产物在写入端漏传 <code>y_coord_down</code>（库默认 False = 会翻转），导致每块瓦片上下镜像。修复是「翻转一次」：已修好的文件<b>绝不能</b>再跑（靠进度日志的 文件名/sha256 双判据跳过）。先「预览」确认待处理清单，再执行。</div>
+  </div>
+
+  <!-- 进度 -->
+  <div class="card">
+    <h2>⑤ 进度</h2>
+    <div class="progress-head">
+      <div class="bar"><i id="bar"></i></div>
+      <span class="stat">已完成 <b id="doneN">0</b> / <b id="totalN">0</b></span>
+      <span class="stat">成功 <b id="okN" style="color:var(--accent2)">0</b></span>
+      <span class="stat">空城 <b id="emptyN" style="color:var(--warn)">0</b></span>
+      <span class="stat" id="osmiumLine"></span>
+    </div>
+    <div class="log" id="log"></div>
+    <div id="resWrap" class="hidden" style="margin-top:12px">
+      <h2 style="font-size:13px">结果</h2>
+      <div class="tbl-wrap">
+        <table class="res-tbl" id="resTbl">
+          <thead><tr><th>名称</th><th>状态</th><th>瓦片数</th><th>大小(MB)</th><th>文件</th><th>备注</th></tr></thead>
+          <tbody id="resBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const slug = (s) => (s || '').replace(/[^\w一-龥 -()（）·、]/g, '').trim()
+  .replace(/[ -()（）·、]/g, '_');
+
+function previewFname(r) {
+  const c = r.continent || '', n = r.country || '', nm = r.name || '';
+  const core = (c && n) ? `${c}-${n}-${nm}` : nm;
+  return slug(core) + '.pmtiles';
+}
+
+function newRow(d = {}) {
+  const tr = document.createElement('tr');
+  const vals = Object.assign({ name:'', continent:'', country:'',
+    minlon:'', minlat:'', maxlon:'', maxlat:'', minz:11, maxz:15 }, d);
+  tr.innerHTML = `
+    <td><input data-k="name" value="${vals.name}"></td>
+    <td><input data-k="continent" value="${vals.continent}" style="width:64px"></td>
+    <td><input data-k="country" value="${vals.country}" style="width:64px"></td>
+    <td><input data-k="minlon" type="number" step="0.0001" value="${vals.minlon}" style="width:84px"></td>
+    <td><input data-k="minlat" type="number" step="0.0001" value="${vals.minlat}" style="width:84px"></td>
+    <td><input data-k="maxlon" type="number" step="0.0001" value="${vals.maxlon}" style="width:84px"></td>
+    <td><input data-k="maxlat" type="number" step="0.0001" value="${vals.maxlat}" style="width:84px"></td>
+    <td><input data-k="minz" type="number" value="${vals.minz}" style="width:56px"></td>
+    <td><input data-k="maxz" type="number" value="${vals.maxz}" style="width:56px"></td>
+    <td class="fname"></td>
+    <td><button class="link-del">✕</button></td>`;
+  tr.querySelector('.link-del').onclick = () => tr.remove();
+  tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', refreshFnames));
+  return tr;
+}
+
+function refreshFnames() {
+  document.querySelectorAll('#cityBody tr').forEach(tr => {
+    const r = readRow(tr);
+    tr.querySelector('.fname').textContent = previewFname(r);
+  });
+}
+
+function readRow(tr) {
+  const r = {};
+  tr.querySelectorAll('input').forEach(inp => { r[inp.dataset.k] = inp.value.trim(); });
+  return r;
+}
+
+function collectCities() {
+  const cities = [];
+  document.querySelectorAll('#cityBody tr').forEach(tr => {
+    const r = readRow(tr);
+    if (!r.name) return;
+    cities.push({
+      name: r.name, continent: r.continent, country: r.country,
+      bbox: [r.minlon, r.minlat, r.maxlon, r.maxlat],
+      minz: parseInt(r.minz || '11', 10), maxz: parseInt(r.maxz || '15', 10),
+    });
+  });
+  return cities;
+}
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ---- osmium 状态 ----
+fetch('/api/info').then(r => r.json()).then(d => {
+  const b = $('#osmiumBadge');
+  if (d.osmium) { b.textContent = 'osmium: 已启用(快速裁剪)'; b.className = 'badge on'; }
+  else { b.textContent = 'osmium: 未找到(将全量扫描,较慢)'; b.className = 'badge off'; }
+  $('#outdir').value = d.default_out || '';
+}).catch(() => { $('#outdir').value = ''; });
+
+// ---- 检查 pbf ----
+$('#checkPbf').onclick = () => {
+  const pbf = $('#pbf').value.trim();
+  if (!pbf) { toast('请先填写 pbf 路径'); return; }
+  fetch('/api/check', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ pbf }) }).then(r=>r.json()).then(d => {
+    const h = $('#pbfHint');
+    if (d.exists) h.innerHTML = `✅ 文件存在，大小 <b>${d.size_mb} MB</b>`;
+    else h.innerHTML = `❌ ${d.error || '文件不存在'}`;
+  });
+};
+
+// ---- 行操作 ----
+$('#addRow').onclick = () => { $('#cityBody').appendChild(newRow()); refreshFnames(); };
+$('#fillDemo').onclick = () => {
+  $('#cityBody').innerHTML = '';
+  [['北京','亚洲','中国',115.9,39.4,116.9,40.4],
+   ['上海','亚洲','中国',121.0,30.7,121.9,31.5],
+   ['东京','亚洲','日本',139.5,35.5,139.9,35.8]].forEach(d => {
+    $('#cityBody').appendChild(newRow({name:d[0],continent:d[1],country:d[2],
+      minlon:d[3],minlat:d[4],maxlon:d[5],maxlat:d[6]}));
+  });
+  refreshFnames();
+};
+
+// ---- JSON 导入/导出 ----
+function parseImport(text) {
+  let obj;
+  try { obj = JSON.parse(text); } catch(e) { toast('JSON 解析失败'); return; }
+  let list = Array.isArray(obj) ? obj : (obj.coverable || obj.cities || []);
+  if (!Array.isArray(list)) { toast('未找到城市数组'); return; }
+  $('#cityBody').innerHTML = '';
+  list.forEach(c => {
+    const bbox = c.bbox || c.bbox_wgs84 || [];
+    $('#cityBody').appendChild(newRow({
+      name: c.name || c.city || '', continent: c.continent || '', country: c.country || '',
+      minlon: bbox[0], minlat: bbox[1], maxlon: bbox[2], maxlat: bbox[3],
+      minz: c.minz || 11, maxz: c.maxz || 15,
+    }));
+  });
+  refreshFnames();
+  toast(`已导入 ${list.length} 个城市`);
+}
+$('#importJson').onclick = () => $('#fileInput').click();
+$('#fileInput').onchange = (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader(); rd.onload = () => parseImport(rd.result); rd.readAsText(f);
+};
+$('#exportJson').onclick = () => {
+  const data = collectCities();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'pmtiles-cities.json'; a.click();
+};
+// 拖放
+const dz = $('#dropZone');
+dz.onclick = () => $('#fileInput').click();
+['dragover','dragenter'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('over'); }));
+['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove('over'); }));
+dz.ondrop = (ev) => {
+  const f = ev.dataTransfer.files[0]; if (!f) return;
+  const rd = new FileReader(); rd.onload = () => parseImport(rd.result); rd.readAsText(f);
+};
+
+// ---- 运行 ----
+let es = null;
+function logLine(line, done, total) {
+  const el = $('#log');
+  const div = document.createElement('div');
+  let cls = '';
+  if (line.startsWith('✓')) cls = 'ok';
+  else if (line.startsWith('✗') || line.startsWith('■') && line.includes('error')) cls = 'bad';
+  else if (line.includes('未找到 osmium') || line.includes('EMPTY') || line.includes('警告')) cls = 'warn';
+  if (cls) div.className = cls;
+  div.textContent = line;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  if (typeof done === 'number') { $('#doneN').textContent = done; $('#totalN').textContent = total; }
+}
+
+$('#runBtn').onclick = () => {
+  const pbf = $('#pbf').value.trim();
+  const cities = collectCities();
+  if (!pbf) { toast('请填写源 pbf 路径'); return; }
+  if (!cities.length) { toast('请至少添加一个城市'); return; }
+  // 简单校验
+  for (const c of cities) {
+    const b = c.bbox.map(Number);
+    if (b.some(v => isNaN(v))) { toast(`城市「${c.name}」四至含非法数字`); return; }
+    if (b[0] >= b[2] || b[1] >= b[3]) { toast(`城市「${c.name}」四至不合法（最小须<最大）`); return; }
+  }
+  $('#runStat').textContent = '启动中…';
+  $('#resWrap').classList.add('hidden');
+  $('#log').innerHTML = ''; $('#bar').style.width = '0';
+  $('#doneN').textContent = '0'; $('#totalN').textContent = cities.length;
+  fetch('/api/run', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ pbf, cities, outdir: $('#outdir').value.trim(), chunk: $('#chunk').value,
+      auto_merge: $('#autoMerge').checked }) })
+    .then(r => r.json()).then(d => {
+      if (d.error) { toast(d.error); $('#runStat').textContent = ''; return; }
+      startStream(d.job_id);
+    }).catch(e => toast('启动失败: ' + e));
+};
+
+// ---- 并入前端 manifest（手动按钮）----
+$('#mergeBtn').onclick = () => {
+  $('#mergeStat').textContent = '合并中…';
+  fetch('/api/merge', { method:'POST' }).then(r => r.json()).then(d => {
+    $('#mergeStat').textContent = d.ok
+      ? ('✅ ' + ((d.summary || '').split('\n')[0] || 'manifest.json 已重建'))
+      : ('❌ ' + ((d.summary || '失败').split('\n')[0]));
+    if (d.ok) toast('已并入前端 manifest（manifest.json 已重建）');
+    else toast('并入失败，见日志');
+  }).catch(e => { $('#mergeStat').textContent = '❌ 请求失败'; });
+};
+
+function startStream(jobId) {
+  $('#runBtn').disabled = true; $('#stopBtn').disabled = false;
+  if (es) es.close();
+  es = new EventSource('/api/progress/' + jobId);
+  let ok = 0, emp = 0;
+  es.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.type === 'state') {
+      $('#totalN').textContent = m.total || 0;
+      $('#doneN').textContent = m.done || 0;
+      if (m.total) $('#bar').style.width = Math.round((m.done||0)/m.total*100) + '%';
+      $('#osmiumLine').textContent = m.osmium === false ? 'osmium: 缺失' : (m.osmium ? 'osmium: 启用' : '');
+      (m.log||[]).forEach(l => logLine(l, m.done, m.total));
+    } else if (m.type === 'log') {
+      logLine(m.line, m.done, m.total);
+      if (m.total) $('#bar').style.width = Math.round((m.done||0)/m.total*100) + '%';
+    } else if (m.type === 'end') {
+      $('#doneN').textContent = m.done; $('#totalN').textContent = m.total;
+      $('#bar').style.width = '100%';
+      $('#runStat').textContent = '完成：' + m.status + (m.summary ? `（成功 ${m.summary.ok} / 空 ${m.summary.empty} / ${m.summary.mb} MB）` : '');
+      if (m.merge) {
+        $('#mergeStat').textContent = m.merge.ok
+          ? ('✅ 已自动并入：' + ((m.merge.summary || '').split('\n')[0] || 'manifest.json 已重建'))
+          : ('❌ 自动并入失败：' + ((m.merge.summary || '').split('\n')[0] || ''));
+      }
+      renderResults(m.cities || []);
+      es.close(); es = null;
+      $('#runBtn').disabled = false; $('#stopBtn').disabled = true;
+    }
+  };
+  es.onerror = () => { /* 末态关闭会触发 error，忽略 */ };
+}
+
+function renderResults(cities) {
+  if (!cities.length) return;
+  const tb = $('#resBody'); tb.innerHTML = '';
+  let ok = 0, emp = 0;
+  cities.forEach(c => {
+    if (c.status === 'done') ok++; else emp++;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.name}</td>
+      <td class="${c.status}">${c.status === 'done' ? '✓ 成功' : '✗ 空城'}</td>
+      <td>${c.tiles ?? '-'}</td><td>${c.mb ?? '-'}</td>
+      <td class="fname">${c.file || '-'}</td>
+      <td>${(c.resumed ? '续跑命中 · ' : '') + (c.reason || '')}</td>`;
+    tb.appendChild(tr);
+  });
+  $('#okN').textContent = ok; $('#emptyN').textContent = emp;
+  $('#resWrap').classList.remove('hidden');
+}
+
+$('#stopBtn').onclick = () => {
+  if (!es) return;
+  fetch('/api/stop/' + (es.url || '').split('/').pop(), { method:'POST' }).then(() => toast('已发送停止指令'));
+};
+
+$('#clearLog').onclick = () => { $('#log').innerHTML = ''; };
+
+// ---- y 镜像翻转修复 ----
+function yflipPost(body, okMsg) {
+  $('#yflipStat').textContent = '执行中…';
+  fetch('/api/yflip', { method:'POST', headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify(body) })
+    .then(r => r.json()).then(d => {
+      if (d.error) { toast(d.error); $('#yflipStat').textContent = '失败'; return; }
+      (d.lines || []).forEach(l => logLine(l));
+      const st = d.stats || {};
+      $('#yflipStat').textContent = d.ok
+        ? `✅ ${okMsg}｜已修 ${st.done}/${st.total_files}（剩余 ${st.pending}）`
+        : `❌ 结束码 ${d.rc}` + (d.err ? '：' + d.err.slice(-120) : '');
+      if (st.pending === 0) toast('全部文件已修复，无需再跑');
+    })
+    .catch(e => { toast('请求失败: ' + e); $('#yflipStat').textContent = '失败'; });
+}
+$('#yflipDry').onclick = () => yflipPost({ mode:'dry-run' }, '预览完成');
+$('#yflipRun').onclick = () => {
+  const w = parseInt($('#yflipWorkers').value || '1', 10);
+  if (!confirm(`将对输出目录下所有未修复的 .pmtiles 执行「翻转一次」修复（${w} 进程）。\n已修好的文件不会被重复处理。继续？`)) return;
+  yflipPost({ mode:'run', workers:w }, '修复完成');
+};
+$('#yflipSeedBtn').onclick = () => {
+  const n = $('#yflipSeed').value.trim();
+  if (!n) { toast('请填文件名'); return; }
+  yflipPost({ mode:'seed', name:n }, '已登记');
+};
+
+// 初始示例
+$('#fillDemo').onclick();
+</script>
+</body>
+</html>

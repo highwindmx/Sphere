@@ -1,0 +1,368 @@
+{
+ "利马": {
+  "ok": true,
+  "file": "pmtiles/南美洲_秘鲁_利马.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -77.54,
+   -12.55,
+   -76.54,
+   -11.55
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 16515338,
+  "pbf": "south-america"
+ },
+ "圣地亚哥": {
+  "ok": true,
+  "file": "pmtiles/南美洲_智利_圣地亚哥.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -71.15,
+   -33.95,
+   -70.15,
+   -32.95
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 24771490,
+  "pbf": "south-america"
+ },
+ "波哥大": {
+  "ok": true,
+  "file": "pmtiles/南美洲_哥伦比亚_波哥大.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -74.57,
+   4.21,
+   -73.57,
+   5.21
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 21115224,
+  "pbf": "south-america"
+ },
+ "瓜亚基尔": {
+  "ok": true,
+  "file": "pmtiles/南美洲_厄瓜多尔_瓜亚基尔.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -80.39,
+   -2.69,
+   -79.39,
+   -1.69
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 8690525,
+  "pbf": "south-america"
+ },
+ "麦德林": {
+  "ok": true,
+  "file": "pmtiles/南美洲_哥伦比亚_麦德林.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -76.06,
+   5.74,
+   -75.06,
+   6.74
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "bytes": 18324863,
+  "pbf": "south-america"
+ },
+ "加拉加斯": {
+  "ok": true,
+  "file": "pmtiles/南美洲_委内瑞拉_加拉加斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -67.14,
+   10.24,
+   -66.66000000000001,
+   10.72
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 6637019,
+  "pbf": "south-america"
+ },
+ "基多": {
+  "ok": true,
+  "file": "pmtiles/南美洲_厄瓜多尔_基多.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -78.71,
+   -0.42,
+   -78.23,
+   0.06
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 10264450,
+  "pbf": "south-america"
+ },
+ "库斯科": {
+  "ok": true,
+  "file": "pmtiles/南美洲_秘鲁_库斯科.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -72.22,
+   -13.77,
+   -71.74000000000001,
+   -13.29
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 6694637,
+  "pbf": "south-america"
+ },
+ "拉巴斯": {
+  "ok": true,
+  "file": "pmtiles/南美洲_玻利维亚_拉巴斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -68.39,
+   -16.74,
+   -67.91000000000001,
+   -16.26
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 5957274,
+  "pbf": "south-america"
+ },
+ "马丘比丘": {
+  "ok": true,
+  "file": "pmtiles/南美洲_秘鲁_马丘比丘.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -72.62,
+   -13.319999999999999,
+   -72.38,
+   -13.08
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 448183,
+  "pbf": "south-america"
+ },
+ "印加文明（库斯科）": {
+  "ok": true,
+  "file": "pmtiles/南美洲_秘鲁_印加文明_库斯科.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -71.22,
+   -13.62,
+   -70.97999999999999,
+   -13.38
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 304642,
+  "pbf": "south-america"
+ },
+ "合恩角": {
+  "ok": true,
+  "file": "pmtiles/南美洲_智利_合恩角.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -67.42,
+   -56.019999999999996,
+   -67.17999999999999,
+   -55.78
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 174156,
+  "pbf": "south-america"
+ },
+ "麦哲伦海峡": {
+  "ok": true,
+  "file": "pmtiles/南美洲_智利_麦哲伦海峡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -68.62,
+   -53.62,
+   -68.38,
+   -53.38
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 81472,
+  "pbf": "south-america"
+ },
+ "布宜诺斯艾利斯": {
+  "ok": true,
+  "file": "pmtiles/南美洲_乌拉圭_布宜诺斯艾利斯.pmtiles",
+  "tiles": 10052,
+  "bytes": 23134072,
+  "bbox": [
+   -58.88,
+   -35.1,
+   -57.88,
+   -34.1
+  ],
+  "center": [
+   -58.38,
+   -34.6
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "south-america"
+ },
+ "亚松森": {
+  "ok": true,
+  "file": "pmtiles/南美洲_巴拉圭_亚松森.pmtiles",
+  "tiles": 2770,
+  "bytes": 20303109,
+  "bbox": [
+   -57.82,
+   -25.5,
+   -57.339999999999996,
+   -25.020000000000003
+  ],
+  "center": [
+   -57.58,
+   -25.26
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-america"
+ },
+ "蒙得维的亚": {
+  "ok": true,
+  "file": "pmtiles/南美洲_乌拉圭_蒙得维的亚.pmtiles",
+  "tiles": 1775,
+  "bytes": 3273814,
+  "bbox": [
+   -56.4,
+   -35.14,
+   -55.919999999999995,
+   -34.66
+  ],
+  "center": [
+   -56.16,
+   -34.9
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-america"
+ },
+ "库里提巴": {
+  "ok": true,
+  "file": "pmtiles/南美洲_巴西_库里提巴.pmtiles",
+  "tiles": 10415,
+  "bytes": 14472817,
+  "bbox": [
+   -49.77,
+   -25.93,
+   -48.77,
+   -24.93
+  ],
+  "center": [
+   -49.27,
+   -25.43
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "south-america"
+ },
+ "圣保罗": {
+  "ok": true,
+  "file": "pmtiles/南美洲_巴西_圣保罗.pmtiles",
+  "tiles": 3173,
+  "bytes": 83796027,
+  "bbox": [
+   -46.870000000000005,
+   -23.79,
+   -46.39,
+   -23.310000000000002
+  ],
+  "center": [
+   -46.63,
+   -23.55
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-america"
+ },
+ "巴西利亚": {
+  "ok": true,
+  "file": "pmtiles/南美洲_巴西_巴西利亚.pmtiles",
+  "tiles": 11000,
+  "bytes": 40371521,
+  "bbox": [
+   -48.43,
+   -16.28,
+   -47.43,
+   -15.28
+  ],
+  "center": [
+   -47.93,
+   -15.780000000000001
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "south-america"
+ },
+ "里约热内卢": {
+  "ok": true,
+  "file": "pmtiles/南美洲_巴西_里约热内卢.pmtiles",
+  "tiles": 1889,
+  "bytes": 12349328,
+  "bbox": [
+   -43.410000000000004,
+   -23.15,
+   -42.93,
+   -22.67
+  ],
+  "center": [
+   -43.17,
+   -22.91
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-america"
+ },
+ "福塔莱萨": {
+  "ok": true,
+  "file": "pmtiles/南美洲_巴西_福塔莱萨.pmtiles",
+  "tiles": 5121,
+  "bytes": 29154427,
+  "bbox": [
+   -39.04,
+   -4.23,
+   -38.04,
+   -3.23
+  ],
+  "center": [
+   -38.54,
+   -3.7300000000000004
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "south-america"
+ },
+ "萨尔瓦多": {
+  "ok": true,
+  "file": "pmtiles/南美洲_巴西_萨尔瓦多.pmtiles",
+  "tiles": 4943,
+  "bytes": 9447007,
+  "bbox": [
+   -39.01,
+   -13.47,
+   -38.01,
+   -12.47
+  ],
+  "center": [
+   -38.51,
+   -12.97
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "south-america"
+ }
+}

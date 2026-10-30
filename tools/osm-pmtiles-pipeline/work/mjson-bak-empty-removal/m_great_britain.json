@@ -1,0 +1,191 @@
+{
+ "巨石阵": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_巨石阵.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -1.92,
+   51.080000000000005,
+   -1.6800000000000002,
+   51.32
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 1924025,
+  "pbf": "great-britain"
+ },
+ "普利茅斯": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_普利茅斯.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -4.22,
+   50.28,
+   -3.9799999999999995,
+   50.519999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 4167500,
+  "pbf": "great-britain"
+ },
+ "埃伯拉库姆（约克）": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_埃伯拉库姆_约克.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -1.2200000000000002,
+   53.78,
+   -0.9800000000000001,
+   54.019999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 4454393,
+  "pbf": "great-britain"
+ },
+ "多佛尔海峡": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_多佛尔海峡.pmtiles",
+  "resumed": true,
+  "bbox": [
+   -0.01999999999999999,
+   51.38,
+   0.22,
+   51.62
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 16314635,
+  "pbf": "great-britain"
+ },
+ "热马皮港（布洛涅）": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_热马皮港_布洛涅.pmtiles",
+  "resumed": true,
+  "bbox": [
+   1.48,
+   50.78,
+   1.7200000000000002,
+   51.019999999999996
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "bytes": 8907,
+  "pbf": "great-britain"
+ },
+ "格拉斯哥": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_格拉斯哥.pmtiles",
+  "tiles": 4925,
+  "bytes": 19406971,
+  "bbox": [
+   -4.49,
+   55.62,
+   -4.01,
+   56.1
+  ],
+  "center": [
+   -4.25,
+   55.86
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "great-britain"
+ },
+ "爱丁堡": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_爱丁堡.pmtiles",
+  "tiles": 4318,
+  "bytes": 17219749,
+  "bbox": [
+   -3.4299999999999997,
+   55.71,
+   -2.95,
+   56.190000000000005
+  ],
+  "center": [
+   -3.19,
+   55.95
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "great-britain"
+ },
+ "利物浦": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_利物浦.pmtiles",
+  "tiles": 3914,
+  "bytes": 22627718,
+  "bbox": [
+   -3.2300000000000004,
+   53.169999999999995,
+   -2.75,
+   53.65
+  ],
+  "center": [
+   -2.99,
+   53.41
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "great-britain"
+ },
+ "曼彻斯特": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_曼彻斯特.pmtiles",
+  "tiles": 4639,
+  "bytes": 30884817,
+  "bbox": [
+   -2.4800000000000004,
+   53.239999999999995,
+   -2.0,
+   53.72
+  ],
+  "center": [
+   -2.24,
+   53.48
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "great-britain"
+ },
+ "伯明翰": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_伯明翰.pmtiles",
+  "tiles": 4515,
+  "bytes": 31774810,
+  "bbox": [
+   -2.13,
+   52.239999999999995,
+   -1.65,
+   52.72
+  ],
+  "center": [
+   -1.89,
+   52.48
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "great-britain"
+ },
+ "伦敦": {
+  "ok": true,
+  "file": "pmtiles/欧洲_英国_伦敦.pmtiles",
+  "tiles": 17856,
+  "bytes": 128688309,
+  "bbox": [
+   -0.63,
+   51.01,
+   0.37,
+   52.01
+  ],
+  "center": [
+   -0.13,
+   51.51
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "great-britain"
+ }
+}

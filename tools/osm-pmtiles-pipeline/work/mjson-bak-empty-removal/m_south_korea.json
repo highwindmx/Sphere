@@ -1,0 +1,173 @@
+{
+ "济州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_济州.pmtiles",
+  "tiles": 1719,
+  "bytes": 2895481,
+  "bbox": [
+   126.29,
+   33.26,
+   126.77,
+   33.74
+  ],
+  "center": [
+   126.53,
+   33.5
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-korea"
+ },
+ "开城": {
+  "ok": true,
+  "file": "pmtiles/亚洲_朝鲜_开城.pmtiles",
+  "tiles": 1455,
+  "bytes": 1576008,
+  "bbox": [
+   126.31,
+   37.73,
+   126.78999999999999,
+   38.21
+  ],
+  "center": [
+   126.55,
+   37.97
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-korea"
+ },
+ "仁川": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_仁川.pmtiles",
+  "tiles": 3428,
+  "bytes": 18904054,
+  "bbox": [
+   126.47,
+   37.22,
+   126.94999999999999,
+   37.7
+  ],
+  "center": [
+   126.71,
+   37.46
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-korea"
+ },
+ "光州": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_光州.pmtiles",
+  "tiles": 3542,
+  "bytes": 8949137,
+  "bbox": [
+   126.61,
+   34.919999999999995,
+   127.08999999999999,
+   35.4
+  ],
+  "center": [
+   126.85,
+   35.16
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-korea"
+ },
+ "首尔": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_首尔.pmtiles",
+  "tiles": 12926,
+  "bytes": 50163552,
+  "bbox": [
+   126.48,
+   37.07,
+   127.48,
+   38.07
+  ],
+  "center": [
+   126.98,
+   37.57
+  ],
+  "minz": 10,
+  "maxz": 15,
+  "pbf": "south-korea"
+ },
+ "大田": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_大田.pmtiles",
+  "tiles": 3697,
+  "bytes": 7726301,
+  "bbox": [
+   127.14,
+   36.11,
+   127.61999999999999,
+   36.59
+  ],
+  "center": [
+   127.38,
+   36.35
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-korea"
+ },
+ "大邱": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_大邱.pmtiles",
+  "tiles": 3472,
+  "bytes": 6700833,
+  "bbox": [
+   128.35999999999999,
+   35.629999999999995,
+   128.84,
+   36.11
+  ],
+  "center": [
+   128.6,
+   35.87
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-korea"
+ },
+ "釜山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_釜山.pmtiles",
+  "tiles": 2211,
+  "bytes": 6753942,
+  "bbox": [
+   128.84,
+   34.94,
+   129.32000000000002,
+   35.42
+  ],
+  "center": [
+   129.08,
+   35.18
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-korea"
+ },
+ "蔚山": {
+  "ok": true,
+  "file": "pmtiles/亚洲_韩国_蔚山.pmtiles",
+  "tiles": 2500,
+  "bytes": 4804092,
+  "bbox": [
+   129.07,
+   35.3,
+   129.55,
+   35.78
+  ],
+  "center": [
+   129.31,
+   35.54
+  ],
+  "minz": 11,
+  "maxz": 15,
+  "pbf": "south-korea"
+ }
+}

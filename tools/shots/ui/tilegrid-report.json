@@ -1,0 +1,248 @@
+{
+ "enter": {
+  "map": true,
+  "mode": "offline",
+  "zoom": 15,
+  "pitch": 35,
+  "bearing": 0,
+  "minZoom": 15,
+  "maxZoom": 19,
+  "center": [
+   121.555,
+   31.196
+  ],
+  "srcMinZoom": 15,
+  "srcMaxZoom": 15,
+  "cacheName": "pmt",
+  "srcTiles": [
+   "pmt://%E4%BA%9A%E6%B4%B2_%E4%B8%AD%E5%9B%BD_%E4%B8%8A%E6%B5%B7.pmtiles/{z}/{x}/{y}"
+  ],
+  "byZ": {
+   "15": 15
+  },
+  "ext": {
+   "15": {
+    "n": 15,
+    "x": [
+     27445,
+     27450
+    ],
+    "y": [
+     13391,
+     13393
+    ]
+   }
+  },
+  "nTiles": 15,
+  "sample": [
+   {
+    "z": 15,
+    "x": 27448,
+    "y": 13392,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27447,
+    "y": 13392,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27448,
+    "y": 13393,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27447,
+    "y": 13393,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27448,
+    "y": 13391,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27449,
+    "y": 13392,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27447,
+    "y": 13391,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27449,
+    "y": 13393,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27446,
+    "y": 13392,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27449,
+    "y": 13391,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27446,
+    "y": 13393,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27446,
+    "y": 13391,
+    "state": "loaded",
+    "raw": "loaded"
+   }
+  ],
+  "rendered": 3382
+ },
+ "offline": {
+  "map": true,
+  "mode": "offline",
+  "zoom": 15,
+  "pitch": 35,
+  "bearing": 0,
+  "minZoom": 15,
+  "maxZoom": 19,
+  "center": [
+   121.555,
+   31.196
+  ],
+  "srcMinZoom": 15,
+  "srcMaxZoom": 15,
+  "cacheName": "pmt",
+  "srcTiles": [
+   "pmt://%E4%BA%9A%E6%B4%B2_%E4%B8%AD%E5%9B%BD_%E4%B8%8A%E6%B5%B7.pmtiles/{z}/{x}/{y}"
+  ],
+  "byZ": {
+   "15": 15
+  },
+  "ext": {
+   "15": {
+    "n": 15,
+    "x": [
+     27445,
+     27450
+    ],
+    "y": [
+     13391,
+     13393
+    ]
+   }
+  },
+  "nTiles": 15,
+  "sample": [
+   {
+    "z": 15,
+    "x": 27448,
+    "y": 13392,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27447,
+    "y": 13392,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27448,
+    "y": 13393,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27447,
+    "y": 13393,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27448,
+    "y": 13391,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27449,
+    "y": 13392,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27447,
+    "y": 13391,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27449,
+    "y": 13393,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27446,
+    "y": 13392,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27449,
+    "y": 13391,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27446,
+    "y": 13393,
+    "state": "loaded",
+    "raw": "loaded"
+   },
+   {
+    "z": 15,
+    "x": 27446,
+    "y": 13391,
+    "state": "loaded",
+    "raw": "loaded"
+   }
+  ],
+  "rendered": 3382
+ }
+}

@@ -29,7 +29,8 @@ export const LAYER = {
           "name": "故宫",
           "lon": 116.4,
           "lat": 39.9,
-          "description": "北京故宫，明清皇宫，1987 年列入，世界最大宫殿群。"
+          "description": "北京故宫，明清皇宫，1987 年列入，世界最大宫殿群。",
+          "url": "https://www.dpm.org.cn"
         },
         {
           "type": "point",
@@ -120,7 +121,8 @@ export const LAYER = {
           "name": "雅典卫城",
           "lon": 23.7,
           "lat": 38,
-          "description": "雅典卫城，1987 年列入，西方文明与民主发祥地。"
+          "description": "雅典卫城，1987 年列入，西方文明与民主发祥地。",
+          "url": "https://www.theacropolismuseum.gr/en"
         },
         {
           "type": "point",

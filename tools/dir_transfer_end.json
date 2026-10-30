@@ -1,0 +1,28 @@
+{
+  "craft": [
+    374,
+    512
+  ],
+  "ghost": {
+    "shown": false
+  },
+  "capOrb": {
+    "shown": false
+  },
+  "trail": {
+    "shown": true,
+    "n": 1566,
+    "head": [
+      374,
+      512
+    ],
+    "tail": [
+      4068,
+      591
+    ],
+    "mid": [
+      3566,
+      790
+    ]
+  }
+}
