@@ -1,7 +1,9 @@
 {
   "errors": [],
-  "consoleErrors": [],
-  "waitedMs": 2750,
+  "consoleErrors": [
+    "[shown] 打开失败 place:北京 TypeError: Cesium.Transforms.headingPitchRangeToCartesian is not a function\n    at flyToCoords (http://127.0.0.1:5008/src/main.js?v=1793325876:1719:34)\n    at Object.setOn (http://127.0.0.1:5008/src/main.js?v=1793325876:1834:18)\n    at turnOn (http://127.0.0.1:5008/src/shown-la"
+  ],
+  "waitedMs": 4000,
   "steps": {
     "layout": {
       "vw": 1250,
@@ -109,7 +111,7 @@
       ],
       "title": "天宫空间站轨道",
       "panelHidden": false,
-      "tourProg": "8% · 星下点 18.0°N 116.5°E"
+      "tourProg": "0%"
     },
     "removeRow": {
       "before": 3,

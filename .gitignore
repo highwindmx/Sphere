@@ -16,6 +16,9 @@ Thumbs.db
 public/cesium/
 public/vendor/
 
+# ============== OSM 矢量瓦片本地代理缓存（运行时经 /osm-vt 落盘，零缓存可优雅降级，非源码） ==============
+public/osm-vt/
+
 # ============== Python (uv) ==============
 .venv/
 __pycache__/

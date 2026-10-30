@@ -53,8 +53,6 @@ let _appliedCity = null;       // ⭐ 当前 style 对应的离线城市：换�
 let _appliedKey = null;        // ⭐ '<mode>:<cityFile>' —— 模式或城市任一变化都要重新 setStyle
 let _modeCtl = null;           // 场景内来源切换控件
 let _modeBtns = {};
-let _tiltBtn = null;
-let _diagBadge = null;         // 接缝诊断的屏上统计条（见 refreshSeamDiag）
 let _city = null;              // 离线模式命中的城市条目（manifest）
 let _manifest = null;          // 离线城市清单（懒加载一次）
 const _readers = new Map();    // file -> Promise<PMTilesReader|null>（懒加载 + 缓存）
@@ -357,8 +355,8 @@ async function autoDetect(lng, lat) {
   };
 }
 
-// 顶部横幅（非阻塞）
-function osmBanner(msg) {
+// 顶部横幅（非阻塞）；kind='ok' → 绿色（正向提示，如有本地覆盖可用）
+function osmBanner(msg, kind) {
   let b = document.getElementById('osmBanner');
   if (!b) {
     b = document.createElement('div');
@@ -370,6 +368,7 @@ function osmBanner(msg) {
   }
   b.textContent = msg;
   b.style.display = msg ? 'block' : 'none';
+  b.style.background = (msg && kind === 'ok') ? '#1f9d68' : '#c0392b';
 }
 function clearOsmBanner() { osmBanner(null); }
 
@@ -653,7 +652,7 @@ function wireZoomFloorHint() {
     if (Date.now() - _floorHintAt < 8000) return;
     _floorHintAt = Date.now();
     osmBanner(`ⓘ 这座城市的离线瓦片只做到 ${lo} 级（它的 z11–z14 只有主干道、没有水面绿地）。`
-      + '要更大范围请手动点左上角「数据来源 → 在线」，或用 v3 管线重跑该城（z11–z14 就会补齐）。');
+      + '要更大范围请点右上角「在线/本地」切「在线」，或用 v3 管线重跑该城（z11–z14 就会补齐）。');
     setTimeout(() => { if (_active && _mode === 'offline') clearOsmBanner(); }, 4200);
   };
   el.addEventListener('wheel', (e) => { if (e.deltaY > 0) setTimeout(maybeHint, 300); }, { passive: true });
@@ -731,84 +730,20 @@ function wirePicking(map) {
   });
 }
 
-// ---------- 场景内「数据来源」切换控件 ----------
+// ---------- 场景内「数据来源」toggle（OSM 右上角控件列，位于缩放 +/- 正下方） ----------
 function buildModeControl() {
+  // ⭐ 外层挂 .maplibregl-ctrl：复用 MapLibre 右上角容器（.maplibregl-ctrl-top-right）的
+  //   float:right + margin:10px 10px 0 0 + clear:both + pointer-events:auto，
+  //   保证本控件**紧贴在缩放 +/- 控件正下方、右缘对齐**，无需手算像素。
+  //   单个 toggle：显示当前来源（本地/在线），点击在两者间切换；29px 宽与缩放控件同宽同列。
   const el = document.createElement('div');
-  el.className = 'osm-mode-ctl';
-  el.innerHTML = '<div class="osm-mode-title">数据来源</div>';
-  const row = document.createElement('div');
-  row.className = 'osm-mode-row';
-  for (const m of ['online', 'offline']) {
-    const b = document.createElement('button');
-    b.textContent = m === 'online' ? '在线' : '离线(本地)';
-    b.className = 'osm-mode-btn';
-    b.onclick = () => applyMode(m, true);   // 显式点击一律强制重设（城市可能已变）
-    _modeBtns[m] = b;
-    row.appendChild(b);
-  }
-  el.appendChild(row);
-  // ⭐ 立体视角：fill-extrusion 在 pitch=0（正俯视）时**只能看到屋顶**，侧面高度为 0 像素，
-  //   「楼高」在视觉上完全不存在 —— 这是用户说「连默认高度都没有」的最后一环。
-  const tilt = document.createElement('button');
-  tilt.className = 'osm-mode-btn';
-  tilt.textContent = '立体视角';
-  tilt.title = '倾斜相机看 3D 建筑（俯视时只能看到屋顶）；再点一次回到正俯视';
-  _tiltBtn = tilt;
-  el.appendChild(tilt);
-  // 按钮态与真实 pitch 同步：默认进入就是 35°，按钮应显示为「已开」，否则用户点了反而压平
-  const syncTilt = () => { if (_map) tilt.classList.toggle('active', _map.getPitch() > 1); };
-  tilt.onclick = () => {
-    if (!_map) return;
-    const on = _map.getPitch() > 1;
-    _map.easeTo({ pitch: on ? 0 : 55, bearing: on ? _map.getBearing() : -20, duration: 600 });
-    syncTilt();
-  };
-  if (_map) { syncTilt(); _map.on('pitchend', syncTilt); }
-
-  // ⭐ 接缝诊断：一键叠加 MapLibre 的瓦片边界线并在屏幕上给出统计。
-  //   任何「地图被水平切开/上下两块详细度不同」的怀疑，看这个就能定性：
-  //   接缝压在彩色边界线上 = 瓦片问题；不压线 = 数据/样式问题。
-  //   （以前要用户开 F12 敲命令，实际没人愿意敲。）
-  const diag = document.createElement('button');
-  diag.className = 'osm-mode-btn osm-diag-btn';
-  diag.textContent = '接缝诊断';
-  diag.title = '叠加瓦片边界线，并在右下角显示瓦片统计；再点一次关闭';
-  diag.onclick = () => toggleSeamDiag(diag);
-  el.appendChild(diag);
-  const badge = document.createElement('div');
-  badge.className = 'osm-diag-badge hidden';
-  el.appendChild(badge);
-  _diagBadge = badge;
+  el.className = 'maplibregl-ctrl osm-mode-ctl';
+  const b = document.createElement('button');
+  b.className = 'osm-mode-toggle';
+  b.onclick = () => applyMode(_mode === 'offline' ? 'online' : 'offline', true); // 强制重设（城市可能已变）
+  _modeBtns.toggle = b;
+  el.appendChild(b);
   return el;
-}
-
-let _diagOn = false;
-function toggleSeamDiag(btn) {
-  if (!_map) return;
-  _diagOn = !_diagOn;
-  try { _map.showTileBoundaries = _diagOn; _map.triggerRepaint(); } catch (e) {}
-  if (btn) btn.classList.toggle('active', _diagOn);
-  if (_diagBadge) _diagBadge.classList.toggle('hidden', !_diagOn);
-  if (_diagOn) refreshSeamDiag();
-  else if (_diagBadge) _diagBadge.textContent = '';
-}
-
-function refreshSeamDiag() {
-  if (!_diagOn || !_map || !_diagBadge) return;
-  try {
-    const caches = (_map.getStyle() && _map.style && _map.style.sourceCaches) || {};
-    const name = Object.keys(caches).find((k) => k === 'pmt' || k === 'openmaptiles') || Object.keys(caches)[0];
-    const tiles = Object.values((caches[name] && caches[name]._tiles) || {});
-    const byZ = {}; const st = {};
-    for (const t of tiles) {
-      const c = t.tileID && t.tileID.canonical; if (!c) continue;
-      byZ[c.z] = (byZ[c.z] || 0) + 1;
-      const s = String(t.state); st[s] = (st[s] || 0) + 1;
-    }
-    const zs = Object.keys(byZ).sort().map((z) => 'z' + z + '×' + byZ[z]).join(' ');
-    const ss = Object.keys(st).map((s) => s + ':' + st[s]).join(' ');
-    _diagBadge.textContent = `${_mode} · zoom ${_map.getZoom().toFixed(1)} · 瓦片 ${tiles.length} 块 (${zs}) · ${ss}`;
-  } catch (e) { _diagBadge.textContent = '统计失败: ' + e.message; }
 }
 
 // ⭐ 换城市必须重设 style：style 里 tiles 模板写死了城市 pmtiles 文件名，
@@ -840,6 +775,13 @@ function actualStyleKey() {
 let _applying = false;         // setStyle 重入保护（moveend 自动换城市时会连发）
 async function applyMode(mode, force) {
   if (!_map || _applying) return;
+  // ⭐ 切「本地」时若还没锁定城市（典型：在线模式进入后平移到覆盖城市再切本地），
+  //   先按当前地图中心命中一次 —— 否则 resolveStyle('offline') 因 _city=null 返回 null，
+  //   被当「无离线数据」回滚，用户看到的就是「点本地没反应」。
+  if (mode === 'offline' && !_city) {
+    const c = _map.getCenter();
+    _city = hitCity(c.lng, c.lat);
+  }
   const key = styleKey(mode);
   if (!force && key === _appliedKey) return;
   const prevMode = _mode;
@@ -856,7 +798,7 @@ async function applyMode(mode, force) {
       _mode = prevMode;
       updateModeButtons();
       osmBanner('ⓘ 当前区域没有可用的离线数据（本地 ' + (_manifest ? _manifest.length : 0) +
-        ' 城），已保持原来源；请在「数据来源」切「在线」。');
+        ' 城），已保持原来源；可平移到覆盖城市再切「本地」，或点右上角「在线/本地」切「在线」。');
       _applying = false;
       return;
     }
@@ -886,9 +828,15 @@ async function applyMode(mode, force) {
 }
 
 function updateModeButtons() {
-  for (const m of ['online', 'offline']) {
-    if (_modeBtns[m]) _modeBtns[m].classList.toggle('active', m === _mode);
-  }
+  const b = _modeBtns.toggle;
+  if (!b) return;
+  b.textContent = _mode === 'offline' ? '本地' : '在线';
+  // ⭐ 按状态着色：本地=绿（与地球侧「本地可用」高亮同色系）、在线=蓝 —— 当前模式一眼可辨
+  b.classList.toggle('local', _mode === 'offline');
+  b.classList.toggle('online', _mode !== 'offline');
+  b.title = _mode === 'offline'
+    ? '当前数据来源：本地 PMTiles（点击切换到在线）'
+    : '当前数据来源：在线（点击切换到本地）';
 }
 
 function updateStatusHint() {
@@ -898,7 +846,7 @@ function updateStatusHint() {
     info.textContent = 'OSM(离线·PMTiles ' + (_city ? _city.name : '') +
       ')：本地数据统一 ' + DETAIL_ZOOM + ' 级（远近同一套几何，不会混层）· 缩放下限 ' +
       (_city ? zoomFloorFor(_city) : DETAIL_ZOOM) + ' 级（本地数据到此为止，要更大范围请手动切「在线」）· ' +
-      '「立体视角」看 3D 楼高 · 右键拖动=旋转 · 点击查属性';
+      '右键拖动=旋转 · 点击查属性';
   } else {
     info.textContent = 'OSM(在线)：右键拖动=旋转 · Ctrl+左键拖动=倾斜 · 点击要素查属性';
   }
@@ -957,6 +905,7 @@ function showOsmScene(view) {
     const ic = _navBtn.querySelector('.osm-nav-icon');
     if (ic) ic.textContent = '🌐';
   }
+  seatNavBtnInOsm();               // 返回球体钮请进右上角控件列（缩放 +/- 正下方；首次进入时地图未建，由 init 内兜底）
 }
 
 // ⭐ OSM 起步 zoom 必须**双向钳制**到离线城市的 [minz, maxz]：
@@ -987,8 +936,8 @@ async function autoDetectAndShow(view) {
   } else if (det.mode === 'offline' && det.city) {
     const _lo = zoomFloorFor(det.city);
     osmBanner(det.city.overview
-      ? `ⓘ 离线矢量：${det.city.name}（本地数据 ${_lo}–${detailZ(det.city)} 级，z11 起有水面/绿地/主干道）· 点「立体视角」看 3D 楼高 · 可缩到 ${_lo} 级，再大范围请点「数据来源 → 在线」。`
-      : `ⓘ 离线矢量：${det.city.name}（本地数据统一 ${detailZ(det.city)} 级，远近同一套几何）· 点「立体视角」看 3D 楼高 · 缩放下限 ${_lo} 级（本地数据到此为止；要更大范围请手动点「数据来源 → 在线」）。`);
+      ? `ⓘ 离线矢量：${det.city.name}（本地数据 ${_lo}–${detailZ(det.city)} 级，z11 起有水面/绿地/主干道）· 可缩到 ${_lo} 级，更大范围请点右上角「在线」切换。`
+      : `ⓘ 离线矢量：${det.city.name}（本地数据统一 ${detailZ(det.city)} 级，远近同一套几何）· 缩放下限 ${_lo} 级（本地数据到此为止；更大范围请点右上角「在线」切换）。`);
     // 3s 后自动收起，不长期挡画面
     setTimeout(() => { if (_active && _mode === 'offline') clearOsmBanner(); }, 3000);
   } else {
@@ -1035,9 +984,13 @@ async function autoDetectAndShow(view) {
       } catch (er) { /* 非致命 */ }
     });
     _map.on('moveend', onMapMoveEnd);
-    // 来源切换控件（一次性挂载到地图容器，setStyle 不移除 DOM）
+    // 来源切换控件（一次性挂载；setStyle 不移除 DOM）
+    // ⭐ 挂进 MapLibre 右上角容器（.maplibregl-ctrl-top-right）：自动排在缩放 +/- 控件
+    //   正下方、右缘对齐（复用 .maplibregl-ctrl 的 float:right + margin:10px），无需手算像素。
     _modeCtl = buildModeControl();
-    osmMapEl().appendChild(_modeCtl);
+    const _trc = osmMapEl().querySelector('.maplibregl-ctrl-top-right');
+    (_trc || osmMapEl()).appendChild(_modeCtl);
+    seatNavBtnInOsm();               // 返回球体钮也一并进右上角控件列
     // ⚠ 2026-10-29：原先这里挂 wireZoomFloorFallback()（触底自动切在线），
     //   已按用户要求移除 —— 缩小不再自动切在线，改为只提示（见 wireZoomFloorHint）。
     wireZoomFloorHint();
@@ -1076,7 +1029,7 @@ function onMapError(e) {
   if (_mode === 'online' && /fetch|network|Failed to|load|tile|glyph/i.test(msg)) {
     _errCount++;
     if (_errCount <= 3) {
-      osmBanner('⚠ 在线地图资源加载失败（' + msg.slice(0, 80) + '）。可切「离线(本地)」或检查网络。');
+      osmBanner('⚠ 在线地图资源加载失败（' + msg.slice(0, 80) + '）。可切「本地」或检查网络。');
     }
   }
 }
@@ -1084,7 +1037,6 @@ function onMapError(e) {
 // 持续提示：当前视图与离线覆盖的关系
 function onMapMoveEnd() {
   if (!_map) return;
-  if (_diagOn) refreshSeamDiag();
   const c = _map.getCenter();
   const count = _manifest ? _manifest.length : 0;   // 实为 433 城，别再写死「123 城」
   if (_mode === 'offline') {
@@ -1099,14 +1051,13 @@ function onMapMoveEnd() {
       return;
     }
     if (!city) {
-      // 方向也要说对：来源控件在地图左上角（面板右侧），不是右上角（右上角是缩放控件）
-      osmBanner(`ⓘ 当前区域无本地离线数据（本地 ${count} 城）；可在地图左上角「数据来源」切「在线」。`);
+      osmBanner(`ⓘ 当前区域无本地离线数据（本地 ${count} 城）；点右上角「在线/本地」切「在线」。`);
     } else {
       clearOsmBanner();
     }
   } else if (_mode === 'online') {
     if (offlineCovers(c.lng, c.lat)) {
-      osmBanner(`ⓘ 此区域有本地离线覆盖，可在地图左上角「数据来源」切「离线(本地)」。`);
+      osmBanner(`ⓘ 此区域有本地离线覆盖，点右上角「在线/本地」切「本地」。`, 'ok');
     } else {
       clearOsmBanner();
     }
@@ -1153,6 +1104,7 @@ function hideOsmScene() {
     const ic = _navBtn.querySelector('.osm-nav-icon');
     if (ic) ic.textContent = '🗺';
   }
+  seatNavBtnOnApp();               // 返回球体钮请回 #app 贴边位（top:304 right:48，与 cesium-navigation 同列）
 }
 
 // ---------- 丝滑切换入口：提示卡 / 侧栏按钮共用 ----------
@@ -1254,6 +1206,28 @@ export function mountOsmNavBtn(viewer) {
 export function unmountOsmNavBtn() {
   if (_navBtn && _navBtn.parentNode) _navBtn.parentNode.removeChild(_navBtn);
   _navBtn = null;
+}
+// ⭐ 返回球体钮的「双宿主」：OSM 场景内住进 MapLibre 右上角控件列（缩放 +/- 正下方、
+//   右缘对齐），离开 OSM 再请回 #app（恢复「🗺 进入地表 OSM」的贴边位置 top:304 right:48）。
+//   对齐机制复用 MapLibre 自家 CSS：.maplibregl-ctrl 在 top-right 容器里
+//   float:right + margin:10px 10px 0 0 + clear:both，天生和缩放控件同列对齐。
+function seatNavBtnInOsm() {
+  if (!_navBtn || !_active) return;
+  const trc = osmMapEl() && osmMapEl().querySelector('.maplibregl-ctrl-top-right');
+  if (!trc) return;
+  _navBtn.style.position = ''; _navBtn.style.top = ''; _navBtn.style.right = ''; _navBtn.style.zIndex = '';
+  _navBtn.classList.add('maplibregl-ctrl', 'in-osm-col');
+  if (_navBtn.parentNode !== trc) trc.appendChild(_navBtn);
+}
+function seatNavBtnOnApp() {
+  if (!_navBtn) return;
+  _navBtn.classList.remove('maplibregl-ctrl', 'in-osm-col');
+  _navBtn.style.position = 'absolute';
+  _navBtn.style.top = '304px';
+  _navBtn.style.right = '48px';
+  _navBtn.style.zIndex = '12';
+  const app = document.getElementById('app') || _navBtn.parentNode;
+  if (_navBtn.parentNode !== app) app.appendChild(_navBtn);
 }
 // 行星模式收放（2026-10-29 第五轮）：这颗钮挂 #app 后不再随星球容器隐藏，
 // 必须显式收——月球/火星没有 OSM 覆盖。OSM 场景激活时保持可见（它是唯一返回入口）。

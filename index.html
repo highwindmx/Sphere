@@ -25,39 +25,25 @@
     #panel { position: absolute; left: 0; top: 0; z-index: 20; }
     #osmMap.hidden { display: none !important; }
     #osmMap .maplibregl-ctrl-attrib { font-size: 10px; }
-    /* OSM 场景内「数据来源」切换控件：2026-10-30 改版 —— 视觉对齐右侧自定义控件
-       （.osm-nav-btn / .scene-nav-col .tool-btn）：深色半透明 + 浅色字 + 4px 圆角 + 投影；
-       从原左上角移到右上「🌐 返回球体」钮正下方，右缘对齐 right:48。 */
-    .osm-mode-ctl {
-      position: absolute; top: 344px; right: 48px; left: auto; z-index: 7;
-      background: rgba(20,26,40,.82); border: 1px solid rgba(255,255,255,.12);
-      border-radius: 6px; padding: 7px 8px; box-shadow: 0 2px 10px rgba(0,0,0,.35);
-      backdrop-filter: blur(4px);
-      font: 12px/1.3 system-ui, sans-serif; color: rgba(255,255,255,.9);
-    }
-    .osm-mode-title { font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,.78); }
-    .osm-mode-row { display: flex; gap: 6px; }
-    .osm-mode-btn {
-      border: 1px solid rgba(255,255,255,.16); background: rgba(47,53,60,.8);
-      color: rgba(255,255,255,.85);
-      border-radius: 4px; padding: 4px 10px; cursor: pointer; font: inherit;
-      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    /* OSM 场景内「数据来源」toggle：挂进 MapLibre .maplibregl-ctrl-top-right，
+       自动排在缩放 +/- 正下方、右缘对齐（float:right + margin:10px）；
+       单按钮显示当前来源（本地/在线），点击切换；29px 与缩放控件同宽成一条竖列。 */
+    .osm-mode-ctl { background: none; border: none; box-shadow: none; padding: 0; display: flex; }
+    .osm-mode-toggle {
+      width: 29px; height: 28px; box-sizing: border-box;
+      margin: 0; padding: 0;              /* ⚠ 盖掉全局 button{width:100%;padding:9px 12px;margin-bottom:8px} */
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(47,53,60,.8); border: 1px solid rgba(255,255,255,.1); border-radius: 4px;
+      color: rgba(255,255,255,.85); font: 11px/1 system-ui, sans-serif; cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,.35);
       transition: background .15s, border-color .15s, color .15s;
     }
-    .osm-mode-btn.active { background: rgba(47,83,143,.92); border-color: #ffc857; color: #fff; }
-    .osm-mode-btn:hover { border-color: rgba(255,255,255,.4); color: #68ADFE; }
-    /* 「立体视角」独占一行（来源按钮只有两个，同一行放不下第三个） */
-    .osm-mode-ctl > .osm-mode-btn { margin-top: 6px; width: 100%; }
-    /* 接缝诊断（叠加瓦片边界 + 屏上统计），排查「地图被水平切开」用 */
-    .osm-mode-btn.osm-diag-btn { font-size: 11px; color: rgba(255,255,255,.6); }
-    .osm-mode-btn.osm-diag-btn.active { background: #ef6c00; border-color: #ef6c00; color: #fff; }
-    .osm-diag-badge {
-      margin-top: 6px; max-width: 268px; word-break: break-all;
-      font: 10px/1.35 ui-monospace, Consolas, monospace;
-      color: #ffd98a; background: rgba(60,40,10,.7); border: 1px solid rgba(255,200,120,.4);
-      border-radius: 5px; padding: 3px 5px;
-    }
-    .osm-diag-badge.hidden { display: none; }
+    .osm-mode-toggle:hover { border-color: rgba(255,255,255,.3); color: #68ADFE; }
+    /* 当前模式着色：本地=绿（与地球侧「本地可用」高亮同色系）、在线=蓝，一眼可辨 */
+    .osm-mode-toggle.local { background: rgba(38,170,124,.92); border-color: #5fe0a8; color: #fff; }
+    .osm-mode-toggle.local:hover { color: #fff; border-color: #8ff0c8; }
+    .osm-mode-toggle.online { background: rgba(47,83,143,.92); border-color: #79a5ff; color: #fff; }
+    .osm-mode-toggle.online:hover { color: #fff; border-color: #a8c6ff; }
     /* 球体右上角浮动区：位于 cesium-navigation 控件（指南针/缩放）下方，避免遮挡。
        仅地球容器挂载；OSM 场景激活时整体隐藏（让位 MapLibre 控件）。
        2026-10-25：删「⬇ 回顶视」钮（cesium-navigation 双击指南针即原地回顶视，
@@ -85,6 +71,9 @@
     .osm-nav-btn:hover .osm-nav-icon { color: #68ADFE; }
     .osm-nav-icon { font-size: 15px; line-height: 1; color: rgba(255,255,255,.85); }
     .osm-nav-btn.hidden { display: none; }
+    /* OSM 场景内：返回球体钮进 MapLibre 右上角控件列（缩放 +/- 正下方），
+       取消绝对定位、29px 与缩放/来源 toggle 同宽，整列成一条整齐竖线。 */
+    .osm-nav-btn.in-osm-col { position: static; width: 29px; height: 28px; box-sizing: border-box; }
     /* 2026-10-29 第五轮：侧栏 🗺 OSM 钮判定冗余已删除，右侧这一颗成为**唯一**进出 OSM 场景的入口。
        故它不再随球体容器一起隐藏（现已挂 #app），而是在 OSM 场景内切成「🌐 返回球体」激活态。 */
     .osm-nav-btn.active { background: rgba(47,83,143,.92); border-color: #79a5ff; }
