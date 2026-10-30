@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MANI = ROOT / "public/data/osm/pmtiles/manifest.json"
-PMT = ROOT / "public/data/osm/pmtiles"
+MANI = ROOT / "public/data/tiles/osm/pmtiles/manifest.json"
+PMT = ROOT / "public/data/tiles/osm/pmtiles"
 
 d = json.load(open(MANI, encoding="utf-8"))
 

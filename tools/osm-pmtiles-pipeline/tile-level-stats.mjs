@@ -18,7 +18,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
-const PMT_DIR = path.join(ROOT, 'public', 'data', 'osm', 'pmtiles');
+const PMT_DIR = path.join(ROOT, 'public', 'data', 'tiles', 'osm', 'pmtiles');
 const _mod = require(path.join(ROOT, 'public', 'vendor', 'pmtiles-reader.js'));
 const READER = (_mod && typeof _mod.fromBuffer === 'function') ? _mod : globalThis.PMTilesReader;
 if (!READER || typeof READER.fromBuffer !== 'function') { console.error('PMTilesReader 加载失败'); process.exit(1); }

@@ -161,10 +161,10 @@ def _tile_tick(kind):
 
 
 # ---------- PMTiles 单文件（离线 OSM 矢量，MapLibre 经自定义协议 pmt:// 读取） ----------
-# 目录：public/data/osm/pmtiles/<城市>.pmtiles（tools/pbf-to-pmtiles.py 生成，含 height 真楼高）
+# 目录：public/data/tiles/osm/pmtiles/<城市>.pmtiles（tools/pbf-to-pmtiles.py 生成，含 height 真楼高）
 # 前端 PMTilesReader.open() 全量 fetch（本地服务，单文件 ≤30MB 可接受）；
 # 如需按需 Range 读取，在此路由解析 Range header 返回 206 + Content-Range。
-PMTILES_ROOT = os.path.join(PUBLIC, 'data', 'osm', 'pmtiles')
+PMTILES_ROOT = os.path.join(PUBLIC, 'data', 'tiles', 'osm', 'pmtiles')
 
 
 # ---------- 在线 OSM 矢量瓦片代理缓存（与 tiles/ 体系一致，落盘 public/osm-vt/） ----------

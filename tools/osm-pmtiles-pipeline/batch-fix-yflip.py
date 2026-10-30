@@ -133,7 +133,7 @@ def main():
         else:
             i += 1
 
-    pmt_dir = Path(d.get("dir", HERE.parent.parent / "public/data/osm/pmtiles"))
+    pmt_dir = Path(d.get("dir", HERE.parent.parent / "public/data/tiles/osm/pmtiles"))
 
     if d.get("seed"):
         fp = pmt_dir / d["seed"]

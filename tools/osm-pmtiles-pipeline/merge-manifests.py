@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""合并 public/data/osm/pmtiles/ 下所有 m_*.json 分组清单 → manifest.json（前端唯一读取的文件）。
+"""合并 public/data/tiles/osm/pmtiles/ 下所有 m_*.json 分组清单 → manifest.json（前端唯一读取的文件）。
 
 规则：
   · 以城市名为键取并集；同名条目以「tiles 更多」的为准（重复城市时保留更完整的那份）
@@ -21,7 +21,7 @@ import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUTDIR = os.path.join(ROOT, 'public', 'data', 'osm', 'pmtiles')
+OUTDIR = os.path.join(ROOT, 'public', 'data', 'tiles', 'osm', 'pmtiles')
 
 
 def _varint(buf, pos):

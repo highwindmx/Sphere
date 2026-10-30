@@ -1,7 +1,7 @@
 import json, os, glob, csv
 from collections import Counter
 
-ROOT = 'public/data/osm/pmtiles'
+ROOT = 'public/data/tiles/osm/pmtiles'
 DL = 'D:/迅雷下载'          # 原生 Windows 路径，uv 的 Python 才认
 
 manifest = json.load(open(os.path.join(ROOT, 'manifest.json'), encoding='utf-8'))

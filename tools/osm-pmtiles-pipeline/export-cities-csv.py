@@ -22,7 +22,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-OUTDIR = os.path.join(ROOT, 'public', 'data', 'osm', 'pmtiles')
+OUTDIR = os.path.join(ROOT, 'public', 'data', 'tiles', 'osm', 'pmtiles')
 MANIFEST = os.path.join(OUTDIR, 'manifest.json')
 
 # 已知洲名（用于校验文件名第一段确实是洲，避免把「长城_八达岭」这类误判）

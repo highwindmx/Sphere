@@ -23,7 +23,7 @@ import shutil
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, 'public', 'data', 'osm', 'pmtiles')
+OUT = os.path.join(ROOT, 'public', 'data', 'tiles', 'osm', 'pmtiles')
 QUAR = os.path.join(ROOT, 'archive', 'quarantine-pmtiles')
 
 

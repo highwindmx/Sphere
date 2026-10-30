@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw
 from pmtiles.reader import Reader, MmapSource
 import mapbox_vector_tile as mvt
 
-PMT = r'D:/Share/Scripts/Explore/sphere/public/data/osm/pmtiles'
+PMT = r'D:/Share/Scripts/Explore/sphere/public/data/tiles/osm/pmtiles'
 
 
 def main():

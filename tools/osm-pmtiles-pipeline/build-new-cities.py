@@ -18,8 +18,8 @@
   # 只构建某个 pbf 组的城市（逗号分隔组名，如 dach,italy）
   ... build-new-cities.py --groups dach,italy
 
-  # 指定 pbf 目录 / 输出目录（默认 D:/迅雷下载 与 public/data/osm/pmtiles）
-  ... build-new-cities.py --pbfdir "D:/迅雷下载" --out public/data/osm/pmtiles
+  # 指定 pbf 目录 / 输出目录（默认 D:/迅雷下载 与 public/data/tiles/osm/pmtiles）
+  ... build-new-cities.py --pbfdir "D:/迅雷下载" --out public/data/tiles/osm/pmtiles
 
 说明
 ----
@@ -28,7 +28,7 @@
 - 但后台正在跑的 batch-fix-yflip 按 *.pmtiles 通配处理；为防止它（或将来重启）
   把本脚本产出的"正确"文件再翻回错误，脚本在每城构建成功后把该文件登记进
   yflip 进度日志（name + sha_out 命中即跳过）。
-- 构建完自动把新条目合并进 public/data/osm/pmtiles/manifest.json（仅更新成功的）。
+- 构建完自动把新条目合并进 public/data/tiles/osm/pmtiles/manifest.json（仅更新成功的）。
 - osmium-tool 二进制（tools/osmium-bin/Library/bin/osmium.exe）用于预裁剪；
   找不到则回退全量扫源 pbf（慢）。
 """
@@ -172,8 +172,8 @@ for _c in CITIES:
 def main():
     args = sys.argv[1:]
     d = dict(pbfdir='D:/迅雷下载',
-             out=str(Path('public/data/osm/pmtiles')),
-             manifest=str(Path('public/data/osm/pmtiles/manifest.json')))
+             out=str(Path('public/data/tiles/osm/pmtiles')),
+             manifest=str(Path('public/data/tiles/osm/pmtiles/manifest.json')))
     i = 0
     only = groups_filter = None
     dry = False

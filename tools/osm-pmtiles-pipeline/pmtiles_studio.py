@@ -35,7 +35,7 @@ PIPELINE = HERE
 ROOT = os.path.dirname(os.path.dirname(HERE))                     # sphere 项目根
 CORE_SCRIPT = os.path.join(PIPELINE, 'pbf-to-pmtiles.py')
 MERGE_SCRIPT = os.path.join(PIPELINE, 'merge-manifests.py')
-DEFAULT_OUT = os.path.join(ROOT, 'public', 'data', 'osm', 'pmtiles')
+DEFAULT_OUT = os.path.join(ROOT, 'public', 'data', 'tiles', 'osm', 'pmtiles')
 STUDIO_MANIFEST = 'm_studio.json'   # 工作室抽取结果累积清单，供 merge-manifests 识别并入
 PORT = 5011
 

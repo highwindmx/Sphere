@@ -13,7 +13,7 @@ import json
 import os
 import struct
 
-OUTDIR = 'public/data/osm/pmtiles'
+OUTDIR = 'public/data/tiles/osm/pmtiles'
 MANIFEST = os.path.join(OUTDIR, 'manifest.json')
 SLUG_SRC = 'tools/osm-pmtiles-pipeline/_pmtiles_manifest.json'      # A 组原始清单（含 bbox/lon/lat/pbf）
 

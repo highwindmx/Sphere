@@ -30,7 +30,7 @@ import time
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 P2P = os.path.join(ROOT, 'tools/osm-pmtiles-pipeline/pbf-to-pmtiles.py')
 MANIFEST = os.path.join(ROOT, 'tools/osm-pmtiles-pipeline/_bgroup_manifest.v3.json')  # 448 城版（合并龟兹错点 + 新疆丝路点国别改中国）
-OUTDIR = os.path.join(ROOT, 'public/data/osm/pmtiles')
+OUTDIR = os.path.join(ROOT, 'public/data/tiles/osm/pmtiles')
 WORK = os.path.join(ROOT, 'tools/.work')
 STATE = os.path.join(ROOT, 'tools/.work/queue-state.json')
 PY = os.path.join(ROOT, '.venv/Scripts/python.exe')

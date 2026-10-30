@@ -19,7 +19,7 @@ from pmtiles.reader import Reader, MmapSource
 import mapbox_vector_tile as mvt
 from scipy import ndimage
 
-PMT = r'D:/Share/Scripts/Explore/sphere/public/data/osm/pmtiles'
+PMT = r'D:/Share/Scripts/Explore/sphere/public/data/tiles/osm/pmtiles'
 EXT = 4096
 PX = 600          # 输出图边长
 

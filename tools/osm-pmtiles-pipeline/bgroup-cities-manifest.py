@@ -7,7 +7,7 @@ B 组城市分配（2026-10-25）：把 _all_cities.json（489 城：巡礼169 +
 与 tour-cities-manifest.py 的区别：
   · 覆盖全部区域（含 B 组新下载的 turkey / australia-oceania / central-america，
     以及待下载的 africa / india / syria）；
-  · 跳过已生成城市（public/data/osm/pmtiles/manifest.json 里 ok=true）
+  · 跳过已生成城市（public/data/tiles/osm/pmtiles/manifest.json 里 ok=true）
     与 A 组正在跑的城市（tools/osm-pmtiles-pipeline/_pmtiles_manifest.json coverable）；
   · blocked = 本地无对应 pbf 的城市（走在线兜底）。
 
@@ -245,7 +245,7 @@ def main():
     # 导致清单里中国只剩北京+港澳台。默认不再跳过（--keep-done 可恢复旧行为）。
     done = set()
     if args.keep_done:
-        p = "public/data/osm/pmtiles/manifest.json"
+        p = "public/data/tiles/osm/pmtiles/manifest.json"
         if os.path.exists(p):
             for k, v in json.load(open(p)).items():
                 if v.get("ok"):

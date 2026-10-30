@@ -50,9 +50,9 @@ archive/
 public/OSM/
 
 # OSM 生成的矢量瓦片树（运行时由 PBF/MVT 切片产生，非源码）
-public/data/osm/pmtiles/
-public/data/osm/vtiles/
-public/data/osm/mvt/
+public/data/tiles/osm/pmtiles/
+public/data/tiles/osm/vtiles/
+public/data/tiles/osm/mvt/
 public/OSM/*.osm.pbf
 
 # osmium-tool 预编译二进制（conda-forge 手动解包，非 pip 依赖）

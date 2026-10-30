@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-旧瓦片（public/data/osm/pmtiles_v1/）回收器
+旧瓦片（public/data/tiles/osm/pmtiles_v1/）回收器
 
 背景：2026-10-26 抽取口径改为三档（T1 ±0.50° / T2 ±0.24° / T3 ±0.12°），
       且文件名改为「大洲-国家-城市」。旧目录 339 个文件全是旧的 ±0.12° 小框 + 旧命名。
@@ -22,8 +22,8 @@ import json
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-V1 = os.path.join(ROOT, 'public/data/osm/pmtiles_v1')
-NEW = os.path.join(ROOT, 'public/data/osm/pmtiles')
+V1 = os.path.join(ROOT, 'public/data/tiles/osm/pmtiles_v1')
+NEW = os.path.join(ROOT, 'public/data/tiles/osm/pmtiles')
 MANIFEST = os.path.join(ROOT, 'tools/osm-pmtiles-pipeline/_bgroup_manifest.json')
 
 spec = importlib.util.spec_from_file_location('p2', os.path.join(ROOT, 'tools/osm-pmtiles-pipeline/pbf-to-pmtiles.py'))

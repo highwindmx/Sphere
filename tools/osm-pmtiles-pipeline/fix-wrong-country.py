@@ -25,7 +25,7 @@ import os
 import shutil
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, 'public', 'data', 'osm', 'pmtiles')
+OUT = os.path.join(ROOT, 'public', 'data', 'tiles', 'osm', 'pmtiles')
 V3 = os.path.join(ROOT, 'tools', 'pmtiles', '_bgroup_manifest.v3.json')
 
 

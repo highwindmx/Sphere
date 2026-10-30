@@ -9,8 +9,8 @@ import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MANI = ROOT / "public/data/osm/pmtiles/manifest.json"
-PMT = ROOT / "public/data/osm/pmtiles"
+MANI = ROOT / "public/data/tiles/osm/pmtiles/manifest.json"
+PMT = ROOT / "public/data/tiles/osm/pmtiles"
 QUAR = ROOT / "archive/quarantine-redundant-subsets"
 QUAR.mkdir(parents=True, exist_ok=True)
 

@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw
 from pmtiles.reader import Reader, MmapSource
 import mapbox_vector_tile as mvt
 
-PMT = 'D:/Share/Scripts/Explore/sphere/public/data/osm/pmtiles'
+PMT = 'D:/Share/Scripts/Explore/sphere/public/data/tiles/osm/pmtiles'
 EXT = 4096
 
 

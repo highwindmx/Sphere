@@ -27,7 +27,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--manifest', default=os.path.join(ROOT, 'tools', 'pmtiles', '_bgroup_manifest.v3.json'))
     ap.add_argument('--pbfdir', default=os.path.join(ROOT, 'public', 'OSM'))
-    ap.add_argument('--out', default=os.path.join(ROOT, 'public', 'data', 'osm', 'pmtiles'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'public', 'data', 'tiles', 'osm', 'pmtiles'))
     ap.add_argument('--only', default=None)
     ap.add_argument('--todo', action='store_true', help='只显示未完成的组')
     ap.add_argument('--grow', type=float, default=150.0, help='cluster 合并阈值（与 run-remaining 一致）')

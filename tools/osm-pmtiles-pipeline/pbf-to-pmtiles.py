@@ -912,7 +912,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--manifest', default='tools/osm-pmtiles-pipeline/_pmtiles_manifest.json')
     ap.add_argument('--pbfdir', default='public/OSM')
-    ap.add_argument('--out', default='public/data/osm/pmtiles')
+    ap.add_argument('--out', default='public/data/tiles/osm/pmtiles')
     ap.add_argument('--only', default=None, help='只跑某个源 pbf 组（如 china）')
     ap.add_argument('--cities', default=None, help='逗号分隔城市名子集')
     ap.add_argument('--skip', default=None, help='逗号分隔要跳过的源 pbf 组（如 us,russia）')

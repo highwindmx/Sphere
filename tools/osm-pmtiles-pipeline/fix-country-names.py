@@ -24,7 +24,7 @@ import json
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, 'public', 'data', 'osm', 'pmtiles')
+OUT = os.path.join(ROOT, 'public', 'data', 'tiles', 'osm', 'pmtiles')
 V3 = os.path.join(ROOT, 'tools', 'pmtiles', '_bgroup_manifest.v3.json')
 
 # 需修正国别的目标城市（仅这 4 个，从 v3 取权威 continent/country）

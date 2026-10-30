@@ -7,7 +7,7 @@ import { glyphRangePbf } from './osm-glyphs.js';
 //
 // 两种数据来源（场景内可切换）：
 //  - 在线（默认）：OpenFreeMap 全球 OSM（含楼高、街道名、免费无密钥），需联网。
-//  - 离线：本地 PMTiles 单文件（public/data/osm/pmtiles/<城市>.pmtiles，tools/osm-pmtiles-pipeline/pbf-to-pmtiles.py
+//  - 离线：本地 PMTiles 单文件（public/data/tiles/osm/pmtiles/<城市>.pmtiles，tools/osm-pmtiles-pipeline/pbf-to-pmtiles.py
 //          生成，实测 433 城；勿写死数字，一律取 manifest 长度），经自定义协议 pmt:// 由 PMTilesReader 读取；含 height/levels 真楼高，
 //          不依赖外网。城市清单见同目录 manifest.json（bbox 命中即用）。
 //
@@ -21,7 +21,7 @@ const OSM_STYLE_ONLINE = 'https://tiles.openfreemap.org/styles/liberty';
 
 // 离线：PMTiles 单文件 + 城市 manifest
 const PMTILES_BASE = window.location.origin + '/pmtiles/';
-const MANIFEST_URL = window.location.origin + '/data/osm/pmtiles/manifest.json';
+const MANIFEST_URL = window.location.origin + '/data/tiles/osm/pmtiles/manifest.json';
 const HANDOFF_HEIGHT = 9000;    // 丝滑切换的交接高度(m)：对应 zoom≈15.1，恰为离线数据最高级
 const HINT_HEIGHT = 10000;      // 提示卡浮现阈值(m)：低于此高度卫星图开始不够用
 const RETURN_HEIGHT = 5000;     // 返回球体的固定相机高度(m)：按 zoom 换算会甩到几十公里外
