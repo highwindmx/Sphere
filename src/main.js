@@ -1736,19 +1736,18 @@ let shownList = null;
 function flyToCoords(lon, lat, name) {
   if (!requireEarth('地名定位')) return;
   const ellipsoid = isMoonMode ? MOON_ELLIPSOID : isMarsMode ? MARS_ELLIPSOID : Cesium.Ellipsoid.WGS84;
-  const H = 600000;                                  // 相机离目标的高度（米）：城市级取 600km
-  const pitch = Cesium.Math.toRadians(-40);           // 朝北俯视 40°，比 -45 更平、倾角更舒服
-  // ⭐ 让目标居中而非贴在画面底边：相机落在目标正南 H/tan(|pitch|)（水平视距）处、朝北俯视，
-  //   视线落点≈目标（旧版 (lon,lat,2000km)+pitch-45 把目标甩到画面底边，视线落点北偏 ~18° 纬度，
-  //   看着像"飞错地方 + 大倾角"）。球面曲率约带来 1° 残差，城市级可忽略。
-  const mPerDeg = ellipsoid.maximumRadius * Math.PI / 180;
-  const offsetDeg = (H / Math.tan(Math.abs(pitch))) / mPerDeg;
-  const dest = Cesium.Cartesian3.fromDegrees(lon, lat - offsetDeg, H, ellipsoid);
-  activeViewer().camera.flyTo({
-    destination: dest,
-    orientation: { heading: 0, pitch, roll: 0 },
-    duration: 1.8,
-  });
+  // ⭐ 用 Cesium 官方 HeadingPitchRange 做"看向某点"：给定目标点 + 航向/俯角/斜距，
+  //   框架反推相机位姿、目标精确居中（无需手算每度米数，且自动适配地球/月/火椭球）。
+  //   注：本项目 vendored Cesium 1.146 没有 Transforms.headingPitchRangeToCartesian，
+  //   故改用 camera.flyToBoundingSphere(sphere, { offset: HPR })，是同一套数学、等价且可用。
+  //   旧版手写 fromDegrees(lon,lat,2000km)+pitch-45 把目标甩到画面底边（视线落点北偏 ~18° 纬度）。
+  const H = 600000;                                   // 相机离目标正上方的高度（米）
+  const pitch = Cesium.Math.toRadians(-40);            // 相对目标地平线的俯角：朝北俯视 40°（比 -45 更平）
+  const target = Cesium.Cartesian3.fromDegrees(lon, lat, 0, ellipsoid);
+  const range = H / Math.sin(Math.abs(pitch));         // 斜距 = 高度 / sin(俯角)
+  const hpr = new Cesium.HeadingPitchRange(0, pitch, range);
+  const sphere = new Cesium.BoundingSphere(target, 0);
+  activeViewer().camera.flyToBoundingSphere(sphere, { offset: hpr, duration: 1.8 });
   setStatus(`已飞到 ${name ? name + '（' : ''}${lon.toFixed(2)}°, ${lat.toFixed(2)}°${name ? '）' : ''}`, 'ok');
   navHistoryPush(lon, lat);
 }

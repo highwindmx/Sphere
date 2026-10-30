@@ -89,11 +89,24 @@ async function locate(q) {
     const lat = c ? +(c.latitude * 180 / Math.PI).toFixed(3) : null;
     const h = c ? Math.round(c.height) : null;
     const pitch = +(v.camera.pitch * 180 / Math.PI).toFixed(1);
+    // 视线落点（相机看向的地面点）—— 才是"有没有居中"的真判据
+    const look = (() => {
+      try {
+        const C = window.Cesium;
+        const ray = new C.Ray(v.camera.position.clone(), v.camera.direction.clone());
+        const i = C.IntersectionTests.rayEllipsoid(ray, C.Ellipsoid.WGS84);
+        if (!i) return null;
+        const pt = C.Ray.getPoint(ray, i.start);
+        const ct = C.Cartographic.fromCartesian(pt);
+        return { lon: +(ct.longitude * 180 / Math.PI).toFixed(3), lat: +(ct.latitude * 180 / Math.PI).toFixed(3) };
+      } catch (e) { return { err: String(e) }; }
+    })();
     return {
       clicked: true,
       label: btn.querySelector('.sr-label').textContent.trim(),
       status: document.getElementById('statusBar')?.textContent || document.getElementById('buildBar')?.textContent || '',
       cam: { lon, lat, h, pitch },
+      look,
       isMoon: window.__getMoonViewer ? false : null,
       moonMode: document.getElementById('btnMoonMode')?.classList.contains('active'),
       marsMode: document.getElementById('btnMarsMode')?.classList.contains('active'),
