@@ -545,6 +545,34 @@ const earthNav = new CesiumNavigation(viewer, {
 // 地表OSM 贴邻钮：挂到导航控件列正下方（独立 DOM，视觉同款）
 mountOsmNavBtn(viewer);
 
+// ====== 右侧控件同轴对齐（2026-10-30 用户：fixed 后上下两段仍有微小错位）======
+// 根因：缩放列在导航容器内 right:32、宽 32 → 中心=视口−60px；.scene-nav-col 自身 right:12、宽 30
+// → 中心=视口−27px，偏右 33px。不手算 right 值（插件内部尺寸一变就再错），改为运行时
+// 读 .navigation-controls 真实几何，把「场景钮列 / OSM 钮」的中心轴钉到缩放列中心上。
+(function setupRightDockAlign() {
+  const HALF = { nav: 15, osm: 15 };   // 各钮宽 30（含边框）的一半
+  function align() {
+    const zoom = document.querySelector(
+      '.cesium-widget-cesiumNavigationContainer .navigation-controls');
+    if (!zoom) return false;
+    const r = zoom.getBoundingClientRect();
+    if (!r.width) return false;
+    const axis = r.left + r.width / 2;
+    const nav = document.getElementById('sceneNavCol');
+    if (nav) nav.style.right = Math.round(window.innerWidth - axis - HALF.nav) + 'px';
+    const osm = document.querySelector('.osm-nav-btn');
+    if (osm) osm.style.right = Math.round(window.innerWidth - axis - HALF.osm) + 'px';
+    return true;
+  }
+  // 插件容器是异步 appendChild 的 → 轮询到挂载为止；此后 resize 重算
+  let tries = 0;
+  (function retry() {
+    if (align() || ++tries > 40) return;
+    setTimeout(retry, 250);
+  })();
+  window.addEventListener('resize', () => { align(); });
+})();
+
 // ====== 右侧控件自动隐藏（2026-10-30 用户要求）======
 // 默认隐藏（透明 + 不拦截鼠标，避免挡住球体拖拽）；hover 视口右缘区域或操作球体（拖拽/旋转/相机变化）
 // 时被唤起，离开后自动收起。Cesium 原生导航与 .scene-nav-col 都锚定视口右缘，永远同列。
@@ -1708,9 +1736,17 @@ let shownList = null;
 function flyToCoords(lon, lat, name) {
   if (!requireEarth('地名定位')) return;
   const ellipsoid = isMoonMode ? MOON_ELLIPSOID : isMarsMode ? MARS_ELLIPSOID : Cesium.Ellipsoid.WGS84;
+  const H = 600000;                                  // 相机离目标的高度（米）：城市级取 600km
+  const pitch = Cesium.Math.toRadians(-40);           // 朝北俯视 40°，比 -45 更平、倾角更舒服
+  // ⭐ 让目标居中而非贴在画面底边：相机落在目标正南 H/tan(|pitch|)（水平视距）处、朝北俯视，
+  //   视线落点≈目标（旧版 (lon,lat,2000km)+pitch-45 把目标甩到画面底边，视线落点北偏 ~18° 纬度，
+  //   看着像"飞错地方 + 大倾角"）。球面曲率约带来 1° 残差，城市级可忽略。
+  const mPerDeg = ellipsoid.maximumRadius * Math.PI / 180;
+  const offsetDeg = (H / Math.tan(Math.abs(pitch))) / mPerDeg;
+  const dest = Cesium.Cartesian3.fromDegrees(lon, lat - offsetDeg, H, ellipsoid);
   activeViewer().camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(lon, lat, 2e6, ellipsoid),
-    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
+    destination: dest,
+    orientation: { heading: 0, pitch, roll: 0 },
     duration: 1.8,
   });
   setStatus(`已飞到 ${name ? name + '（' : ''}${lon.toFixed(2)}°, ${lat.toFixed(2)}°${name ? '）' : ''}`, 'ok');
